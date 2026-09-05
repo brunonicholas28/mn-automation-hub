@@ -74,7 +74,7 @@ export default async function handler(req, res) {
           continue;
         }
 
-        const person = await findOrCreatePerson({ name: contact.name, email });
+        const person = await findOrCreatePerson({ name: contact.name, email, linkedinUrl: contact.linkedin_url });
         const existingDeals = await findDealsByPersonId(person.id);
         if (existingDeals && existingDeals.length > 0) continue; // already synced
 

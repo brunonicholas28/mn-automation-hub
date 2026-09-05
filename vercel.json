@@ -1,0 +1,6 @@
+{
+  "crons": [
+    { "path": "/api/cron/apollo-sync", "schedule": "0 6 * * *" },
+    { "path": "/api/cron/linkedin-score", "schedule": "0 7 * * *" }
+  ]
+}

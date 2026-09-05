@@ -1,0 +1,12 @@
+{
+  "name": "mn-automation-hub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Custom Vercel automation replacing Zapier for two flows: Apollo -> Pipedrive sync, and the LinkedIn Lane 2 scoring/shortlist pipeline.",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "@vercel/kv": "^1.0.1"
+  }
+}

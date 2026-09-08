@@ -5,6 +5,7 @@
 // GET /api/metrics?cohort=... -> one cohort
 
 import { readAllCohorts, readCohort, normaliseCohortId } from "../lib/cohort.js";
+import { getState } from "../lib/kv.js";
 
 // Verification rows written while wiring the beacon. Dated 1970 so they sort
 // last and read as obviously synthetic, and hidden here so nobody mistakes a
@@ -56,16 +57,23 @@ export default async function handler(req, res) {
       { sent: 0, bounced: 0, replied: 0, visits: 0, started: 0, completed: 0, booked: 0 }
     );
 
+    // Report completions and booked calls that carry no Cohort value. Shown
+    // separately rather than folded into a cohort, because guessing which
+    // batch they belong to would be worse than admitting we cannot tell.
+    const unattributed = (await getState("funnel:unattributed")) || null;
+
     return res.status(200).json({
       ok: true,
       generatedAt: new Date().toISOString(),
       cohorts: rows,
+      unattributed,
       totals: withRates({ cohort: "all", ...totals }),
       caveats: [
         "Open and click rates are absent by design - tracking pixels are off in Instantly for deliverability.",
         "Landing page visits stand in for click-through and count only traffic carrying a cohort tag.",
         "c20260908 is cohort zero: it sent before cohort tagging, so its funnel below the send count is attributable to cold email but not cleanly separable from later batches.",
         "Attribution is last-touch and single-channel.",
+        "Report completions and booked calls only split by cohort once the Fillout to Pipedrive webhook writes utm_campaign into the deal Cohort field. Until then they appear under unattributed.",
       ],
     });
   } catch (err) {

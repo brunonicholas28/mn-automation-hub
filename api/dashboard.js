@@ -210,7 +210,13 @@ const PAGE = String.raw`<!doctype html>
     }
     var t = f.totals || {};
     var denom = (t.finished || 0) + (t.inProgress || 0);
-    var rate = denom ? Math.round(((t.finished || 0) / denom) * 1000) / 10 + "%" : "&mdash;";
+    // A rate off one submission reads as a triumphant 100%. Withhold it until
+    // there is enough behind it to mean anything.
+    var MIN = 10;
+    var rate = denom >= MIN ? Math.round(((t.finished || 0) / denom) * 1000) / 10 + "%" : "&mdash;";
+    var rateSub = denom >= MIN
+      ? "finished &divide; (finished + in progress)"
+      : "withheld until " + MIN + " submissions &mdash; " + denom + " so far";
     var secs = f.medianSecondsToComplete;
     var time = secs == null ? "&mdash;"
       : Math.floor(secs / 60) + "m " + String(Math.round(secs % 60)).padStart(2, "0") + "s";
@@ -218,7 +224,7 @@ const PAGE = String.raw`<!doctype html>
     el.innerHTML =
       tile("Reports finished", n(t.finished), t.internalTestSubmissions + " internal test submissions excluded") +
       tile("In progress", n(t.inProgress), "only counts partials Fillout kept as resumable") +
-      tile("Completion rate", rate, "finished &divide; (finished + in progress)") +
+      tile("Completion rate", rate, rateSub, { na: denom < MIN }) +
       tile("Median time to complete", time,
            f.durationSampleSize ? "from " + f.durationSampleSize + " real submission" + (f.durationSampleSize === 1 ? "" : "s") : "no sample yet") +
       tile("Unique visitors", "Not in the API", "Fillout shows it in Results &rsaquo; Analytics only", { na: true }) +

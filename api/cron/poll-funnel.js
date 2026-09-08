@@ -11,7 +11,15 @@
 // batches until it is renamed.
 
 import { listCampaigns, listCampaignLeads } from "../../lib/instantly.js";
+import { listEnrolmentDeals, ENROLMENT_STAGES } from "../../lib/pipedrive.js";
 import { normaliseCohortId, setCohortFields } from "../../lib/cohort.js";
+import { setState } from "../../lib/kv.js";
+
+// Deals that carry no Cohort value cannot be assigned to a batch. They are
+// counted and stored separately rather than dropped or spread across cohorts,
+// so the size of the attribution hole stays visible instead of looking like
+// a run of honest zeros.
+export const UNATTRIBUTED_KEY = "funnel:unattributed";
 
 function authorised(req) {
   const expected = process.env.FUNNEL_CRON_KEY;
@@ -91,6 +99,47 @@ export default async function handler(req, res) {
       });
     }
 
+    // ---- Bottom of the funnel, from the Pipedrive enrolment pipeline ----
+    // A deal sits in one stage, so each level counts "reached this stage or
+    // beyond" - otherwise progressing a deal erases it from the level below.
+    let pipedrive = null;
+    try {
+      const deals = await listEnrolmentDeals();
+      const buckets = new Map();
+      const unattributed = { started: 0, completed: 0, booked: 0, deals: 0 };
+
+      for (const d of deals) {
+        const started = d.stageId >= ENROLMENT_STAGES.reportStarted ? 1 : 0;
+        const completed = d.stageId >= ENROLMENT_STAGES.reportCompleted ? 1 : 0;
+        const booked = d.stageId >= ENROLMENT_STAGES.callBooked ? 1 : 0;
+
+        const cohort = normaliseCohortId(d.cohort);
+        if (!cohort) {
+          unattributed.deals += 1;
+          unattributed.started += started;
+          unattributed.completed += completed;
+          unattributed.booked += booked;
+          continue;
+        }
+        const acc = buckets.get(cohort) || { started: 0, completed: 0, booked: 0 };
+        acc.started += started;
+        acc.completed += completed;
+        acc.booked += booked;
+        buckets.set(cohort, acc);
+      }
+
+      for (const [cohort, acc] of buckets.entries()) {
+        const existing = byCohort.get(cohort) || {};
+        byCohort.set(cohort, { ...existing, ...acc });
+      }
+
+      await setState(UNATTRIBUTED_KEY, { ...unattributed, updatedAt: new Date().toISOString() });
+      pipedrive = { dealsSeen: deals.length, attributedCohorts: [...buckets.keys()], unattributed };
+    } catch (err) {
+      console.error("poll-funnel pipedrive step failed:", err);
+      pipedrive = { error: String(err.message || err) };
+    }
+
     for (const [cohort, acc] of byCohort.entries()) {
       await setCohortFields(cohort, acc);
     }
@@ -102,6 +151,7 @@ export default async function handler(req, res) {
       campaignsSeen: campaigns.length,
       cohortsWritten: [...byCohort.keys()],
       perCampaign,
+      pipedrive,
       diagnostics: {
         statusTally,
         bounceSignalsSeen,

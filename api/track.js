@@ -48,7 +48,11 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, counted: false, reason: "no cohort tag" });
     }
 
-    await bumpCohort(cohort, "visits", 1);
+    // stage=started is fired by the beacon embedded in the Fillout form
+    // itself, so "reports started" means the form was actually opened rather
+    // than merely that the landing page was seen.
+    const field = body.stage === "started" ? "started" : "visits";
+    await bumpCohort(cohort, field, 1);
 
     if (touch) {
       await kv.hincrby(`${cohortKey(cohort)}:touches`, touch, 1);
@@ -57,7 +61,7 @@ export default async function handler(req, res) {
       await kv.hincrby(`${cohortKey(cohort)}:sources`, String(body.source).slice(0, 32), 1);
     }
 
-    return res.status(200).json({ ok: true, counted: true, cohort, touch: touch || null });
+    return res.status(200).json({ ok: true, counted: true, cohort, touch: touch || null, field });
   } catch (err) {
     // Never let a tracking failure surface to a prospect's browser as an
     // error - the beacon is fire-and-forget by design.

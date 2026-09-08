@@ -7,10 +7,16 @@
 import { readAllCohorts, readCohort, normaliseCohortId } from "../lib/cohort.js";
 import { getState } from "../lib/kv.js";
 
-// Verification rows written while wiring the beacon. Dated 1970 so they sort
-// last and read as obviously synthetic, and hidden here so nobody mistakes a
-// test for a batch.
-const TEST_COHORTS = new Set(["c19700101"]);
+// Rows that exist in the store but must never reach a reader.
+// - c19700101: the 1970-dated verification row written while wiring the beacon.
+// - no-phone-cadence-...: the first poll ran before the Instantly campaign
+//   name was aliased onto c20260908, so it wrote the same 2026-09-08 sends
+//   under the raw campaign slug. Left in place but hidden, because showing it
+//   would count that batch twice in the totals.
+const HIDDEN_COHORTS = new Set([
+  "c19700101",
+  "no-phone-cadence---cold-outreach-v1untitled-camp",
+]);
 
 // Returns null rather than 0 when the denominator is zero, so the dashboard
 // can render "-" instead of a confident-looking 0.0% that means nothing.
@@ -46,7 +52,7 @@ export default async function handler(req, res) {
     const one = normaliseCohortId(req.query?.cohort);
     const cohorts = one ? [await readCohort(one)] : await readAllCohorts();
 
-    const rows = cohorts.filter((c) => !TEST_COHORTS.has(c.cohort)).map(withRates);
+    const rows = cohorts.filter((c) => !HIDDEN_COHORTS.has(c.cohort)).map(withRates);
     const totals = rows.reduce(
       (acc, r) => {
         for (const k of ["sent", "bounced", "replied", "visits", "started", "completed", "booked"]) {
@@ -73,6 +79,7 @@ export default async function handler(req, res) {
         "Landing page visits stand in for click-through and count only traffic carrying a cohort tag.",
         "c20260908 is cohort zero: it sent before cohort tagging, so its funnel below the send count is attributable to cold email but not cleanly separable from later batches.",
         "Attribution is last-touch and single-channel.",
+        "Bounces read zero because no bounce signal has yet appeared on this Instantly account. Treat the bounce column as unconfirmed rather than as a real zero until a bounce is seen.",
         "Report completions and booked calls only split by cohort once the Fillout to Pipedrive webhook writes utm_campaign into the deal Cohort field. Until then they appear under unattributed.",
       ],
     });

@@ -18,7 +18,7 @@
 //      "Network Proximity" Yes/No field on the deal for Marina to set
 //      manually; defaults to No until she does.
 
-import { listAllLeadsEngagement } from "../../lib/instantly.js";
+import { listAllLeadsEngagement, listBlocklist, isBlocked } from "../../lib/instantly.js";
 import {
   listDealsByPipelineStage,
   getDealFieldsMap,
@@ -68,6 +68,12 @@ export default async function handler(req, res) {
       field_type: "enum",
       options: [{ label: "Yes" }, { label: "No" }],
     });
+    // Manual override, for opt-outs that arrive somewhere Instantly cannot see
+    // them - a LinkedIn message, a phone call, a forwarded complaint.
+    await ensureDealField("Do Not Contact", {
+      field_type: "enum",
+      options: [{ label: "Yes" }, { label: "No" }],
+    });
     const fieldsMap = await getDealFieldsMap({ forceRefresh: true });
 
     const deals = await listDealsByPipelineStage(PIPELINE_ID, STAGE_ID_NEW_LEAD);
@@ -85,6 +91,26 @@ export default async function handler(req, res) {
     const engagement = await listAllLeadsEngagement();
     const engagementByEmail = new Map(engagement.map((e) => [e.email?.toLowerCase(), e]));
 
+    // Anyone who has opted out must never reach the LinkedIn shortlist.
+    // This is not a nicety: computeScore gives a reply a 1000-point bonus and
+    // does not care whether the reply was "sounds great" or "stop", so without
+    // this filter the person who just asked us to leave them alone lands at
+    // the TOP of the weekly list for a connection request and a voice note.
+    // They said stop - not "stop emailing" - and the cold email copy promises
+    // exactly that.
+    const blocklist = await listBlocklist();
+    if (!blocklist.ok) {
+      // Failing open would silently resume contacting opted-out people, which
+      // is the one outcome worth aborting the whole run to avoid.
+      console.error("linkedin-score: blocklist unreadable", blocklist.attempts);
+      return res.status(503).json({
+        ok: false,
+        error: "Instantly blocklist could not be read - aborting rather than risk contacting an opted-out lead",
+        attempts: blocklist.attempts,
+      });
+    }
+
+    const suppressed = [];
     const scored = [];
     for (const deal of inWindow) {
       let email = personEmail(deal);
@@ -94,6 +120,15 @@ export default async function handler(req, res) {
         email = person?.email?.[0]?.value || null;
       }
       if (!email) continue;
+
+      if (isBlocked(email, blocklist.entries)) {
+        suppressed.push({ dealId: deal.id, reason: "on the Instantly blocklist" });
+        continue;
+      }
+      if (deal[fieldsMap["Do Not Contact"]?.key] === "Yes") {
+        suppressed.push({ dealId: deal.id, reason: "Do Not Contact set on the deal" });
+        continue;
+      }
 
       const lead = engagementByEmail.get(email.toLowerCase());
       const revenueBand = deal[fieldsMap["Revenue Band"]?.key];
@@ -151,7 +186,14 @@ export default async function handler(req, res) {
       });
     }
 
-    return res.status(200).json({ ok: true, cohortsProcessed: results });
+    return res.status(200).json({
+      ok: true,
+      cohortsProcessed: results,
+      suppressedCount: suppressed.length,
+      suppressed,
+      blocklistSource: blocklist.path,
+      blocklistSize: blocklist.entries.length,
+    });
   } catch (err) {
     console.error("linkedin-score failed:", err);
     return res.status(500).json({ ok: false, error: err.message });

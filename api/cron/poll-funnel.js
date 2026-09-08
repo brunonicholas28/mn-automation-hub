@@ -121,9 +121,12 @@ export default async function handler(req, res) {
           unattributed.booked += booked;
           continue;
         }
-        const acc = buckets.get(cohort) || { started: 0, completed: 0, booked: 0 };
-        acc.started += started;
-        acc.completed += completed;
+        // Only "booked" is taken from Pipedrive. Report starts and
+        // completions come from Fillout (api/track stage=started and
+        // api/fillout-hook), which sees the utm_campaign tag directly -
+        // writing them from here as well would overwrite the real numbers
+        // with whatever Pipedrive's untagged deals happen to add up to.
+        const acc = buckets.get(cohort) || { booked: 0 };
         acc.booked += booked;
         buckets.set(cohort, acc);
       }

@@ -6,6 +6,11 @@
 
 import { readAllCohorts, readCohort, normaliseCohortId } from "../lib/cohort.js";
 
+// Verification rows written while wiring the beacon. Dated 1970 so they sort
+// last and read as obviously synthetic, and hidden here so nobody mistakes a
+// test for a batch.
+const TEST_COHORTS = new Set(["c19700101"]);
+
 // Returns null rather than 0 when the denominator is zero, so the dashboard
 // can render "-" instead of a confident-looking 0.0% that means nothing.
 function rate(numerator, denominator) {
@@ -40,7 +45,7 @@ export default async function handler(req, res) {
     const one = normaliseCohortId(req.query?.cohort);
     const cohorts = one ? [await readCohort(one)] : await readAllCohorts();
 
-    const rows = cohorts.map(withRates);
+    const rows = cohorts.filter((c) => !TEST_COHORTS.has(c.cohort)).map(withRates);
     const totals = rows.reduce(
       (acc, r) => {
         for (const k of ["sent", "bounced", "replied", "visits", "started", "completed", "booked"]) {

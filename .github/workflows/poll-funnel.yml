@@ -1,0 +1,35 @@
+# Hourly funnel poll.
+#
+# This does NOT run on Vercel's scheduler: the Hobby plan allows two cron jobs
+# per account and apollo-sync and linkedin-score already hold both, and Hobby
+# crons only fire once a day. GitHub Actions costs nothing on a public repo,
+# runs hourly, and keeps the two existing Vercel crons untouched.
+#
+# GitHub disables scheduled workflows in a repository with no activity for 60
+# days. If the cohort numbers ever go flat, check here first.
+
+name: Poll cold-outreach funnel
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hit the funnel poll endpoint
+        env:
+          FUNNEL_CRON_KEY: ${{ secrets.FUNNEL_CRON_KEY }}
+        run: |
+          set -euo pipefail
+          response=$(curl -sS -w '\n%{http_code}' --max-time 120 \
+            "https://mn-automation-hub.vercel.app/api/cron/poll-funnel?key=${FUNNEL_CRON_KEY}")
+          body=$(printf '%s' "$response" | sed '$d')
+          code=$(printf '%s' "$response" | tail -n1)
+          echo "$body"
+          if [ "$code" != "200" ]; then
+            echo "Poll failed with HTTP $code" >&2
+            exit 1
+          fi

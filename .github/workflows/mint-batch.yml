@@ -1,0 +1,59 @@
+# Mints a tracked link for every lead in the next send batch, straight from
+# Pipedrive, and writes it onto the deal.
+#
+# Run this BEFORE the batch goes out. A cohort sent without tokens can never
+# be segmented afterwards - there is no way to work out retroactively which
+# anonymous landing-page visit belonged to whom.
+#
+# Manual only, on purpose: minting is tied to a specific cohort id and a
+# specific send date, so it should be a deliberate act rather than a schedule
+# that fires whether or not a batch is ready.
+#
+# Dry run by default. Set live to 1 to actually mint.
+name: mint-batch
+
+on:
+  workflow_dispatch:
+    inputs:
+      cohort:
+        description: "Cohort id, e.g. c20260915"
+        required: true
+      touch:
+        description: "Touch tag on the link (default day2)"
+        required: false
+        default: "day2"
+      live:
+        description: "Set to 1 to actually mint and write to Pipedrive"
+        required: false
+        default: "0"
+
+jobs:
+  mint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint tracked links for the batch
+        env:
+          FUNNEL_CRON_KEY: ${{ secrets.FUNNEL_CRON_KEY }}
+          COHORT: ${{ github.event.inputs.cohort }}
+          TOUCH: ${{ github.event.inputs.touch }}
+          LIVE: ${{ github.event.inputs.live }}
+        run: |
+          curl -sS --fail-with-body \
+            "https://mn-automation-hub.vercel.app/api/leads/mint-batch?key=${FUNNEL_CRON_KEY}&cohort=${COHORT}&touch=${TOUCH}&live=${LIVE}" \
+            -o response.json
+          # The response carries prospect email addresses on a live run, so
+          # only the counts go into the log. Read the full list in Pipedrive,
+          # where the tracked link is written onto each deal.
+          python3 - <<'PY'
+          import json
+          d = json.load(open("response.json"))
+          if not d.get("ok"):
+              print("FAILED:", d.get("error"))
+              raise SystemExit(1)
+          print("live:", d.get("live"))
+          print("cohort:", d.get("cohort"), "touch:", d.get("touch"))
+          print("deals in New Lead:", d.get("dealsInNewLead"))
+          print("minted:", d.get("minted"))
+          print("skipped:", json.dumps(d.get("skipped", {}), indent=2))
+          print(d.get("note", ""))
+          PY

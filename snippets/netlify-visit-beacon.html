@@ -1,0 +1,46 @@
+<!--
+  Netlify snippet: "Cohort visit beacon".
+  Paste into: Netlify -> Project configuration -> Build & deploy ->
+  Post processing -> Snippet injection -> Insert before </body>.
+
+  REPLACES the earlier "Cohort visit beacon (mn-automation-hub /api/track)".
+  Do not run both, or every visit counts twice.
+
+  Change from the earlier version: forwards the per-lead token (lid) when the
+  email link carried one. Without a token this behaves exactly as before and
+  records nothing but an anonymous tagged visit.
+
+  Still stores no IP, no user agent, no cookie and no identifier of our own,
+  which is what keeps this page free of a consent banner. The token is one we
+  minted ourselves and resolves only inside our own KV.
+-->
+<script>
+(function () {
+  var ENDPOINT = "https://mn-automation-hub.vercel.app/api/track";
+  var p;
+  try { p = new URLSearchParams(window.location.search); } catch (e) { return; }
+
+  var campaign = p.get("utm_campaign");
+  if (!campaign) return;
+
+  var lid = p.get("lid") || "";
+  var guard = "mn_visit_" + campaign + "_" + lid;
+  try {
+    if (sessionStorage.getItem(guard)) return;   // One visit per session.
+    sessionStorage.setItem(guard, "1");
+  } catch (e) {}
+
+  var payload = JSON.stringify({
+    campaign: campaign,
+    stage: "visit",
+    source: p.get("utm_source") || "email",
+    lid: lid
+  });
+
+  try {
+    navigator.sendBeacon(ENDPOINT, new Blob([payload], { type: "text/plain" }));
+  } catch (e) {
+    try { fetch(ENDPOINT, { method: "POST", body: payload, keepalive: true }); } catch (e2) {}
+  }
+})();
+</script>

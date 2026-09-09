@@ -1,0 +1,64 @@
+<!--
+  Netlify snippet: "CTA host swap + lead token forwarding"
+  Paste into: Netlify -> Project configuration -> Build & deploy ->
+  Post processing -> Snippet injection -> Insert before </body>.
+
+  REPLACES the earlier "CTA host swap -> report.marinanicholas.com" snippet.
+  Do not run both. Delete the old one when this goes in.
+
+  Two jobs:
+   1. Rewrite Fillout CTA links onto our own report.marinanicholas.com host.
+   2. Carry utm_campaign and the per-lead token (lid) from the landing-page
+      URL through to the form, so the funnel can tell who reached the form
+      and who only reached the page.
+
+  The site's own CTA script writes rid and UTM params asynchronously, so this
+  runs at several points and again at click time in the capture phase. Last
+  write wins, and click time is always last.
+-->
+<script>
+(function () {
+  var FROM = "marinanicholas.fillout.com";
+  var TO = "report.marinanicholas.com";
+  // Only params we set ourselves are forwarded. Anything else on the landing
+  // page URL stays on the landing page.
+  var CARRY = ["utm_campaign", "utm_source", "utm_medium", "lid"];
+
+  function pageParams() {
+    try { return new URLSearchParams(window.location.search); }
+    catch (e) { return new URLSearchParams(); }
+  }
+
+  function fix(a) {
+    var href = a.getAttribute("href") || "";
+    if (href.indexOf(FROM) === -1 && href.indexOf(TO) === -1) return;
+    try {
+      var u = new URL(href, window.location.href);
+      if (u.hostname === FROM) u.hostname = TO;
+      var p = pageParams();
+      for (var i = 0; i < CARRY.length; i++) {
+        var k = CARRY[i];
+        var v = p.get(k);
+        // Never overwrite a value the CTA script already put there with an
+        // empty one - a missing token is better than a blanked token.
+        if (v) u.searchParams.set(k, v);
+      }
+      a.setAttribute("href", u.toString());
+    } catch (e) {}
+  }
+
+  function sweep() {
+    var links = document.getElementsByTagName("a");
+    for (var i = 0; i < links.length; i++) fix(links[i]);
+  }
+
+  sweep();
+  document.addEventListener("DOMContentLoaded", sweep);
+  window.addEventListener("load", sweep);
+  // Capture phase, so this runs before any handler that might navigate.
+  document.addEventListener("click", function (e) {
+    var a = e.target && e.target.closest ? e.target.closest("a") : null;
+    if (a) fix(a);
+  }, true);
+})();
+</script>

@@ -1,0 +1,47 @@
+<!--
+  Fillout snippet: "report started" beacon.
+  Paste into: Fillout -> your form -> Settings -> Custom code.
+  Requires the Business plan (custom code is gated behind it).
+
+  REPLACES the earlier beacon. Do not run both.
+
+  Fires once per session when the form is actually opened, which is what
+  makes "started" mean started rather than merely "saw the landing page".
+  Now also forwards the per-lead token so the clicked-but-did-not-start
+  sweep can tell which specific leads reached this point.
+
+  Stores nothing but a sessionStorage flag. No cookie, no identifier of our
+  own, no third party.
+-->
+<script>
+(function () {
+  var ENDPOINT = "https://mn-automation-hub.vercel.app/api/track";
+  var p;
+  try { p = new URLSearchParams(window.location.search); } catch (e) { return; }
+
+  var campaign = p.get("utm_campaign");
+  if (!campaign) return;                 // Untagged traffic is not ours to count.
+  var lid = p.get("lid") || "";
+
+  var guard = "mn_started_" + campaign + "_" + lid;
+  try {
+    if (sessionStorage.getItem(guard)) return;
+    sessionStorage.setItem(guard, "1");
+  } catch (e) {}                          // Private mode: send anyway.
+
+  var payload = JSON.stringify({
+    campaign: campaign,
+    stage: "started",
+    source: "fillout",
+    lid: lid
+  });
+
+  try {
+    // text/plain keeps this a CORS-simple request, so no preflight and no
+    // chance of the beacon being dropped by a failed OPTIONS.
+    navigator.sendBeacon(ENDPOINT, new Blob([payload], { type: "text/plain" }));
+  } catch (e) {
+    try { fetch(ENDPOINT, { method: "POST", body: payload, keepalive: true }); } catch (e2) {}
+  }
+})();
+</script>

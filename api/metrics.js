@@ -16,6 +16,9 @@ import { getState } from "../lib/kv.js";
 const HIDDEN_COHORTS = new Set([
   "c19700101",
   "no-phone-cadence---cold-outreach-v1untitled-camp",
+  // Written before placeholder tags were rejected at the source; Fillout's
+  // preview link carries utm_campaign=xxxxx.
+  "xxxxx",
 ]);
 
 // Returns null rather than 0 when the denominator is zero, so the dashboard
@@ -52,7 +55,9 @@ export default async function handler(req, res) {
     const one = normaliseCohortId(req.query?.cohort);
     const cohorts = one ? [await readCohort(one)] : await readAllCohorts();
 
-    const rows = cohorts.filter((c) => !HIDDEN_COHORTS.has(c.cohort)).map(withRates);
+    // Asking for a cohort by name is a deliberate act, so it can see the hidden
+    // rows - otherwise a test row is impossible to inspect even on purpose.
+    const rows = (one ? cohorts : cohorts.filter((c) => !HIDDEN_COHORTS.has(c.cohort))).map(withRates);
     const totals = rows.reduce(
       (acc, r) => {
         for (const k of ["sent", "bounced", "replied", "visits", "started", "completed", "booked"]) {

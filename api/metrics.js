@@ -14,12 +14,23 @@ import { getState } from "../lib/kv.js";
 //   under the raw campaign slug. Left in place but hidden, because showing it
 //   would count that batch twice in the totals.
 const HIDDEN_COHORTS = new Set([
+  // The 1970-dated verification row written while wiring the beacon.
   "c19700101",
+  // The first poll ran before the Instantly campaign name was aliased onto
+  // c20260908, so it wrote the same 2026-09-08 sends under the raw campaign
+  // slug. Hidden because showing it would count that batch twice.
   "no-phone-cadence---cold-outreach-v1untitled-camp",
   // Written before placeholder tags were rejected at the source; Fillout's
   // preview link carries utm_campaign=xxxxx.
   "xxxxx",
 ]);
+
+// Anything tagged ctest-* is a deliberate end-to-end check. Making the rule a
+// pattern rather than a list means a future test hides itself instead of
+// needing a code change to tidy up after it.
+function isHidden(cohort) {
+  return HIDDEN_COHORTS.has(cohort) || /^ctest[-_]/.test(cohort || "");
+}
 
 // Returns null rather than 0 when the denominator is zero, so the dashboard
 // can render "-" instead of a confident-looking 0.0% that means nothing.
@@ -57,7 +68,7 @@ export default async function handler(req, res) {
 
     // Asking for a cohort by name is a deliberate act, so it can see the hidden
     // rows - otherwise a test row is impossible to inspect even on purpose.
-    const rows = (one ? cohorts : cohorts.filter((c) => !HIDDEN_COHORTS.has(c.cohort))).map(withRates);
+    const rows = (one ? cohorts : cohorts.filter((c) => !isHidden(c.cohort))).map(withRates);
     const totals = rows.reduce(
       (acc, r) => {
         for (const k of ["sent", "bounced", "replied", "visits", "started", "completed", "booked"]) {

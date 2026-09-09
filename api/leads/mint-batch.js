@@ -14,9 +14,17 @@
 //
 // Idempotent: a deal that already carries a Report Link is skipped, so a
 // re-run tops up new deals rather than reminting tokens for everyone.
+//
+// It also skips anyone already sitting in the main Instantly campaign. Deals
+// do not leave stage 20 (New Lead) just because they were emailed, so the
+// stage alone would have handed a "new" cohort the entire previously-sent
+// list - 288 deals in New Lead on 2026-09-09, of which 267 had already had
+// the c20260908 batch. Minting those as c20260915 would have re-emailed them
+// under a cohort tag that claimed they were new.
 
 import { mintToken, putLead } from "../../lib/leads.js";
 import { normaliseCohortId } from "../../lib/cohort.js";
+import { listCampaignLeads } from "../../lib/instantly.js";
 import {
   ENROLMENT_PIPELINE_ID,
   ENROLMENT_STAGES,
@@ -63,6 +71,29 @@ export default async function handler(req, res) {
 
     const deals = await listDealsByPipelineStage(ENROLMENT_PIPELINE_ID, ENROLMENT_STAGES.newLead);
 
+    // Already-contacted addresses, read from Instantly rather than inferred
+    // from Pipedrive. If this cannot be read the run aborts: sending a whole
+    // previously-contacted list a second time under a fresh cohort tag is a
+    // worse outcome than minting nothing.
+    const sourceCampaign = process.env.INSTANTLY_CAMPAIGN_ID;
+    if (!sourceCampaign) {
+      return res.status(503).json({
+        ok: false,
+        error: "INSTANTLY_CAMPAIGN_ID is not set - cannot tell which leads have already been contacted, so nothing was minted",
+      });
+    }
+    let alreadySent;
+    try {
+      const existing = await listCampaignLeads(sourceCampaign);
+      alreadySent = new Set(existing.map((l) => l.email).filter(Boolean));
+    } catch (err) {
+      return res.status(503).json({
+        ok: false,
+        error: "Instantly campaign leads could not be read - aborting rather than risk re-contacting a previously sent list",
+        detail: String(err.message || err).slice(0, 200),
+      });
+    }
+
     const minted = [];
     const skipped = {};
     const bump = (reason) => { skipped[reason] = (skipped[reason] || 0) + 1; };
@@ -77,6 +108,7 @@ export default async function handler(req, res) {
       const person = await getPersonById(personId);
       const email = (person?.email?.[0]?.value || person?.email || "").trim().toLowerCase();
       if (!email.includes("@")) { bump("no usable email"); continue; }
+      if (alreadySent.has(email)) { bump("already contacted in a previous batch"); continue; }
 
       const lid = mintToken();
       const url = new URL(LANDING);
@@ -111,6 +143,7 @@ export default async function handler(req, res) {
       cohort,
       touch,
       dealsInNewLead: deals.length,
+      alreadyContacted: alreadySent.size,
       minted: minted.length,
       skipped,
       leads: live ? minted : minted.slice(0, 3),

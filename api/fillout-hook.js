@@ -13,6 +13,7 @@
 
 import { Redis } from "@upstash/redis";
 import { bumpCohort, splitCampaignTag } from "../lib/cohort.js";
+import { normaliseToken, markLeadStage } from "../lib/leads.js";
 
 const kv = Redis.fromEnv();
 const SEEN_TTL_SECONDS = 60 * 60 * 24 * 120;
@@ -30,7 +31,7 @@ function readBody(req) {
 
 // Fillout has moved this around between payload versions, so look everywhere
 // it plausibly lives rather than pinning one path and silently reading null.
-function findCampaign(payload) {
+function findParam(payload, matcher) {
   const candidates = [
     payload?.submission?.urlParameters,
     payload?.urlParameters,
@@ -41,22 +42,30 @@ function findCampaign(payload) {
   for (const c of candidates) {
     if (!c) continue;
     if (Array.isArray(c)) {
-      const hit = c.find((p) => /utm_?campaign/i.test(p?.name || p?.id || ""));
+      const hit = c.find((p) => matcher.test(p?.name || p?.id || ""));
       if (hit && hit.value) return hit.value;
     } else if (typeof c === "object") {
       for (const [k, v] of Object.entries(c)) {
-        if (/utm_?campaign/i.test(k) && v) return v;
+        if (matcher.test(k) && v) return v;
       }
     }
   }
   // Last resort: the submission URL itself.
   const url = payload?.submission?.url || payload?.url;
   if (typeof url === "string") {
-    const m = url.match(/[?&]utm_campaign=([^&#]+)/i);
-    if (m) return decodeURIComponent(m[1]);
+    try {
+      for (const [k, v] of new URL(url, "https://x.invalid").searchParams) {
+        if (matcher.test(k) && v) return v;
+      }
+    } catch {
+      // A malformed submission URL is not worth failing a webhook over.
+    }
   }
   return null;
 }
+
+const findCampaign = (payload) => findParam(payload, /utm_?campaign/i);
+const findLeadToken = (payload) => findParam(payload, /^lid$/i);
 
 function findSubmissionId(payload) {
   return (
@@ -93,6 +102,11 @@ export default async function handler(req, res) {
     }
 
     await bumpCohort(cohort, "completed", 1);
+
+    // Close the loop on the per-lead token so the clicked-but-did-not-start
+    // sweep can never nudge someone who has already finished the report.
+    const lid = normaliseToken(findLeadToken(payload));
+    if (lid) await markLeadStage(lid, "completed");
     return res.status(200).json({ ok: true, counted: true, cohort });
   } catch (err) {
     console.error("fillout-hook failed:", err);

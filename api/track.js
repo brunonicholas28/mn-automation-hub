@@ -10,6 +10,7 @@
 // page free of a consent banner.
 
 import { bumpCohort, splitCampaignTag, cohortKey } from "../lib/cohort.js";
+import { normaliseToken, markLeadStage } from "../lib/leads.js";
 import { Redis } from "@upstash/redis";
 
 const kv = Redis.fromEnv();
@@ -54,6 +55,15 @@ export default async function handler(req, res) {
     const field = body.stage === "started" ? "started" : "visits";
     await bumpCohort(cohort, field, 1);
 
+    // If the link carried a per-lead token, record which stage this
+    // particular lead reached, so the clicked-but-did-not-start sweep can
+    // find them later. Tokens are opaque and only resolve inside our KV;
+    // an unknown or stale one is ignored rather than minting a record.
+    const lid = normaliseToken(body.lid);
+    if (lid) {
+      await markLeadStage(lid, body.stage === "started" ? "started" : "visit");
+    }
+
     if (touch) {
       await kv.hincrby(`${cohortKey(cohort)}:touches`, touch, 1);
     }
@@ -61,7 +71,14 @@ export default async function handler(req, res) {
       await kv.hincrby(`${cohortKey(cohort)}:sources`, String(body.source).slice(0, 32), 1);
     }
 
-    return res.status(200).json({ ok: true, counted: true, cohort, touch: touch || null, field });
+    return res.status(200).json({
+      ok: true,
+      counted: true,
+      cohort,
+      touch: touch || null,
+      field,
+      identified: Boolean(lid),
+    });
   } catch (err) {
     // Never let a tracking failure surface to a prospect's browser as an
     // error - the beacon is fire-and-forget by design.

@@ -21,7 +21,7 @@
 // Dry run is the default. Pass ?live=1 to actually move anyone.
 
 import { listCohortIds } from "../../lib/cohort.js";
-import { listLeadTokens, readLeads, markNudged } from "../../lib/leads.js";
+import { listLeadTokens, readLeads, markNudged, isRepeatClicker } from "../../lib/leads.js";
 import { listBlocklist, isBlocked, listCampaignLeads, moveLeadsToCampaign } from "../../lib/instantly.js";
 
 // Long enough that the nudge does not arrive while they still have the tab
@@ -49,7 +49,7 @@ export default async function handler(req, res) {
 
   try {
     const cohorts = req.query.cohort ? [req.query.cohort] : await listCohortIds();
-    const report = { live, cohorts: [], moved: 0, skipped: {} };
+    const report = { live, cohorts: [], moved: 0, skipped: {}, repeatClickers: 0 };
 
     // Read once, not per cohort. A failure here stops everything.
     const blocklist = await listBlocklist();
@@ -77,6 +77,11 @@ export default async function handler(req, res) {
       const leads = await readLeads(tokens);
 
       const candidates = [];
+      // Counted, never auto-contacted. Someone who came back to the page
+      // after the nudge and still has not opened the form is worth a human
+      // message, not a fourth automated one.
+      report.repeatClickers += leads.filter(isRepeatClicker).length;
+
       for (const lead of leads) {
         if (!lead.visitedAt) { bump("never reached the landing page"); continue; }
         if (lead.startedAt) { bump("started the form"); continue; }
@@ -97,7 +102,12 @@ export default async function handler(req, res) {
         candidates.push({ lid: lead.lid, email: lead.email, instantlyId: source.id });
       }
 
-      const entry = { cohort, eligible: candidates.length, moved: 0 };
+      const entry = {
+        cohort,
+        eligible: candidates.length,
+        moved: 0,
+        repeatClickers: leads.filter(isRepeatClicker).length,
+      };
 
       if (candidates.length && live) {
         if (!recoveryCampaign) {

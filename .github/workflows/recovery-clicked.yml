@@ -1,0 +1,35 @@
+# Sweeps leads who clicked through to the landing page but never opened the
+# report form, and moves them into the recovery campaign.
+#
+# Vercel Hobby allows two cron jobs, once daily only, and both slots are
+# already spent - hence GitHub Actions.
+#
+# Runs in DRY RUN until LIVE is flipped to "1" below. A dry run reports what
+# it would do and contacts nobody.
+name: recovery-clicked
+
+on:
+  schedule:
+    - cron: "43 9 * * *"
+  workflow_dispatch:
+    inputs:
+      live:
+        description: "Set to 1 to actually move leads"
+        required: false
+        default: "0"
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sweep clicked-but-not-started leads
+        env:
+          FUNNEL_CRON_KEY: ${{ secrets.FUNNEL_CRON_KEY }}
+          LIVE: ${{ github.event.inputs.live || '0' }}
+        run: |
+          curl -sS --fail-with-body \
+            "https://mn-automation-hub.vercel.app/api/cron/recovery-clicked?key=${FUNNEL_CRON_KEY}&live=${LIVE}" \
+            | tee response.json
+          # A fail-closed abort (blocklist unreadable, move endpoint wrong)
+          # returns ok:false and must show up as a red run, not a silent pass.
+          grep -q '"ok":true' response.json

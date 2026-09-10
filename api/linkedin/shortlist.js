@@ -163,6 +163,36 @@ async function listApolloContacts() {
   return out;
 }
 
+// Apollo's contact search returns account_id but not the account itself, so
+// team size and revenue have to be fetched separately and joined. Without this
+// every fit score collapses to "team size unknown, revenue unknown", which is
+// how the first live run came back.
+async function listApolloAccounts() {
+  if (!APOLLO_KEY) return 0;
+  let seen = 0;
+  for (let page = 1; page <= 10; page++) {
+    const res = await fetch("https://api.apollo.io/api/v1/accounts/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Api-Key": APOLLO_KEY },
+      body: JSON.stringify({ page, per_page: 100 }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error("Apollo accounts search failed: " + res.status);
+    const accounts = json.accounts || [];
+    if (!APOLLO_SHAPE.org.length && accounts[0]) {
+      APOLLO_SHAPE.org = Object.keys(accounts[0]).slice(0, 60);
+    }
+    for (const a of accounts) {
+      if (a && a.id) APOLLO_ORGS.set(String(a.id), a);
+      if (a && a.organization_id) APOLLO_ORGS.set(String(a.organization_id), a);
+      seen++;
+    }
+    const totalPages = (json.pagination && json.pagination.total_pages) || 1;
+    if (page >= totalPages || accounts.length === 0) break;
+  }
+  return seen;
+}
+
 // Apollo puts the company under 'account' for a saved contact and
 // 'organization' for a raw person, and not every record carries both.
 function orgOf(c) {
@@ -285,6 +315,10 @@ async function buildRoster() {
     listPipelineDeals(),
     listApolloContacts().catch(() => []),
   ]);
+
+  // Sequential and after the contacts, because it fills the same map and a
+  // failure here should degrade the score, not fail the whole list.
+  await listApolloAccounts().catch(() => 0);
 
   if (!blocklist.ok) {
     throw new Error(

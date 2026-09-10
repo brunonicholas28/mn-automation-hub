@@ -55,6 +55,13 @@ const APOLLO_KEY = process.env.APOLLO_API_KEY;
 const APOLLO_STAGE_ID = process.env.APOLLO_STAGE_ID || "6a8ab4ad5a018d0020c4bd18";
 const SOURCE_CAMPAIGN = process.env.INSTANTLY_CAMPAIGN_ID;
 
+// Apollo returns the company on a separate top-level array, not nested on the
+// contact, so the join has to happen here. Held at module scope because orgOf
+// is called from three places and threading the map through all of them buys
+// nothing.
+let APOLLO_ORGS = new Map();
+let APOLLO_SHAPE = { contact: [], org: [] };
+
 const CACHE_KEY = "linkedin:shortlist:roster";
 const CACHE_TTL_SECONDS = 600;
 // Which people have already had their request sent. Kept here rather than in
@@ -130,7 +137,25 @@ async function listApolloContacts() {
     });
     const json = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error("Apollo search failed: " + res.status);
+    // The company record lives in accounts/organizations alongside the
+    // contacts, keyed by account_id. Without this join, estimated_num_employees
+    // and annual_revenue are simply absent and every fit score collapses to
+    // "team size unknown, revenue unknown".
+    for (const a of json.accounts || []) {
+      if (a && a.id) APOLLO_ORGS.set(String(a.id), a);
+      if (a && a.organization_id) APOLLO_ORGS.set(String(a.organization_id), a);
+    }
+    for (const o of json.organizations || []) {
+      if (o && o.id) APOLLO_ORGS.set(String(o.id), o);
+    }
     const contacts = json.contacts || [];
+    if (!APOLLO_SHAPE.contact.length && contacts[0]) {
+      APOLLO_SHAPE.contact = Object.keys(contacts[0]).slice(0, 60);
+    }
+    const anyOrg = (json.accounts || [])[0] || (json.organizations || [])[0];
+    if (!APOLLO_SHAPE.org.length && anyOrg) {
+      APOLLO_SHAPE.org = Object.keys(anyOrg).slice(0, 60);
+    }
     out.push(...contacts);
     const totalPages = (json.pagination && json.pagination.total_pages) || 1;
     if (page >= totalPages || contacts.length === 0) break;
@@ -141,16 +166,27 @@ async function listApolloContacts() {
 // Apollo puts the company under 'account' for a saved contact and
 // 'organization' for a raw person, and not every record carries both.
 function orgOf(c) {
-  return (c && (c.organization || c.account)) || {};
+  if (!c) return {};
+  if (c.organization && typeof c.organization === "object") return c.organization;
+  if (c.account && typeof c.account === "object") return c.account;
+  const id = c.account_id || c.organization_id;
+  if (id && APOLLO_ORGS.has(String(id))) return APOLLO_ORGS.get(String(id));
+  return {};
 }
 function employeesOf(c) {
   const o = orgOf(c);
-  const n = Number(o.estimated_num_employees || o.employee_count || 0);
+  const n = Number(
+    o.estimated_num_employees || o.employee_count || o.num_employees ||
+    (c && c.organization_num_employees) || 0
+  );
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 function revenueOf(c) {
   const o = orgOf(c);
-  const n = Number(o.annual_revenue || o.organization_revenue || 0);
+  const n = Number(
+    o.annual_revenue || o.organization_revenue || o.estimated_annual_revenue ||
+    (c && c.organization_annual_revenue) || 0
+  );
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
@@ -237,6 +273,8 @@ function excludeReason(row) {
 
 async function buildRoster() {
   if (!SOURCE_CAMPAIGN) throw new Error("INSTANTLY_CAMPAIGN_ID is not set");
+  APOLLO_ORGS = new Map();
+  APOLLO_SHAPE = { contact: [], org: [] };
 
   // Campaign membership is the definition of "people we emailed". Using the
   // Pipedrive stage instead would sweep in deals that were never sent to.
@@ -354,7 +392,12 @@ async function buildRoster() {
       clicked: rows.filter((r) => r.visitedAt).length,
       excluded: rows.filter((r) => r.excluded).length,
       blocklistSize: blocklist.entries.length,
+      apolloContactsSeen: apollo.length,
+      apolloOrgsSeen: APOLLO_ORGS.size,
     },
+    // Field names only, never values - this is how we can tell from a public
+    // run log whether Apollo changed its payload shape under us.
+    apolloShape: APOLLO_SHAPE,
     rows,
   };
 }
@@ -535,6 +578,7 @@ export default async function handler(req, res) {
         builtAt: roster.builtAt,
         totals: roster.totals,
         exclusions,
+        apolloShape: roster.apolloShape || null,
         sampleShape: shape,
       });
     }

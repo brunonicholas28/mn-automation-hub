@@ -3,10 +3,10 @@
 # without the key ever leaving the repository's secrets.
 #
 # IMPORTANT: this repository is public, which means these run logs are public
-# too. So this workflow only ever runs the endpoint in inspect mode, which
-# returns coverage counts and nothing about any individual. The ranked list
-# itself is read through the HTML view in a browser, and written into
-# Pipedrive - never printed here.
+# too. So nothing here ever prints a person. Step one runs inspect mode, which
+# returns coverage counts only. Step two renders the real page and reports its
+# size and row count and nothing else - enough to prove the page works before
+# anyone is handed the link, without publishing who is on it.
 name: linkedin-shortlist
 
 on:
@@ -16,6 +16,10 @@ on:
         description: "1 to rebuild rather than use the 10-minute cache"
         required: false
         default: "1"
+      live:
+        description: "1 to also write Lane2 Score, rank and batch date onto the Pipedrive deals"
+        required: false
+        default: "0"
 
 jobs:
   inspect:
@@ -29,12 +33,33 @@ jobs:
           curl -sS --fail-with-body \
             "https://mn-automation-hub.vercel.app/api/linkedin/shortlist?key=${FUNNEL_CRON_KEY}&mode=inspect&refresh=${REFRESH}" \
             -o response.json
-          # Print it, but only after checking it is the inspect shape. If the
-          # endpoint ever starts returning people here, fail loudly rather than
-          # publish a prospect list to a public log.
           if grep -q '"picked"' response.json; then
             echo "Refusing to print: response contains personal data"
             exit 1
           fi
           cat response.json
           grep -q '"ok":true' response.json
+
+      - name: Check the page renders
+        env:
+          FUNNEL_CRON_KEY: ${{ secrets.FUNNEL_CRON_KEY }}
+        run: |
+          curl -sS --fail-with-body \
+            "https://mn-automation-hub.vercel.app/api/linkedin/shortlist?key=${FUNNEL_CRON_KEY}&mode=html&cap=80" \
+            -o page.html
+          ROWS=$(grep -o 'class="row' page.html | wc -l)
+          LINKS=$(grep -o 'class="btn open"' page.html | wc -l)
+          BYTES=$(wc -c < page.html)
+          echo "rows=$ROWS linkedin_links=$LINKS bytes=$BYTES"
+          test "$ROWS" -ge 1
+          test "$ROWS" -eq "$LINKS"
+
+      - name: Write scores back to Pipedrive
+        if: ${{ github.event.inputs.live == '1' }}
+        env:
+          FUNNEL_CRON_KEY: ${{ secrets.FUNNEL_CRON_KEY }}
+        run: |
+          curl -sS --fail-with-body \
+            "https://mn-automation-hub.vercel.app/api/linkedin/shortlist?key=${FUNNEL_CRON_KEY}&cap=80&live=1" \
+            -o written.json
+          python3 -c "import json;d=json.load(open('written.json'));print('written',d.get('written'),'of',d.get('cap'),'errors',len(d.get('writeErrors') or []))"

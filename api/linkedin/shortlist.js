@@ -211,6 +211,20 @@ function employeesOf(c) {
   );
   return Number.isFinite(n) && n > 0 ? n : null;
 }
+// Apollo's saved-account payload carries neither headcount nor revenue - both
+// came back empty on the first two live runs, and the account shape confirms
+// the fields simply are not there. Getting them would mean an enrichment call
+// per company, which spends Apollo credits, so the fit score uses what the
+// account record actually has instead.
+function foundedYearOf(c) {
+  const o = orgOf(c);
+  const n = Number(o.founded_year || 0);
+  return n > 1800 && n <= new Date().getFullYear() ? n : null;
+}
+function publiclyTradedOf(c) {
+  const o = orgOf(c);
+  return Boolean(o.publicly_traded_symbol || o.publicly_traded_exchange);
+}
 function revenueOf(c) {
   const o = orgOf(c);
   const n = Number(
@@ -259,30 +273,25 @@ function scoreOf(row) {
     reasons.push("manager level");
   }
 
-  const emp = row.employees;
-  if (emp === null) {
-    score += 6;
-    reasons.push("team size unknown");
-  } else if (emp >= 5 && emp <= 250) {
-    score += 25;
-    reasons.push(emp + " people, core ICP band");
-  } else if (emp <= 1000) {
-    score += 14;
-    reasons.push(emp + " people, above the usual band");
+  // Age stands in for "established, not too early". It is a proxy, not a
+  // revenue check, but pre-revenue startups are one of the three things the
+  // ICP genuinely disqualifies and a company trading for a decade is not one.
+  const age = row.foundedYear ? new Date().getFullYear() - row.foundedYear : null;
+  if (age === null) {
+    reasons.push("age unknown");
+  } else if (age >= 10) {
+    score += 20;
+    reasons.push("trading " + age + " years");
+  } else if (age >= 5) {
+    score += 12;
+    reasons.push("trading " + age + " years");
   } else {
-    score += 4;
-    reasons.push(emp + " people, drifting into enterprise");
+    reasons.push("only " + age + " years old");
   }
 
-  const rev = row.revenue;
-  if (rev === null) {
-    score += 6;
-    reasons.push("revenue unknown");
-  } else if (rev >= 1e6) {
+  if (row.employees !== null) {
     score += 25;
-    reasons.push("~$" + Math.round(rev / 1e6) + "m revenue");
-  } else {
-    reasons.push("under the $1m floor on Apollo's estimate");
+    reasons.push(row.employees + " people");
   }
 
   return { score, reasons };
@@ -295,6 +304,9 @@ function excludeReason(row) {
   if (row.bounced) return "email bounced, stale record";
   if (row.blocked) return "on the Instantly blocklist";
   if (row.employees !== null && row.employees < 5) return "under 5 people, anti-ICP";
+  // Section 17: once a business needs board approval and a procurement layer to
+  // buy anything, it has left this ICP entirely.
+  if (row.publiclyTraded) return "publicly listed, outside the ICP";
   if (IB_ADVISORY.test(row.company || "") || IB_ADVISORY.test(row.title || "")) {
     return "investment banking or M&A advisory";
   }
@@ -387,6 +399,8 @@ async function buildRoster() {
       linkedinUrl: linkedinUrl ? String(linkedinUrl).trim() : null,
       employees: employeesOf(contact),
       revenue: revenueOf(contact),
+      foundedYear: foundedYearOf(contact),
+      publiclyTraded: publiclyTradedOf(contact),
       replied: lead.replyCount > 0,
       bounced: lead.bounceCount > 0,
       blocked: isBlocked(email, blocklist.entries),
@@ -421,6 +435,8 @@ async function buildRoster() {
       withApolloTitle: rows.filter((r) => r.title).length,
       withEmployees: rows.filter((r) => r.employees !== null).length,
       withRevenue: rows.filter((r) => r.revenue !== null).length,
+      withFoundedYear: rows.filter((r) => r.foundedYear !== null).length,
+      publiclyTraded: rows.filter((r) => r.publiclyTraded).length,
       withDeal: rows.filter((r) => r.dealId).length,
       replied: rows.filter((r) => r.replied).length,
       clicked: rows.filter((r) => r.visitedAt).length,

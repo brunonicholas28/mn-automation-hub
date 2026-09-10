@@ -1,0 +1,40 @@
+# Calls the LinkedIn shortlist endpoint, which is key-guarded because it
+# returns names, emails and LinkedIn URLs. This Action is how it gets called
+# without the key ever leaving the repository's secrets.
+#
+# IMPORTANT: this repository is public, which means these run logs are public
+# too. So this workflow only ever runs the endpoint in inspect mode, which
+# returns coverage counts and nothing about any individual. The ranked list
+# itself is read through the HTML view in a browser, and written into
+# Pipedrive - never printed here.
+name: linkedin-shortlist
+
+on:
+  workflow_dispatch:
+    inputs:
+      refresh:
+        description: "1 to rebuild rather than use the 10-minute cache"
+        required: false
+        default: "1"
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect the shortlist inputs
+        env:
+          FUNNEL_CRON_KEY: ${{ secrets.FUNNEL_CRON_KEY }}
+          REFRESH: ${{ github.event.inputs.refresh || '1' }}
+        run: |
+          curl -sS --fail-with-body \
+            "https://mn-automation-hub.vercel.app/api/linkedin/shortlist?key=${FUNNEL_CRON_KEY}&mode=inspect&refresh=${REFRESH}" \
+            -o response.json
+          # Print it, but only after checking it is the inspect shape. If the
+          # endpoint ever starts returning people here, fail loudly rather than
+          # publish a prospect list to a public log.
+          if grep -q '"picked"' response.json; then
+            echo "Refusing to print: response contains personal data"
+            exit 1
+          fi
+          cat response.json
+          grep -q '"ok":true' response.json

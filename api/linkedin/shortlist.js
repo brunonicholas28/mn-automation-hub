@@ -57,6 +57,9 @@ const SOURCE_CAMPAIGN = process.env.INSTANTLY_CAMPAIGN_ID;
 
 const CACHE_KEY = "linkedin:shortlist:roster";
 const CACHE_TTL_SECONDS = 600;
+// Which people have already had their request sent. Kept here rather than in
+// Pipedrive so ticking one off is instant and needs no CRM write.
+const REQUESTED_KEY = "linkedin:requested";
 
 function authorised(req) {
   const expected = process.env.FUNNEL_CRON_KEY;
@@ -319,6 +322,7 @@ async function buildRoster() {
       personId: (person && person.id) || null,
       dealId: (deal && deal.id) || null,
       dealUrl: deal && PD_DOMAIN ? "https://" + PD_DOMAIN + ".pipedrive.com/deal/" + deal.id : null,
+      personKey: String((deal && deal.id) || (person && person.id) || email),
     };
 
     row.excluded = excludeReason(row);
@@ -365,11 +369,156 @@ async function getRoster(refresh) {
   return roster;
 }
 
+// ------------------------------------------------------------------ render
+
+function esc(s) {
+  return String(s === null || s === undefined ? "" : s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+
+// Inline CSS and no external requests, because this page is opened with a key
+// in the URL and has no business talking to anything else.
+const PAGE_CSS = [
+  ":root{--bg:#F7F9FB;--panel:#fff;--ink:#16324F;--muted:#5B7186;--line:#E2E8EE;",
+  "--accent:#16324F;--teal:#2F7D93;--done:#EAF3EE;--doneline:#BEDCC9;--on-accent:#fff}",
+  "@media(prefers-color-scheme:dark){:root{--bg:#0F1720;--panel:#16202B;--ink:#E8EFF5;",
+  "--muted:#9DB0C0;--line:#26333F;--accent:#5DC9D6;--teal:#5DC9D6;--done:#16281F;",
+  "--doneline:#2C5540;--on-accent:#0F1720}}",
+  "*{box-sizing:border-box}",
+  "body{margin:0;background:var(--bg);color:var(--ink);",
+  "font:15px/1.45 -apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif}",
+  "header{position:sticky;top:0;z-index:5;background:var(--panel);",
+  "border-bottom:1px solid var(--line);padding:14px 0}",
+  ".wrap{max-width:940px;margin:0 auto;padding:0 16px}",
+  "h1{margin:0;font-size:17px;font-weight:700;letter-spacing:-.01em}",
+  ".sub{margin:3px 0 0;font-size:13px;color:var(--muted)}",
+  ".bar{height:6px;border-radius:99px;background:var(--line);margin-top:10px;overflow:hidden}",
+  ".bar span{display:block;height:100%;background:var(--teal);transition:width .2s ease}",
+  "ul{list-style:none;margin:18px auto;padding:0 16px;max-width:940px}",
+  ".row{display:grid;grid-template-columns:38px 1fr auto auto;gap:14px;align-items:center;",
+  "background:var(--panel);border:1px solid var(--line);border-radius:12px;",
+  "padding:12px 14px;margin-bottom:8px}",
+  ".row.done{background:var(--done);border-color:var(--doneline);opacity:.7}",
+  ".rank{font-weight:700;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}",
+  ".nm{font-weight:650}",
+  ".meta{font-size:13px;color:var(--muted);margin-top:1px}",
+  ".chips{margin-top:6px;display:flex;flex-wrap:wrap;gap:5px}",
+  ".chip{font-size:11px;color:var(--muted);border:1px solid var(--line);",
+  "border-radius:99px;padding:2px 8px;white-space:nowrap}",
+  ".score{font-variant-numeric:tabular-nums;font-weight:700;color:var(--teal);",
+  "min-width:44px;text-align:right}",
+  ".actions{display:flex;gap:8px}",
+  ".btn{appearance:none;font:inherit;font-size:13px;font-weight:600;cursor:pointer;",
+  "border-radius:8px;padding:8px 13px;text-decoration:none;white-space:nowrap;",
+  "border:1px solid var(--line);background:transparent;color:var(--ink)}",
+  ".btn.open{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}",
+  ".btn:hover{filter:brightness(.95)}",
+  "footer{max-width:940px;margin:0 auto 60px;padding:0 16px;font-size:13px;color:var(--muted)}",
+  "footer p{margin:8px 0}",
+  "@media(max-width:700px){.row{grid-template-columns:30px 1fr;",
+  "grid-template-areas:'r w' '. s' '. a'}.rank{grid-area:r}.who{grid-area:w}",
+  ".score{grid-area:s;text-align:left}.actions{grid-area:a;margin-top:6px}}",
+].join("");
+
+const PAGE_JS = [
+  "var KEY=document.body.dataset.key,TOTAL=+document.body.dataset.total;",
+  "document.getElementById('list').addEventListener('click',function(ev){",
+  "var b=ev.target.closest('button.mark');if(!b)return;",
+  "var row=b.closest('.row'),done=!row.classList.contains('done');",
+  "row.classList.toggle('done',done);b.textContent=done?'Sent':'Mark sent';",
+  "var n=document.querySelectorAll('.row.done').length;",
+  "document.getElementById('count').textContent=n;",
+  "document.getElementById('prog').style.width=(TOTAL?n/TOTAL*100:0)+'%';",
+  "fetch(location.pathname+'?key='+encodeURIComponent(KEY),{method:'POST',",
+  "headers:{'Content-Type':'application/json'},",
+  "body:JSON.stringify({personKey:row.dataset.k,done:done})}).catch(function(){});",
+  "});",
+].join("");
+
+function renderRow(r, i, done) {
+  const meta = [r.title, r.company].filter(Boolean).map(esc).join(" &middot; ");
+  const chips = r.reasons.slice(0, 3).map(function (x) {
+    return '<span class="chip">' + esc(x) + "</span>";
+  }).join("");
+  return '<li class="row' + (done ? " done" : "") + '" data-k="' + esc(r.personKey) + '">' +
+    '<div class="rank">' + (i + 1) + "</div>" +
+    '<div class="who"><div class="nm">' + esc(r.name) + "</div>" +
+    '<div class="meta">' + (meta || "&mdash;") + "</div>" +
+    '<div class="chips">' + chips + "</div></div>" +
+    '<div class="score">' + r.score + "</div>" +
+    '<div class="actions">' +
+    '<a class="btn open" target="_blank" rel="noopener" href="' + esc(r.linkedinUrl) + '">Open profile</a>' +
+    '<button class="btn mark" type="button">' + (done ? "Sent" : "Mark sent") + "</button>" +
+    "</div></li>";
+}
+
+function renderPage(roster, picked, requested, key) {
+  const doneCount = picked.filter(function (r) { return requested[r.personKey]; }).length;
+  const pct = picked.length ? (doneCount / picked.length) * 100 : 0;
+  const rows = picked.map(function (r, i) {
+    return renderRow(r, i, Boolean(requested[r.personKey]));
+  }).join("");
+  const t = roster.totals;
+  return "<!doctype html><html lang='en'><head><meta charset='utf-8'>" +
+    "<meta name='viewport' content='width=device-width,initial-scale=1'>" +
+    "<title>LinkedIn requests</title><style>" + PAGE_CSS + "</style></head>" +
+    "<body data-key='" + esc(key) + "' data-total='" + picked.length + "'>" +
+    "<header><div class='wrap'><h1>LinkedIn connection requests</h1>" +
+    "<p class='sub'><b id='count'>" + doneCount + "</b> of " + picked.length +
+    " sent &middot; ranked from " + t.emailed + " people we emailed &middot; built " +
+    esc(roster.builtAt.slice(0, 16).replace("T", " ")) + " UTC</p>" +
+    "<div class='bar'><span id='prog' style='width:" + pct + "%'></span></div>" +
+    "</div></header><ul id='list'>" + rows + "</ul><footer>" +
+    "<p>Open the profile, send the request, hit Mark sent. Progress is saved, so you can stop and come back.</p>" +
+    "<p>Ranked on fit, not engagement. Email opens and clicks are switched off for deliverability, and this batch went out before per-lead click tracking existed. " +
+    t.replied + " replied and " + t.clicked +
+    " have a tracked landing-page click; those sort to the top. Everyone else is ordered by seniority, team size and revenue from Apollo.</p>" +
+    "<p>" + t.excluded + " of the " + t.emailed +
+    " were held back: no LinkedIn URL, a bounce, an opt-out, or under 5 people.</p>" +
+    "</footer><script>" + PAGE_JS + "</scr" + "ipt></body></html>";
+}
+
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
+
+  // /api/health used to be its own function. Vercel Hobby caps a deployment at
+  // 12 of them and the project was already at exactly 12, so it lives here now
+  // and vercel.json rewrites the old path onto it. Unguarded, like it was: it
+  // reports whether each key is SET, never what any of them are.
+  if (req.query.health === "1") {
+    return res.status(200).json({
+      ok: true,
+      service: "mn-automation-hub",
+      checks: {
+        apolloKeySet: !!process.env.APOLLO_API_KEY,
+        pipedriveTokenSet: !!process.env.PIPEDRIVE_API_TOKEN,
+        instantlyKeySet: !!process.env.INSTANTLY_API_KEY,
+        instantlyCampaignSet: !!process.env.INSTANTLY_CAMPAIGN_ID,
+        resendKeySet: !!process.env.RESEND_API_KEY,
+        kvConfigured: !!process.env.KV_REST_API_URL,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  }
+
   if (!authorised(req)) return res.status(401).json({ ok: false, error: "unauthorised" });
 
   try {
+    if (req.method === "POST") {
+      const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
+      const personKey = String(body.personKey || "");
+      if (!personKey) return res.status(400).json({ ok: false, error: "personKey is required" });
+      if (body.done) {
+        const patch = {};
+        patch[personKey] = new Date().toISOString();
+        await kv.hset(REQUESTED_KEY, patch);
+      } else {
+        await kv.hdel(REQUESTED_KEY, personKey);
+      }
+      return res.status(200).json({ ok: true });
+    }
+
     const cap = Math.min(Number(req.query.cap || 80), 500);
     const roster = await getRoster(req.query.refresh === "1");
 
@@ -413,6 +562,12 @@ export default async function handler(req, res) {
           writeErrors.push({ dealId: r.dealId, error: String(err.message || err).slice(0, 120) });
         }
       }
+    }
+
+    if (String(req.query.mode || "") === "html") {
+      const requested = (await kv.hgetall(REQUESTED_KEY)) || {};
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      return res.status(200).send(renderPage(roster, picked, requested, req.query.key));
     }
 
     return res.status(200).json({

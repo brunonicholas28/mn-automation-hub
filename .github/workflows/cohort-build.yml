@@ -1,0 +1,61 @@
+# Builds the week's Instantly campaigns and imports the cohort into them.
+#
+# Runs Monday morning, the day before Email #1 goes out on the Tuesday. By
+# then mint-batch has already minted the batch, so the cohort exists and this
+# only has to package it. With no cohort given the endpoint works out the next
+# Tuesday itself, so the schedule needs no input.
+#
+# It creates the campaigns PAUSED and imports the leads. It never starts a
+# send - Marina still presses Launch in Instantly. If a Monday goes by with
+# nothing minted, the endpoint says so and creates nothing.
+#
+# Live on the schedule on purpose: creating a paused campaign is not a
+# side effect anyone needs to approve, and leaving it as a dry run would just
+# mean the manual step never actually went away.
+
+name: cohort-build
+
+on:
+  schedule:
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+    inputs:
+      cohort:
+        description: "Cohort id, e.g. c20260915. Leave blank for the next Tuesday."
+        required: false
+        default: ""
+      step:
+        description: "inspect, campaign, import or all"
+        required: false
+        default: "all"
+      live:
+        description: "Set to 1 to actually create the campaigns and import"
+        required: false
+        default: "0"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build the cohort campaigns and import its leads
+        env:
+          FUNNEL_CRON_KEY: ${{ secrets.FUNNEL_CRON_KEY }}
+          COHORT: ${{ github.event.inputs.cohort || '' }}
+          STEP: ${{ github.event.inputs.step || 'all' }}
+          LIVE: ${{ github.event.inputs.live || (github.event_name == 'schedule' && '1') || '0' }}
+        run: |
+          curl -sS --fail-with-body \
+            "https://mn-automation-hub.vercel.app/api/cohort/build?key=${FUNNEL_CRON_KEY}&cohort=${COHORT}&step=${STEP}&live=${LIVE}" \
+            | tee response.json
+
+          # The endpoint returns counts only, never a name or an email. This
+          # repository is public and these logs are public with it, so fail
+          # the run rather than print a person if that ever stops being true.
+          if grep -qiE '"email"|@[a-z0-9.-]+\.[a-z]{2,}' response.json; then
+            echo "Refusing to print: response contains personal data"
+            exit 1
+          fi
+
+          # A fail-closed abort returns ok:false and must show up as a red
+          # run, not a silent pass.
+          grep -q '"ok":true' response.json

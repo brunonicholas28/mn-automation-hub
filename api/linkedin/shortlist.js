@@ -55,6 +55,27 @@ const APOLLO_KEY = process.env.APOLLO_API_KEY;
 const APOLLO_STAGE_ID = process.env.APOLLO_STAGE_ID || "6a8ab4ad5a018d0020c4bd18";
 const SOURCE_CAMPAIGN = process.env.INSTANTLY_CAMPAIGN_ID;
 
+// ---- Day 4 connection-request notes ----
+// The research is already done and already paid for. For each of these people
+// the outreach agent found a specific, dated, sourced, genuinely notable fact
+// and wrote it into the Email #1 draft pinned on that deal - all 267 of which
+// were normalised and reviewed on 2026-09-08. This reads that same fact back
+// out and restyles it for LinkedIn. No second research pass, no new facts, and
+// nothing that has not already been through the review the drafts had.
+const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
+const CLAUDE_MODEL = process.env.CLAUDE_MODEL || "claude-sonnet-4-6";
+// Cached per person and keyed on the fact it was written from, so rebuilding
+// the roster costs nothing and re-researching a company regenerates its note.
+const NOTE_CACHE_PREFIX = "linkedin:note:v1:";
+// LinkedIn's own cap. The whole note has to fit, greeting included.
+const NOTE_LIMIT = 300;
+// Generation shares the same 60s function as the roster build, so it gets a
+// budget rather than a promise. Anything not reached keeps the fallback note
+// and is written on the next load, because the cache survives.
+const NOTE_BUDGET_MS = 22000;
+const NOTE_BATCH = 8;
+const NOTE_CONCURRENCY = 3;
+
 // Apollo returns the company on a separate top-level array, not nested on the
 // contact, so the join has to happen here. Held at module scope because orgOf
 // is called from three places and threading the map through all of them buys
@@ -159,6 +180,65 @@ async function listPipelineDeals() {
     start += 500;
   }
   return out;
+}
+
+// One paged list, same reasoning as listAllPersons: 80 separate
+// /notes?deal_id= calls would spend most of the function's budget on round
+// trips before the first note was even written.
+async function listAllNotes() {
+  const out = [];
+  let start = 0;
+  for (let page = 0; page < 20; page++) {
+    const items = await pd("/notes?start=" + start + "&limit=500");
+    if (!items || items.length === 0) break;
+    out.push(...items);
+    if (items.length < 500) break;
+    start += 500;
+  }
+  return out;
+}
+
+function stripHtml(s) {
+  return String(s || "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|li|h\d)>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    // Decoded before the trigger regex runs, because the pre-2026-09-04
+    // generation of drafts separates the fact from "congratulations" with an
+    // em dash and it arrives from Pipedrive as an entity.
+    .replace(/&mdash;|&#8212;/gi, "—")
+    .replace(/&ndash;|&#8211;/gi, "–")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#0?39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/[ \t]+/g, " ")
+    .trim();
+}
+
+// Every normalised draft opens "Saw {fact}, congratulations!" when the agent
+// found something worth opening on, and skips that paragraph entirely when it
+// did not - the documented no-clean-trigger fallback. So the presence of this
+// line is itself the signal that a real, sourced, notable fact exists for this
+// person: the fact-quality bar was applied when the draft was written, and
+// this does not second-guess it. The older em-dash generation is matched too,
+// in case a draft predates the 2026-09-08 normalisation.
+function triggerFromDraft(content) {
+  const text = stripHtml(content);
+  const m =
+    /\bSaw\s+([^\n]{8,220}?)\s*(?:,|–|—|-)\s*congratulations/i.exec(text) ||
+    /\bSaw\s+([^\n.!?]{8,220})[.!?]/i.exec(text);
+  if (!m) return null;
+  const fact = m[1].replace(/\s+/g, " ").replace(/[\s,–—-]+$/, "").trim();
+  if (fact.length < 8) return null;
+  // The looser second pattern can over-reach on an oddly punctuated draft.
+  if (/congratulation/i.test(fact)) return null;
+  // The retired personalisation-theatre openers are not facts, and neither is
+  // an unfilled template variable.
+  if (/\{\{|\[INSERT|following your work|been following/i.test(fact)) return null;
+  return fact;
 }
 
 // The enrichment lives in Apollo, not Pipedrive - apollo-sync only ever copied
@@ -371,11 +451,14 @@ async function buildRoster() {
   const cohortCampaigns = await listCohortCampaigns();
   if (!cohortCampaigns.length) cohortCampaigns.push({ id: SOURCE_CAMPAIGN, cohort: null });
 
-  const [blocklist, persons, deals, apollo] = await Promise.all([
+  const [blocklist, persons, deals, apollo, notes] = await Promise.all([
     listBlocklist(),
     listAllPersons(),
     listPipelineDeals(),
     listApolloContacts().catch(() => []),
+    // A missing note is a missing personal opener, not a missing person. The
+    // list still has to build if Pipedrive's notes endpoint is unhappy.
+    listAllNotes().catch(() => []),
   ]);
 
   // Every cohort is loaded, not just the active one, because the backfill tier
@@ -422,6 +505,22 @@ async function buildRoster() {
   for (const d of deals) {
     const pid = typeof d.person_id === "object" ? d.person_id && d.person_id.value : d.person_id;
     if (pid && !dealByPersonId.has(pid)) dealByPersonId.set(pid, d);
+  }
+
+  // The researched fact, read back out of the draft that was already reviewed.
+  // A person without one is not a failure: it means the agent found nothing
+  // genuinely notable for that company and the draft correctly fell back to
+  // the generic opener. Newest matching draft wins, since a deal can carry
+  // several generations of note.
+  const triggerByDealId = new Map();
+  for (const n of notes) {
+    const did = typeof n.deal_id === "object" ? n.deal_id && n.deal_id.value : n.deal_id;
+    if (!did) continue;
+    const fact = triggerFromDraft(n.content);
+    if (!fact) continue;
+    const at = String(n.update_time || n.add_time || "");
+    const prev = triggerByDealId.get(did);
+    if (!prev || at > prev.at) triggerByDealId.set(did, { fact, at });
   }
 
   const apolloByEmail = new Map();
@@ -481,6 +580,7 @@ async function buildRoster() {
       startedAt: state.startedAt || null,
       nudgedAt: state.nudgedAt || null,
       repeatClicker: Number(state.visitCount || 0) > 1 && !state.startedAt,
+      trigger: (deal && (triggerByDealId.get(deal.id) || {}).fact) || null,
       personId: (person && person.id) || null,
       dealId: (deal && deal.id) || null,
       dealUrl: deal && PD_DOMAIN ? "https://" + PD_DOMAIN + ".pipedrive.com/deal/" + deal.id : null,
@@ -527,6 +627,7 @@ async function buildRoster() {
       backfillPool: rows.filter((r) => !r.excluded && r.tier === 2).length,
       repeatClickers: rows.filter((r) => r.repeatClicker).length,
       withDeal: rows.filter((r) => r.dealId).length,
+      withTrigger: rows.filter((r) => r.trigger).length,
       replied: rows.filter((r) => r.replied).length,
       clicked: rows.filter((r) => r.visitedAt).length,
       excluded: rows.filter((r) => r.excluded).length,
@@ -596,11 +697,23 @@ const PAGE_CSS = [
   "border:1px solid var(--line);background:transparent;color:var(--ink)}",
   ".btn.open{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}",
   ".btn:hover{filter:brightness(.95)}",
+  ".note{grid-column:1/-1;margin-top:11px;padding-top:11px;border-top:1px solid var(--line)}",
+  ".notetext{display:block;width:100%;resize:vertical;font:inherit;font-size:13.5px;",
+  "line-height:1.5;color:var(--ink);background:var(--bg);border:1px solid var(--line);",
+  "border-radius:8px;padding:9px 10px}",
+  ".notetext:focus{outline:2px solid var(--teal);outline-offset:-1px}",
+  ".noterow{display:flex;align-items:center;gap:10px;margin-top:6px;flex-wrap:wrap}",
+  ".cnt{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}",
+  ".cnt.over{color:#C0392B;font-weight:700}",
+  ".warn{font-size:12px;color:var(--muted)}",
+  ".noterow .copy{margin-left:auto}",
+  ".btn.copied{background:var(--teal);border-color:var(--teal);color:var(--on-accent)}",
   "footer{max-width:940px;margin:0 auto 60px;padding:0 16px;font-size:13px;color:var(--muted)}",
   "footer p{margin:8px 0}",
   "@media(max-width:700px){.row{grid-template-columns:30px 1fr;",
-  "grid-template-areas:'r w' '. s' '. a'}.rank{grid-area:r}.who{grid-area:w}",
-  ".score{grid-area:s;text-align:left}.actions{grid-area:a;margin-top:6px}}",
+  "grid-template-areas:'r w' '. s' '. a' 'n n'}.rank{grid-area:r}.who{grid-area:w}",
+  ".score{grid-area:s;text-align:left}.actions{grid-area:a;margin-top:6px}",
+  ".note{grid-area:n}}",
 ].join("");
 
 const PAGE_JS = [
@@ -616,7 +729,216 @@ const PAGE_JS = [
   "headers:{'Content-Type':'application/json'},",
   "body:JSON.stringify({personKey:row.dataset.k,done:done})}).catch(function(){});",
   "});",
+  // The note is editable, so the counter has to follow what is actually there,
+  // not what was rendered.
+  "document.getElementById('list').addEventListener('input',function(ev){",
+  "var t=ev.target;if(!t.classList.contains('notetext'))return;",
+  "var c=t.closest('.note').querySelector('.cnt');var n=t.value.length;",
+  "c.textContent=n+'/300';c.classList.toggle('over',n>300);});",
+  "document.getElementById('list').addEventListener('click',function(ev){",
+  "var b=ev.target.closest('button.copy');if(!b)return;",
+  "var t=b.closest('.note').querySelector('.notetext');",
+  "var done=function(){b.textContent='Copied';b.classList.add('copied');",
+  "setTimeout(function(){b.textContent='Copy note';b.classList.remove('copied')},1200);};",
+  "if(navigator.clipboard&&navigator.clipboard.writeText){",
+  "navigator.clipboard.writeText(t.value).then(done,function(){t.select();",
+  "try{document.execCommand('copy')}catch(e){}done();});}",
+  "else{t.select();try{document.execCommand('copy')}catch(e){}done();}",
+  "});",
 ].join("");
+
+function firstNameOf(row) {
+  const n = String(row.name || "").trim();
+  if (!n || n.includes("@")) return "there";
+  const first = n.split(/\s+/)[0];
+  return first.length > 1 ? first : n;
+}
+
+// The approved Day 4 shape from no-phone-cadence-copy-v1.md. Only the middle
+// fragment is ever generated: the greeting and the closing sentence are fixed
+// here, so no model output can quietly drift the template, and the character
+// budget is known before the call rather than discovered after it. The
+// no-trigger version is the documented fallback from the same doc.
+function assembleNote(row, fragment) {
+  const first = firstNameOf(row);
+  const company = row.company || "the business";
+  const fallback =
+    "Hi " + first + ", come across " + company + " a few times recently. Would love to connect.";
+  if (!fragment) return fallback;
+  const frag = String(fragment).trim().replace(/[.\s]+$/, "");
+  const full =
+    "Hi " + first + ", " + frag + ". Following " + company +
+    "'s growth with interest, would love to connect.";
+  if (full.length <= NOTE_LIMIT) return full;
+  const short = "Hi " + first + ", " + frag + ". Would love to connect.";
+  if (short.length <= NOTE_LIMIT) return short;
+  return fallback;
+}
+
+function fragmentBudget(row) {
+  return Math.max(40, NOTE_LIMIT - assembleNote(row, "x").length + 1);
+}
+
+// Restyle, do not re-research. Every hard rule here already exists in the
+// project: the no-em-dash guardrail and the "a routine filing is not an
+// achievement" bar from ai-cold-outreach-research-agent-design.md, and the
+// "no pitch in the note itself, the report is named at Day 7" rule from
+// linkedin-campaign-launch-strategy.md.
+const NOTE_SYSTEM = [
+  "You write the opening fragment of a LinkedIn connection-request note for Marina Nicholas, a UK growth consultant doing cold outreach to owners and senior leaders.",
+  "For each person you are given one fact that has already been researched, sourced and approved. Restyle that fact. Never add a fact, figure, date or name that is not in the fact you were given, and never embellish or soften it.",
+  "Return only the middle fragment. It is dropped into this fixed sentence: \"Hi <First>, <FRAGMENT>. Following <Company>'s growth with interest, would love to connect.\" So the fragment must start lower case, be a single clause, and carry no closing punctuation. Stay within that person's maxChars.",
+  "Hard style rules. British English. No em dashes, ever. No exclamation marks. No pitch, no offer, no link, and no mention of a report, a diagnostic, a score or a call, because this touch is only a connect opener. No flattery and no adjectives like exciting, impressive, amazing or fantastic. Plain and peer to peer, the way one business owner writes to another.",
+  "If the fact is a routine administrative event with no achievement in it, such as a filing or a director appointment with no coverage, do not congratulate it. Either reference it flatly or return an empty fragment for that person.",
+  "Good fragments read like: \"saw the new Leeds site opened last month\", \"noticed the Series A closed in June\", \"saw the team has doubled since the acquisition\".",
+  "Reply with JSON only, no prose: {\"notes\":[{\"i\":<index>,\"frag\":\"<fragment or empty string>\"}]}. One entry per person, same indexes you were given.",
+].join("\n");
+
+async function claudeFragments(batch) {
+  const people = batch.map((b, idx) => ({
+    i: idx,
+    first: firstNameOf(b.row),
+    company: b.row.company || "",
+    maxChars: fragmentBudget(b.row),
+    fact: b.row.trigger,
+  }));
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": ANTHROPIC_KEY,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: CLAUDE_MODEL,
+      max_tokens: 1500,
+      system: NOTE_SYSTEM,
+      messages: [{ role: "user", content: JSON.stringify({ people }) }],
+    }),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(
+      "Anthropic " + res.status + " " +
+      String((json.error && json.error.message) || "").slice(0, 140)
+    );
+  }
+  const text = (json.content || []).map((c) => c.text || "").join("");
+  const m = /\{[\s\S]*\}/.exec(text);
+  if (!m) throw new Error("Anthropic returned no JSON object");
+  const parsed = JSON.parse(m[0]);
+  const out = new Map();
+  for (const n of parsed.notes || []) {
+    if (typeof n.i === "number") {
+      // Belt and braces on the one rule a reader would actually notice.
+      out.set(n.i, String(n.frag || "").replace(/—/g, ",").trim());
+    }
+  }
+  return out;
+}
+
+// Fills row.note on the picked rows only, so only the people actually being
+// contacted this week cost anything to draft. A cached note against the same
+// fact is free; the rest are written in small batches under a time budget, and
+// anyone not reached keeps the fallback and is written on the next load.
+async function attachNotes(picked) {
+  const stats = { written: 0, cached: 0, noFact: 0, pending: 0, errors: [] };
+  const todo = [];
+
+  let cache = [];
+  try {
+    const keys = picked.map((r) => NOTE_CACHE_PREFIX + r.personKey);
+    cache = keys.length ? await kv.mget(...keys) : [];
+  } catch (err) {
+    cache = [];
+  }
+
+  picked.forEach((row, idx) => {
+    const hit = cache[idx];
+    if (!row.trigger) {
+      row.note = assembleNote(row, null);
+      row.noteSource = "no-fact";
+      stats.noFact++;
+      return;
+    }
+    if (hit && hit.trigger === row.trigger && hit.frag !== undefined) {
+      row.note = assembleNote(row, hit.frag);
+      row.noteSource = hit.frag ? "written" : "no-fact";
+      stats.cached++;
+      return;
+    }
+    row.note = assembleNote(row, null);
+    row.noteSource = "pending";
+    todo.push({ row, key: NOTE_CACHE_PREFIX + row.personKey });
+  });
+
+  if (!todo.length) return stats;
+  if (!ANTHROPIC_KEY) {
+    stats.pending = todo.length;
+    stats.errors.push("ANTHROPIC_API_KEY is not set on this project, so no notes can be written");
+    return stats;
+  }
+
+  const batches = [];
+  for (let i = 0; i < todo.length; i += NOTE_BATCH) batches.push(todo.slice(i, i + NOTE_BATCH));
+
+  const deadline = Date.now() + NOTE_BUDGET_MS;
+  let next = 0;
+  async function worker() {
+    for (;;) {
+      const mine = batches[next++];
+      if (!mine) return;
+      if (Date.now() > deadline) {
+        stats.pending += mine.length;
+        continue;
+      }
+      try {
+        const frags = await claudeFragments(mine);
+        const writes = {};
+        mine.forEach((item, idx) => {
+          const frag = frags.get(idx);
+          if (frag === undefined) {
+            stats.pending++;
+            return;
+          }
+          item.row.note = assembleNote(item.row, frag);
+          item.row.noteSource = frag ? "written" : "no-fact";
+          if (frag) stats.written++;
+          else stats.noFact++;
+          writes[item.key] = { trigger: item.row.trigger, frag, at: new Date().toISOString() };
+        });
+        if (Object.keys(writes).length) {
+          try {
+            await kv.mset(writes);
+          } catch (err) {
+            // A cache miss next time is cheaper than failing the page.
+          }
+        }
+      } catch (err) {
+        stats.pending += mine.length;
+        if (stats.errors.length < 3) stats.errors.push(String(err.message || err).slice(0, 160));
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(NOTE_CONCURRENCY, batches.length) }, worker));
+  return stats;
+}
+
+function renderNote(r) {
+  const n = r.note || "";
+  const flag =
+    r.noteSource === "no-fact"
+      ? "no researched fact for this company, generic opener"
+      : r.noteSource === "pending"
+      ? "not written yet, reload the page"
+      : "";
+  return '<div class="note">' +
+    '<textarea class="notetext" rows="2" spellcheck="false">' + esc(n) + "</textarea>" +
+    '<div class="noterow"><span class="cnt' + (n.length > NOTE_LIMIT ? " over" : "") + '">' +
+    n.length + "/" + NOTE_LIMIT + "</span>" +
+    (flag ? '<span class="warn">' + esc(flag) + "</span>" : "") +
+    '<button class="btn copy" type="button">Copy note</button></div></div>';
+}
 
 function renderRow(r, i, done) {
   const meta = [r.title, r.company].filter(Boolean).map(esc).join(" &middot; ");
@@ -632,10 +954,11 @@ function renderRow(r, i, done) {
     '<div class="actions">' +
     '<a class="btn open" target="_blank" rel="noopener" href="' + esc(r.linkedinUrl) + '">Open profile</a>' +
     '<button class="btn mark" type="button">' + (done ? "Sent" : "Mark sent") + "</button>" +
-    "</div></li>";
+    "</div>" + renderNote(r) + "</li>";
 }
 
-function renderPage(roster, picked, sentAllTime, key) {
+function renderPage(roster, picked, sentAllTime, key, noteStats) {
+  const ns = noteStats || { written: 0, cached: 0, noFact: 0, pending: 0, errors: [] };
   const rows = picked.map(function (r, i) {
     return renderRow(r, i, false);
   }).join("");
@@ -652,7 +975,17 @@ function renderPage(roster, picked, sentAllTime, key) {
     esc(roster.builtAt.slice(0, 16).replace("T", " ")) + " UTC</p>" +
     "<div class='bar'><span id='prog' style='width:0%'></span></div>" +
     "</div></header><ul id='list'>" + rows + "</ul><footer>" +
-    "<p>Open the profile, send the request, hit Mark sent. Progress is saved, so you can stop and come back.</p>" +
+    "<p>Open the profile, paste the note, send the request, hit Mark sent. Progress is saved, so you can stop and come back.</p>" +
+    "<p>The note is the Day 4 template from the cadence doc, filled from the same researched fact the Day 2 email opener used, rewritten per person and capped at 300 characters. " +
+    "It is a bare connect opener on purpose: no report, no link, no pitch. Day 7's voice note is the first touch that names the report. " +
+    "Edit any of them in place before copying, the counter follows what you type. " +
+    (ns.written + ns.cached) + " of " + picked.length + " have a researched fact behind them" +
+    (ns.noFact ? "; " + ns.noFact + " fell back to the generic opener because the agent found nothing notable for that company" : "") +
+    (ns.pending ? "; " + ns.pending + " were not written this run, reload to finish them" : "") + ". " +
+    (roster.totals.withTrigger || 0) + " of " + roster.totals.emailed + " emailed contacts have a fact on file overall.</p>" +
+    (ns.errors && ns.errors.length
+      ? "<p><b>Note writing hit an error:</b> " + esc(ns.errors.join(" | ")) + "</p>"
+      : "") +
     "<p>Ranked on fit, not engagement. Email opens and clicks are switched off for deliverability, and this batch went out before per-lead click tracking existed. " +
     t.replied + " replied and " + t.clicked +
     " have a tracked landing-page click; those sort to the top. Everyone else is ordered by seniority, team size and revenue from Apollo.</p>" +
@@ -743,6 +1076,10 @@ export default async function handler(req, res) {
     const eligible = roster.rows.filter((r) => !r.excluded && !requested[r.personKey]);
     const picked = eligible.slice(0, cap);
 
+    // After the cut, deliberately: only the people actually being contacted
+    // this week are worth drafting a note for.
+    const noteStats = await attachNotes(picked);
+
     // Writing the score back is what makes the ranking visible in the CRM as a
     // sortable filter, rather than only in this response.
     let written = 0;
@@ -769,7 +1106,7 @@ export default async function handler(req, res) {
       res.setHeader("Content-Type", "text/html; charset=utf-8");
       return res
         .status(200)
-        .send(renderPage(roster, picked, Object.keys(requested).length, req.query.key));
+        .send(renderPage(roster, picked, Object.keys(requested).length, req.query.key, noteStats));
     }
 
     return res.status(200).json({
@@ -780,6 +1117,7 @@ export default async function handler(req, res) {
       cap,
       written,
       writeErrors: writeErrors.slice(0, 10),
+      notes: noteStats,
       picked: picked.map((r, i) => ({
         rank: i + 1,
         name: r.name,
@@ -790,6 +1128,9 @@ export default async function handler(req, res) {
         revenue: r.revenue,
         score: r.score,
         reasons: r.reasons,
+        trigger: r.trigger,
+        note: r.note,
+        noteSource: r.noteSource,
         dealUrl: r.dealUrl,
       })),
     });

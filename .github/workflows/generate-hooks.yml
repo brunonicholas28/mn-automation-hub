@@ -1,0 +1,101 @@
+# Researches the Day 2 hook for every lead in the cohort.
+#
+# Runs Friday morning, after Thursday's mint, which leaves the whole weekend
+# before Monday's campaign build and Tuesday's send. If a run fails there are
+# three days to notice and re-run it by hand.
+#
+# The endpoint researches a handful of leads per call and reports how many are
+# left, so this loops until it reports none. A cohort of 250 is a few minutes
+# of looping. Looping here rather than inside the function is deliberate: a
+# serverless function has a sixty second ceiling and a cohort does not fit in
+# it, but a GitHub Actions job has hours.
+#
+# Nothing sends. Hooks land on the lead record; the campaign they feed is
+# created paused on Monday and Marina presses Launch.
+
+name: generate-hooks
+
+on:
+  schedule:
+    - cron: "0 7 * * 5"
+  workflow_dispatch:
+    inputs:
+      cohort:
+        description: "Cohort id, e.g. c20260915. Leave blank for the next Tuesday."
+        required: false
+        default: ""
+      batch:
+        description: "Leads researched per call, 1 to 8"
+        required: false
+        default: "4"
+      live:
+        description: "Set to 1 to actually research. This spends Anthropic credits."
+        required: false
+        default: "0"
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Research hooks until the cohort is done
+        env:
+          FUNNEL_CRON_KEY: ${{ secrets.FUNNEL_CRON_KEY }}
+          COHORT: ${{ github.event.inputs.cohort || '' }}
+          BATCH: ${{ github.event.inputs.batch || '4' }}
+          LIVE: ${{ github.event.inputs.live || (github.event_name == 'schedule' && '1') || '0' }}
+        run: |
+          BASE="https://mn-automation-hub.vercel.app/api/cron/run?job=generate-hooks"
+          TOTAL_DRAFT=0
+
+          # Hard ceiling on iterations. A bug that stopped decrementing the
+          # remaining count would otherwise loop until the job times out,
+          # spending real money on every pass.
+          for i in $(seq 1 120); do
+            curl -sS --fail-with-body \
+              "${BASE}&key=${FUNNEL_CRON_KEY}&cohort=${COHORT}&batch=${BATCH}&live=${LIVE}" \
+              -o response.json
+
+            # The response carries no names or emails, only counts, but this
+            # repository is public and so are these logs. Fail rather than
+            # print a person if that ever stops being true.
+            if grep -qiE '"email"|@[a-z0-9.-]+\.[a-z]{2,}' response.json; then
+              echo "Refusing to print: response contains personal data"
+              exit 1
+            fi
+
+            cat response.json
+            echo
+
+            grep -q '"ok":true' response.json
+
+            REMAINING=$(python3 -c "import json;print(json.load(open('response.json')).get('remaining',0))")
+            echo "Pass ${i}: ${REMAINING} left"
+
+            if [ "${REMAINING}" -eq 0 ]; then
+              echo "Cohort fully researched."
+              break
+            fi
+
+            # A dry run never decrements anything, so one pass is the whole
+            # story and looping would just repeat it.
+            if [ "${LIVE}" != "1" ]; then
+              echo "Dry run, stopping after one pass."
+              break
+            fi
+
+            sleep 2
+          done
+
+          python3 - <<'PY'
+          import json
+          d = json.load(open("response.json"))
+          c = d.get("counts", {})
+          print("FINAL", json.dumps({
+              "cohort": d.get("cohort"),
+              "leads": d.get("leadsInCohort"),
+              "draft": c.get("DRAFT"),
+              "noTrigger": c.get("NO-TRIGGER"),
+              "exclude": c.get("EXCLUDE"),
+              "remaining": d.get("remaining"),
+          }))
+          PY

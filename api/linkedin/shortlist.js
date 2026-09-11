@@ -420,10 +420,15 @@ async function buildRoster() {
 
   // Deterministic all the way down, so two runs give the same order and
   // "number 41" means the same person tomorrow as it does today.
+  // Score alone leaves a very wide tie block - every owner-level contact at an
+  // established company lands on the same number - and sorting that block by
+  // name means the cut at 80 is really a cut at "surnames up to about L".
+  // Longest-trading first is at least a reason. Name stays last so the order is
+  // still deterministic and rank 41 means the same person tomorrow.
   rows.sort(
     (a, b) =>
       b.score - a.score ||
-      (b.employees || 0) - (a.employees || 0) ||
+      (a.foundedYear || 9999) - (b.foundedYear || 9999) ||
       a.name.localeCompare(b.name)
   );
 
@@ -620,6 +625,13 @@ export default async function handler(req, res) {
       for (const r of roster.rows) {
         if (r.excluded) exclusions[r.excluded] = (exclusions[r.excluded] || 0) + 1;
       }
+      // Counts per score, eligible people only. This is what shows whether the
+      // cut at 80 is a real ranking or an arbitrary slice through a tie.
+      const scoreHistogram = {};
+      for (const r of roster.rows) {
+        if (r.excluded) continue;
+        scoreHistogram[r.score] = (scoreHistogram[r.score] || 0) + 1;
+      }
       const sample = roster.rows[0] || {};
       const shape = {};
       for (const k of Object.keys(sample)) shape[k] = sample[k] === null ? null : typeof sample[k];
@@ -628,6 +640,7 @@ export default async function handler(req, res) {
         builtAt: roster.builtAt,
         totals: roster.totals,
         exclusions,
+        scoreHistogram,
         apolloShape: roster.apolloShape || null,
         sampleShape: shape,
       });

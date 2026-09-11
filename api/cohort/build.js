@@ -323,6 +323,15 @@ export default async function handler(req, res) {
       return res.status(200).json(out);
     }
 
+    // A cohort with nothing in it means mint-batch has not run yet. Creating
+    // an empty pair of campaigns every Monday would quietly fill Instantly
+    // with clutter and make the real ones harder to find, so stop instead.
+    if (loaded.rows.length === 0 && step !== "inspect") {
+      out.note =
+        "No leads are minted for this cohort yet, so nothing was created. Run mint-batch first, then run this again.";
+      return res.status(200).json(out);
+    }
+
     if (step === "campaign" || step === "all") {
       out.campaignsBuilt = {
         hook: await ensureCampaign(cohort, hookTemplate, cohort, live),

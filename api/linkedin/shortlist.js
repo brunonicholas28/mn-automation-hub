@@ -36,8 +36,8 @@
 // URLs. Same rule as /api/leads/import.
 
 import { Redis } from "@upstash/redis";
-import { listCampaignLeads, listBlocklist, isBlocked } from "../../lib/instantly.js";
-import { listCohortIds } from "../../lib/cohort.js";
+import { listCampaigns, listCampaignLeads, listBlocklist, isBlocked } from "../../lib/instantly.js";
+import { listCohortIds, normaliseCohortId } from "../../lib/cohort.js";
 import { listLeadTokens, readLeads } from "../../lib/leads.js";
 import { updateDeal } from "../../lib/pipedrive.js";
 
@@ -76,6 +76,50 @@ function authorised(req) {
 }
 
 const lower = (v) => String(v || "").trim().toLowerCase();
+const daysSince = (iso) => (Date.now() - new Date(iso).getTime()) / 86400000;
+
+// R1/R2/R3 run at T+0, T+4 and T+8. A connection request landing inside that
+// window would put up to seven touches in ten days from one brand, which is
+// the line the escalation model calls pursuit. Wait until the breakup has
+// landed before the LinkedIn rail is allowed to start.
+const RECOVERY_QUIET_DAYS = 10;
+
+// One Instantly campaign per cohort, so the campaign list IS the cohort list.
+// A campaign only qualifies if its name normalises to a cYYYYMMDD id - that
+// picks up the 2026-09-08 batch through its legacy alias and leaves out the
+// recovery campaign, whose leads are mid-sequence and handled separately.
+async function listCohortCampaigns() {
+  const out = [];
+  for (const c of await listCampaigns()) {
+    const cohort = normaliseCohortId(c.name);
+    if (cohort && /^c\d{8}$/.test(cohort)) out.push({ id: c.id, name: c.name, cohort });
+  }
+  return out;
+}
+
+// A cohort id encodes its own send date, so working out which batch is in its
+// connection-request window needs no extra state. Send day is day 1.
+function cohortDay(cohort) {
+  const m = /^c(\d{4})(\d{2})(\d{2})$/.exec(cohort || "");
+  if (!m) return null;
+  const start = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const now = new Date();
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return Math.round((today - start) / 86400000) + 1;
+}
+
+// Fresh cohort wins the slot. Someone who clicked once, never opened the form
+// and then ignored all three recovery emails has declined four times against
+// one positive signal - and that signal is unproven: 22 landing visits on
+// c20260908 produced zero form starts. So they only backfill slots the active
+// cohort cannot fill. Repliers and repeat clickers are exempt, because coming
+// BACK to the page after the nudge is a second, independent signal rather than
+// the same click counted twice.
+function tierOf(row, activeCohort) {
+  if (row.replied || row.repeatClicker) return 1;
+  if (activeCohort && row.cohort === activeCohort) return 1;
+  return 2;
+}
 
 async function pd(path) {
   if (!PD_TOKEN) throw new Error("PIPEDRIVE_API_TOKEN is not set");
@@ -304,6 +348,10 @@ function excludeReason(row) {
   if (row.bounced) return "email bounced, stale record";
   if (row.blocked) return "on the Instantly blocklist";
   if (row.employees !== null && row.employees < 5) return "under 5 people, anti-ICP";
+  if (row.startedAt) return "already opened the report form";
+  if (row.nudgedAt && !row.repeatClicker && daysSince(row.nudgedAt) < RECOVERY_QUIET_DAYS) {
+    return "recovery sequence still running";
+  }
   // Section 17: once a business needs board approval and a procurement layer to
   // buy anything, it has left this ICP entirely.
   if (row.publiclyTraded) return "publicly listed, outside the ICP";
@@ -320,13 +368,36 @@ async function buildRoster() {
 
   // Campaign membership is the definition of "people we emailed". Using the
   // Pipedrive stage instead would sweep in deals that were never sent to.
-  const [campaignLeads, blocklist, persons, deals, apollo] = await Promise.all([
-    listCampaignLeads(SOURCE_CAMPAIGN),
+  const cohortCampaigns = await listCohortCampaigns();
+  if (!cohortCampaigns.length) cohortCampaigns.push({ id: SOURCE_CAMPAIGN, cohort: null });
+
+  const [blocklist, persons, deals, apollo] = await Promise.all([
     listBlocklist(),
     listAllPersons(),
     listPipelineDeals(),
     listApolloContacts().catch(() => []),
   ]);
+
+  // Every cohort is loaded, not just the active one, because the backfill tier
+  // is drawn from the older ones.
+  const campaignLeads = [];
+  for (const c of cohortCampaigns) {
+    for (const lead of await listCampaignLeads(c.id)) {
+      campaignLeads.push(Object.assign({}, lead, { cohort: c.cohort }));
+    }
+  }
+
+  // Exactly one cohort sits in its day 7-9 connection-request window in any
+  // given week. On every other day - which is most of them - fall back to the
+  // newest cohort so the page is never empty.
+  const cohortIds = [...new Set(cohortCampaigns.map((c) => c.cohort).filter(Boolean))]
+    .sort()
+    .reverse();
+  const activeCohort =
+    cohortIds.find((c) => {
+      const d = cohortDay(c);
+      return d !== null && d >= 7 && d <= 9;
+    }) || cohortIds[0] || null;
 
   // Sequential and after the contacts, because it fills the same map and a
   // failure here should degrade the score, not fail the whole list.
@@ -362,13 +433,13 @@ async function buildRoster() {
   // Per-lead landing clicks, where tokens exist. c20260908 has none - that
   // batch predates lids - so this stays empty for the current 267 and starts
   // contributing from c20260915 on.
-  const visitedByEmail = new Map();
+  const leadState = new Map();
   try {
     for (const cohort of await listCohortIds()) {
       const tokens = await listLeadTokens(cohort);
       if (!tokens.length) continue;
       for (const lead of await readLeads(tokens)) {
-        if (lead.visitedAt && lead.email) visitedByEmail.set(lower(lead.email), lead.visitedAt);
+        if (lead.email) leadState.set(lower(lead.email), lead);
       }
     }
   } catch (err) {
@@ -382,6 +453,7 @@ async function buildRoster() {
     const person = personByEmail.get(email) || null;
     const deal = person ? dealByPersonId.get(person.id) : null;
     const contact = apolloByEmail.get(email) || null;
+    const state = leadState.get(email) || {};
     const org = orgOf(contact);
 
     const linkedinUrl =
@@ -404,7 +476,11 @@ async function buildRoster() {
       replied: lead.replyCount > 0,
       bounced: lead.bounceCount > 0,
       blocked: isBlocked(email, blocklist.entries),
-      visitedAt: visitedByEmail.get(email) || null,
+      cohort: lead.cohort || null,
+      visitedAt: state.visitedAt || null,
+      startedAt: state.startedAt || null,
+      nudgedAt: state.nudgedAt || null,
+      repeatClicker: Number(state.visitCount || 0) > 1 && !state.startedAt,
       personId: (person && person.id) || null,
       dealId: (deal && deal.id) || null,
       dealUrl: deal && PD_DOMAIN ? "https://" + PD_DOMAIN + ".pipedrive.com/deal/" + deal.id : null,
@@ -412,6 +488,7 @@ async function buildRoster() {
     };
 
     row.excluded = excludeReason(row);
+    row.tier = tierOf(row, activeCohort);
     const scored = scoreOf(row);
     row.score = scored.score;
     row.reasons = scored.reasons;
@@ -427,6 +504,7 @@ async function buildRoster() {
   // still deterministic and rank 41 means the same person tomorrow.
   rows.sort(
     (a, b) =>
+      a.tier - b.tier ||
       b.score - a.score ||
       (a.foundedYear || 9999) - (b.foundedYear || 9999) ||
       a.name.localeCompare(b.name)
@@ -434,6 +512,9 @@ async function buildRoster() {
 
   return {
     builtAt: new Date().toISOString(),
+    activeCohort,
+    cohortDay: cohortDay(activeCohort),
+    cohorts: cohortIds,
     totals: {
       emailed: rows.length,
       withLinkedIn: rows.filter((r) => r.linkedinUrl).length,
@@ -442,6 +523,9 @@ async function buildRoster() {
       withRevenue: rows.filter((r) => r.revenue !== null).length,
       withFoundedYear: rows.filter((r) => r.foundedYear !== null).length,
       publiclyTraded: rows.filter((r) => r.publiclyTraded).length,
+      inActiveCohort: rows.filter((r) => !r.excluded && r.tier === 1).length,
+      backfillPool: rows.filter((r) => !r.excluded && r.tier === 2).length,
+      repeatClickers: rows.filter((r) => r.repeatClicker).length,
       withDeal: rows.filter((r) => r.dealId).length,
       replied: rows.filter((r) => r.replied).length,
       clicked: rows.filter((r) => r.visitedAt).length,
@@ -551,29 +635,32 @@ function renderRow(r, i, done) {
     "</div></li>";
 }
 
-function renderPage(roster, picked, requested, key) {
-  const doneCount = picked.filter(function (r) { return requested[r.personKey]; }).length;
-  const pct = picked.length ? (doneCount / picked.length) * 100 : 0;
+function renderPage(roster, picked, sentAllTime, key) {
   const rows = picked.map(function (r, i) {
-    return renderRow(r, i, Boolean(requested[r.personKey]));
+    return renderRow(r, i, false);
   }).join("");
   const t = roster.totals;
   return "<!doctype html><html lang='en'><head><meta charset='utf-8'>" +
     "<meta name='viewport' content='width=device-width,initial-scale=1'>" +
     "<title>LinkedIn requests</title><style>" + PAGE_CSS + "</style></head>" +
     "<body data-key='" + esc(key) + "' data-total='" + picked.length + "'>" +
-    "<header><div class='wrap'><h1>LinkedIn connection requests</h1>" +
-    "<p class='sub'><b id='count'>" + doneCount + "</b> of " + picked.length +
-    " sent &middot; ranked from " + t.emailed + " people we emailed &middot; built " +
+    "<header><div class='wrap'><h1>LinkedIn requests &mdash; cohort " +
+    esc(roster.activeCohort || "unknown") + "</h1>" +
+    "<p class='sub'><b id='count'>0</b> of " + picked.length + " sent today &middot; " +
+    (roster.cohortDay ? "day " + roster.cohortDay + " of this cohort &middot; " : "") +
+    sentAllTime + " requested all time &middot; built " +
     esc(roster.builtAt.slice(0, 16).replace("T", " ")) + " UTC</p>" +
-    "<div class='bar'><span id='prog' style='width:" + pct + "%'></span></div>" +
+    "<div class='bar'><span id='prog' style='width:0%'></span></div>" +
     "</div></header><ul id='list'>" + rows + "</ul><footer>" +
     "<p>Open the profile, send the request, hit Mark sent. Progress is saved, so you can stop and come back.</p>" +
     "<p>Ranked on fit, not engagement. Email opens and clicks are switched off for deliverability, and this batch went out before per-lead click tracking existed. " +
     t.replied + " replied and " + t.clicked +
     " have a tracked landing-page click; those sort to the top. Everyone else is ordered by seniority, team size and revenue from Apollo.</p>" +
-    "<p>" + t.excluded + " of the " + t.emailed +
-    " were held back: no LinkedIn URL, a bounce, an opt-out, or under 5 people.</p>" +
+    "<p>" + t.inActiveCohort + " are in this cohort and " + t.backfillPool +
+    " sit in the backfill pool from earlier cohorts, used only once the active one runs out. " +
+    t.excluded + " of " + t.emailed +
+    " were held back: no LinkedIn URL, a bounce, an opt-out, under 5 people, or a recovery sequence still running.</p>" +
+    "<p>Marking someone sent removes them for good, so reloading next week gives you the next batch rather than this one again.</p>" +
     "</footer><script>" + PAGE_JS + "</scr" + "ipt></body></html>";
 }
 
@@ -638,6 +725,9 @@ export default async function handler(req, res) {
       return res.status(200).json({
         ok: true,
         builtAt: roster.builtAt,
+        activeCohort: roster.activeCohort,
+        cohortDay: roster.cohortDay,
+        cohorts: roster.cohorts,
         totals: roster.totals,
         exclusions,
         scoreHistogram,
@@ -646,7 +736,11 @@ export default async function handler(req, res) {
       });
     }
 
-    const eligible = roster.rows.filter((r) => !r.excluded);
+    // Already-requested people leave the pool entirely rather than sitting at
+    // the top greyed out, so next week's list is the NEXT 80 rather than the
+    // same 80 again.
+    const requested = (await kv.hgetall(REQUESTED_KEY)) || {};
+    const eligible = roster.rows.filter((r) => !r.excluded && !requested[r.personKey]);
     const picked = eligible.slice(0, cap);
 
     // Writing the score back is what makes the ranking visible in the CRM as a
@@ -672,9 +766,10 @@ export default async function handler(req, res) {
     }
 
     if (String(req.query.mode || "") === "html") {
-      const requested = (await kv.hgetall(REQUESTED_KEY)) || {};
       res.setHeader("Content-Type", "text/html; charset=utf-8");
-      return res.status(200).send(renderPage(roster, picked, requested, req.query.key));
+      return res
+        .status(200)
+        .send(renderPage(roster, picked, Object.keys(requested).length, req.query.key));
     }
 
     return res.status(200).json({

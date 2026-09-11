@@ -42,6 +42,7 @@ import {
   createCampaign,
   createLead,
   listCampaignLeads,
+  listCampaigns,
 } from "../../lib/instantly.js";
 import { listLeadTokens, readLeads } from "../../lib/leads.js";
 import { normaliseCohortId } from "../../lib/cohort.js";
@@ -318,6 +319,14 @@ export default async function handler(req, res) {
         hook: await findCampaignByName(cohort),
         noHook: await findCampaignByName(cohort + " B"),
       };
+      // Listing what already exists is how you pick the two template ids
+      // for INSTANTLY_TEMPLATE_HOOK and INSTANTLY_TEMPLATE_NOHOOK without
+      // going hunting in the Instantly UI. Names and ids only, no people.
+      out.availableCampaigns = (await listCampaigns()).map((c) => ({
+        id: c.id,
+        name: c.name,
+        status: c.status,
+      }));
       out.note =
         "Nothing was changed. Run with step=campaign to create the pair, then step=import, then add live=1 once the counts look right.";
       return res.status(200).json(out);

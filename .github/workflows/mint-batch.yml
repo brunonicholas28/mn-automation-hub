@@ -5,19 +5,26 @@
 # be segmented afterwards - there is no way to work out retroactively which
 # anonymous landing-page visit belonged to whom.
 #
-# Manual only, on purpose: minting is tied to a specific cohort id and a
-# specific send date, so it should be a deliberate act rather than a schedule
-# that fires whether or not a batch is ready.
+# Runs Thursday, before Day 1 (the Friday the profile views start), so the
+# batch always carries its tracked links by the time anyone touches it.
 #
-# Dry run by default. Set live to 1 to actually mint.
+# This was manual on purpose for a while, because minting is tied to a
+# specific cohort id and a specific send date and neither could be inferred.
+# Both can now: a cohort id IS its Tuesday send date, so the schedule works it
+# out and the deliberate act moved to pressing Launch in Instantly instead.
+#
+# Dry run when it is run by hand, live on the schedule.
 name: mint-batch
 
 on:
+  schedule:
+    - cron: "0 8 * * 4"
   workflow_dispatch:
     inputs:
       cohort:
-        description: "Cohort id, e.g. c20260915"
-        required: true
+        description: "Cohort id, e.g. c20260915. Leave blank for the next Tuesday."
+        required: false
+        default: ""
       touch:
         description: "Touch tag on the link (default day2)"
         required: false
@@ -34,10 +41,15 @@ jobs:
       - name: Mint tracked links for the batch
         env:
           FUNNEL_CRON_KEY: ${{ secrets.FUNNEL_CRON_KEY }}
-          COHORT: ${{ github.event.inputs.cohort }}
-          TOUCH: ${{ github.event.inputs.touch }}
-          LIVE: ${{ github.event.inputs.live }}
+          COHORT: ${{ github.event.inputs.cohort || '' }}
+          TOUCH: ${{ github.event.inputs.touch || 'day2' }}
+          LIVE: ${{ github.event.inputs.live || (github.event_name == 'schedule' && '1') || '0' }}
         run: |
+          # A cohort id is the Tuesday its Email #1 goes out. On the schedule
+          # there is no input to read, so work it out rather than ask.
+          if [ -z "$COHORT" ]; then COHORT=$(date -u -d "next tuesday" +c%Y%m%d); fi
+          echo "Cohort: $COHORT"
+
           curl -sS --fail-with-body \
             "https://mn-automation-hub.vercel.app/api/leads/mint-batch?key=${FUNNEL_CRON_KEY}&cohort=${COHORT}&touch=${TOUCH}&live=${LIVE}" \
             -o response.json

@@ -1,0 +1,22 @@
+# Hourly Apollo -> Pipedrive sync.
+#
+# Vercel's Hobby plan fires crons once a day, and both of its cron slots are
+# already taken by apollo-sync and linkedin-score (see vercel.json), so this
+# runs on GitHub Actions instead - same pattern as poll-funnel.yml. Contacts
+# saved in Apollo now reach Pipedrive within the hour instead of waiting for
+# the next 06:00 UTC run.
+#
+# The Vercel daily cron is left in place as a backstop. Running twice is safe:
+# apollo-sync keeps an updated-at cursor and skips any person who already has
+# a deal.
+#
+# Needs a repository secret CRON_SECRET matching the CRON_SECRET environment
+# variable on the Vercel project. If CRON_SECRET is unset on Vercel then the
+# endpoint accepts unauthenticated calls and the header is simply ignored.
+#
+# Written in YAML flow style on a single line because GitHub's web editor
+# mangles block indentation. This is valid YAML and Actions parses it fine.
+#
+# GitHub disables scheduled workflows in a repo with no activity for 60 days.
+# If sourcing stops reaching Pipedrive, check here first.
+{"name": "Sync Apollo to Pipedrive", "on": {"schedule": [{"cron": "37 * * * *"}], "workflow_dispatch": null}, "jobs": {"sync": {"runs-on": "ubuntu-latest", "steps": [{"name": "Hit the apollo-sync endpoint", "env": {"CRON_SECRET": "${{ secrets.CRON_SECRET }}"}, "run": "set -euo pipefail\ncode=$(curl -sS -o response.json -w '%{http_code}' --max-time 300 -H \"Authorization: Bearer ${CRON_SECRET}\" \"https://mn-automation-hub.vercel.app/api/cron/apollo-sync\")\ncat response.json\necho\nif [ \"$code\" != \"200\" ]; then echo \"apollo-sync failed with HTTP $code\" >&2; exit 1; fi\n"}]}}}

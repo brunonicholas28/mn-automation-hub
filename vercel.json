@@ -1,9 +1,13 @@
 {
   "crons": [
-    { "path": "/api/cron/apollo-sync", "schedule": "0 6 * * *" },
-    { "path": "/api/cron/linkedin-score", "schedule": "0 7 * * *" }
+    { "path": "/api/cron/run?job=apollo-sync", "schedule": "0 6 * * *" },
+    { "path": "/api/cron/run?job=linkedin-score", "schedule": "0 7 * * *" }
   ],
   "rewrites": [
-    { "source": "/api/health", "destination": "/api/linkedin/shortlist?health=1" }
+    { "source": "/api/health", "destination": "/api/linkedin/shortlist?health=1" },
+    { "source": "/api/cron/apollo-sync", "destination": "/api/cron/run?job=apollo-sync" },
+    { "source": "/api/cron/linkedin-score", "destination": "/api/cron/run?job=linkedin-score" },
+    { "source": "/api/cron/poll-funnel", "destination": "/api/cron/run?job=poll-funnel" },
+    { "source": "/api/cron/recovery-clicked", "destination": "/api/cron/run?job=recovery-clicked" }
   ]
 }

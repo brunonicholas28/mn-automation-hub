@@ -124,6 +124,7 @@ export default async function handler(req, res) {
           firstName: firstNameOf(person?.name),
           company: person?.org_id?.name || "",
           cohort,
+          dealId: deal.id,
         });
         await updateDeal(deal.id, { "Report Link": reportLink, "Lead Token": lid });
       }

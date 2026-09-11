@@ -773,6 +773,13 @@ const PAGE_JS = [
   "document.getElementById('list').addEventListener('click',function(ev){",
   "var b=ev.target.closest('button.copy');if(!b)return;",
   "var t=b.closest('.note').querySelector('.notetext');",
+    // The label is restored from whatever it was, because the shortlist says
+  // 'Copy note' and the Day 7 page says 'Copy script'.
+  "var was=b.textContent;",
+  "var done=function(){b.textContent='Copied';b.classList.add('copied');",
+  "setTimeout(function(){b.textContent=was;b.classList.remove('copied')},1200);};",
+  "if(navigator.clipboard&&navigator.clipboard.writeText){",
+  "navigator.clipboard.writeText(t.value).then(done,function(){t.select();",
   "try{document.execCommand('copy')}catch(e){}done();});}",
   "else{t.select();try{document.execCommand('copy')}catch(e){}done();}",
   "});",

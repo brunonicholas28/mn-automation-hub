@@ -148,14 +148,14 @@ async function listCohortCampaigns() {
 }
 
 // A cohort id encodes its own send date, so working out which batch is in its
-// connection-request window needs no extra state. Send day is day 1.
+// connection-request window needs no extra state. The id is the EMAIL #1 date.
 function cohortDay(cohort) {
   const m = /^c(\d{4})(\d{2})(\d{2})$/.exec(cohort || "");
   if (!m) return null;
   const start = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
   const now = new Date();
   const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-  return Math.round((today - start) / 86400000) + 1;
+  return Math.round((today - start) / 86400000) + 5; // Email #1 is day 5, not day 1.
 }
 
 // Fresh cohort wins the slot. Someone who clicked once, never opened the form
@@ -499,7 +499,7 @@ async function buildRoster() {
     }
   }
 
-  // Exactly one cohort sits in its day 7-9 connection-request window in any
+  // Exactly one cohort sits in its day 8-9 connection-request window in any
   // given week. On every other day - which is most of them - fall back to the
   // newest cohort so the page is never empty.
   const cohortIds = [...new Set(cohortCampaigns.map((c) => c.cohort).filter(Boolean))]
@@ -508,7 +508,7 @@ async function buildRoster() {
   const activeCohort =
     cohortIds.find((c) => {
       const d = cohortDay(c);
-      return d !== null && d >= 7 && d <= 9;
+      return d !== null && d >= 8 && d <= 9;
     }) || cohortIds[0] || null;
 
   // Sequential and after the contacts, because it fills the same map and a

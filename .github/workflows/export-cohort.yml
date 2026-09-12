@@ -1,0 +1,71 @@
+# Publishes the week's research queue where a credential-free session can read it.
+#
+# The scheduled Claude session that researches hooks has no secret and no
+# Pipedrive login it can rely on at 1am. Rather than give it either, this runs
+# on Wednesday after Apollo sources the cohort, holds the key itself, and
+# commits the roster to cohort/<id>.json. The session then just fetches that
+# file from raw.githubusercontent.com and starts work.
+#
+# WHAT IS IN THE FILE, AND WHAT IS NOT
+#
+# dealId, company and the company's own web domain. That is all. This repo is
+# public. No email addresses and no contact names: the domain is derived from
+# the prospect's work email inside the app, because a bare company name is
+# often unsearchable ("Clear", "Fabric", "Strategy"), but the address itself
+# never leaves Upstash.
+#
+# The roster also carries each lead's current verdict, so a session picking up
+# on night three can skip the 180 already done and research only what is left.
+
+name: export-cohort
+
+on:
+  schedule:
+    - cron: "0 18 * * 3"
+  workflow_dispatch:
+    inputs:
+      cohort:
+        description: "Cohort id, e.g. c20260915. Leave blank for the next Tuesday."
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch the roster and commit it
+        env:
+          FUNNEL_CRON_KEY: ${{ secrets.FUNNEL_CRON_KEY }}
+          COHORT_IN: ${{ github.event.inputs.cohort || '' }}
+        run: |
+          COHORT="${COHORT_IN}"
+          if [ -z "$COHORT" ]; then COHORT=$(date -u -d "next tuesday" +c%Y%m%d); fi
+          echo "Cohort: ${COHORT}"
+
+          curl -sS --fail-with-body "https://mn-automation-hub.vercel.app/api/cron/run?job=hook-io&mode=export&cohort=${COHORT}&key=${FUNNEL_CRON_KEY}" -o raw.json
+
+          # The endpoint is built not to return addresses, but this repo is
+          # public and the file is about to be committed to it. Check rather
+          # than trust, and fail loudly rather than publish a person.
+          if grep -qiE '"email"|"name"|[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}' raw.json; then
+            echo "::error::Refusing to commit: the export contains personal data"
+            exit 1
+          fi
+
+          python3 scripts/write_cohort_roster.py raw.json "cohort/${COHORT}.json"
+
+          if git diff --quiet -- "cohort/${COHORT}.json"; then
+            echo "Roster unchanged, nothing to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "cohort/${COHORT}.json"
+          git commit -m "Roster for ${COHORT}"
+          git push

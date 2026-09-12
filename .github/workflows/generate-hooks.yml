@@ -96,6 +96,9 @@ jobs:
           # lead cohort is about 90 passes, so this leaves real headroom.
           TOTAL_SEARCHES=0
           TOTAL_LEADS=0
+          DEAD=0
+          STUCK=0
+          PREV_REMAINING=-1
 
           for i in $(seq 1 250); do
             curl -sS --fail-with-body \
@@ -122,15 +125,46 @@ jobs:
             TOTAL_LEADS=$((TOTAL_LEADS + PASS_LEADS))
             echo "Pass ${i}: ${REMAINING} left, ${PASS_SEARCHES} searches this pass"
 
-            # The failure that produced 3 hooks from 265 leads was silent: the
-            # job ran clean, reported no errors, and every lead came back
-            # NO-TRIGGER in under four seconds because the model never
-            # searched. Nothing in the loop could tell that apart from a quiet
-            # cohort. Now it can, and it stops rather than spending the rest.
-            if [ "${LIVE}" = "1" ] && [ "${i}" -ge 3 ] && [ "${TOTAL_SEARCHES}" -eq 0 ]; then
-              echo "STOPPING: ${TOTAL_LEADS} leads researched and not one web search ran."
-              echo "The model is answering from memory, so every verdict so far is worthless."
-              echo "Re-run with debug=1 to see the raw replies before spending any more."
+            # Two ways a run goes bad, and both used to be silent.
+            #
+            # The first produced 3 hooks from 265 leads on 12 Sep: the job ran
+            # clean, reported no errors, and every lead came back NO-TRIGGER in
+            # under four seconds because the model never searched.
+            #
+            # The second showed up on the very next run: the Anthropic account
+            # ran out of credit eleven leads in, so every call 400'd. Errors
+            # leave the lead unmarked on purpose, which is right, but it means
+            # remaining never falls and the loop happily spent two hundred
+            # passes asking for the same three leads.
+            #
+            # So the check is on CONSECUTIVE dead passes, not on the run total.
+            # A cumulative check is no use: once the early passes have searched,
+            # every pass after them sails through.
+            if [ "${PASS_SEARCHES}" -eq 0 ]; then
+              DEAD=$((DEAD + 1))
+            else
+              DEAD=0
+            fi
+
+            if [ "${LIVE}" = "1" ] && [ "${DEAD}" -ge 4 ]; then
+              echo "STOPPING: ${DEAD} passes in a row ran zero web searches."
+              echo "Either the model is answering from memory, or the API is refusing the calls."
+              echo "The last response is above: check errorSample first, then re-run with debug=1."
+              exit 1
+            fi
+
+            # Nothing settled and nothing left to settle means the loop cannot
+            # make progress, whatever the reason. Stop rather than grind.
+            if [ "${REMAINING}" -eq "${PREV_REMAINING}" ]; then
+              STUCK=$((STUCK + 1))
+            else
+              STUCK=0
+            fi
+            PREV_REMAINING=${REMAINING}
+
+            if [ "${LIVE}" = "1" ] && [ "${STUCK}" -ge 6 ]; then
+              echo "STOPPING: remaining has sat at ${REMAINING} for ${STUCK} passes."
+              echo "The run is not making progress. Read the last response above before re-running."
               exit 1
             fi
 

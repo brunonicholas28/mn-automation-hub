@@ -1,0 +1,105 @@
+# Posts hooks researched OUTSIDE this app into the cohort's lead records.
+#
+# This is the half of the subscription-research route that needs a secret.
+# A scheduled Claude session can search the web and judge a fact, but it has
+# no business holding FUNNEL_CRON_KEY, and without the key the hooks never
+# reach Upstash and the Instantly CSV goes out bare.
+#
+# So the session commits hooks/<cohort>.json and stops. This runs on that
+# push, holds the key, and posts the file. The session and the secret never
+# meet.
+#
+# The file is a JSON array of:
+#   { "dealId": "486", "verdict": "DRAFT", "trigger": "...",
+#     "url": "https://...", "date": "2026-01-22", "confidence": "High" }
+#
+# dealId is the join key, deliberately: it is the only identifier the research
+# side is given, and a row aimed at somebody outside the cohort finds no lead
+# and gets reported rather than quietly writing onto a stranger.
+#
+# Everything still goes through the same quality bar the API researcher uses.
+# Research arriving from a session is not more trusted than research arriving
+# from the model: no URL, an em dash, or a doubled "congratulations" and the
+# row is demoted to NO-TRIGGER rather than repaired.
+#
+# Nothing here sends. Hooks land on the lead record; the campaign they feed is
+# created paused and Marina presses Launch.
+
+name: import-hooks
+
+on:
+  push:
+    paths:
+      - "hooks/*.json"
+  workflow_dispatch:
+    inputs:
+      cohort:
+        description: "Cohort id, e.g. c20260915. Reads hooks/<cohort>.json."
+        required: true
+      live:
+        description: "Set to 1 to write. 0 validates and reports without writing."
+        required: false
+        default: "0"
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Work out which cohort files to post
+        id: pick
+        env:
+          COHORT_IN: ${{ github.event.inputs.cohort || '' }}
+        run: |
+          if [ -n "${COHORT_IN}" ]; then
+            echo "files=hooks/${COHORT_IN}.json" >> "$GITHUB_OUTPUT"
+          else
+            CHANGED=$(git diff --name-only HEAD^ HEAD -- 'hooks/*.json' | tr '\n' ' ')
+            echo "files=${CHANGED}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Post them
+        env:
+          FUNNEL_CRON_KEY: ${{ secrets.FUNNEL_CRON_KEY }}
+          FILES: ${{ steps.pick.outputs.files }}
+          LIVE: ${{ github.event.inputs.live || (github.event_name == 'push' && '1') || '0' }}
+        run: |
+          if [ -z "${FILES// /}" ]; then
+            echo "No cohort files changed. Nothing to do."
+            exit 0
+          fi
+
+          BASE="https://mn-automation-hub.vercel.app/api/cron/run?job=hook-io&mode=import"
+          FAILED=0
+
+          for f in ${FILES}; do
+            if [ ! -f "$f" ]; then
+              echo "::warning::${f} is gone, skipping"
+              continue
+            fi
+
+            COHORT=$(basename "$f" .json)
+            case "$COHORT" in
+              c[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]) ;;
+              *) echo "::error::${f} is not named like a cohort, e.g. c20260915.json"; FAILED=1; continue ;;
+            esac
+
+            python3 scripts/check_hook_file.py "$f" || { FAILED=1; continue; }
+
+            echo "Posting ${f} for ${COHORT} (live=${LIVE})"
+            curl -sS --fail-with-body -X POST -H 'content-type: application/json' --data-binary "@${f}" "${BASE}&cohort=${COHORT}&key=${FUNNEL_CRON_KEY}&live=${LIVE}" -o response.json || FAILED=1
+
+            if grep -qiE '"email"|@[a-z0-9.-]+\.[a-z]{2,}' response.json; then
+              echo "::error::Refusing to print: response contains personal data"
+              exit 1
+            fi
+
+            cat response.json
+            echo
+            python3 scripts/report_hook_import.py response.json || FAILED=1
+          done
+
+          exit ${FAILED}

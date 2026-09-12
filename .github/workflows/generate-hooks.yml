@@ -5,13 +5,20 @@
 # three days to notice and re-run it by hand.
 #
 # The endpoint researches a handful of leads per call and reports how many are
-# left, so this loops until it reports none. A cohort of 250 is a few minutes
-# of looping. Looping here rather than inside the function is deliberate: a
-# serverless function has a sixty second ceiling and a cohort does not fit in
-# it, but a GitHub Actions job has hours.
+# left, so this loops until it reports none. Looping here rather than inside
+# the function is deliberate: a serverless function has a sixty second ceiling
+# and a cohort does not fit in it, but a GitHub Actions job has hours.
 #
 # Nothing sends. Hooks land on the lead record; the campaign they feed is
 # created paused on Monday and Marina presses Launch.
+#
+# 12 Sep 2026: the first live run researched all 265 leads and returned 3
+# hooks, because the model was answering without searching and the job had no
+# way to notice. Two guards were added after it:
+#   - reset, so a fixed researcher can actually re-run a cohort. Verdicts are
+#     sticky by design, so without this a bad run poisons the cohort forever.
+#   - the searches-per-lead check below, which kills a run that is not
+#     searching after three passes instead of letting it burn the whole cohort.
 
 name: generate-hooks
 
@@ -27,9 +34,17 @@ on:
       batch:
         description: "Leads researched per call, 1 to 8"
         required: false
-        default: "4"
+        default: "3"
       live:
         description: "Set to 1 to actually research. This spends Anthropic credits."
+        required: false
+        default: "0"
+      reset:
+        description: "Set to 1 to clear every verdict in the cohort FIRST, then research it again."
+        required: false
+        default: "0"
+      debug:
+        description: "Set to 1 to research one batch and print the raw model replies without writing anything."
         required: false
         default: "0"
 
@@ -41,16 +56,48 @@ jobs:
         env:
           FUNNEL_CRON_KEY: ${{ secrets.FUNNEL_CRON_KEY }}
           COHORT: ${{ github.event.inputs.cohort || '' }}
-          BATCH: ${{ github.event.inputs.batch || '4' }}
+          BATCH: ${{ github.event.inputs.batch || '3' }}
           LIVE: ${{ github.event.inputs.live || (github.event_name == 'schedule' && '1') || '0' }}
+          RESET: ${{ github.event.inputs.reset || '0' }}
+          DEBUG: ${{ github.event.inputs.debug || '0' }}
         run: |
           BASE="https://mn-automation-hub.vercel.app/api/cron/run?job=generate-hooks"
-          TOTAL_DRAFT=0
+
+          # A verdict is sticky: a lead that has one is never picked up again.
+          # So re-running a fixed researcher over a cohort that a broken run
+          # already marked does nothing at all unless the verdicts go first.
+          if [ "${RESET}" = "1" ]; then
+            echo "Clearing existing verdicts for ${COHORT:-next tuesday}"
+            curl -sS --fail-with-body \
+              "${BASE}&key=${FUNNEL_CRON_KEY}&cohort=${COHORT}&reset=1&live=${LIVE}" \
+              -o reset.json
+            cat reset.json
+            echo
+          fi
+
+          # One batch, raw model replies, nothing written. This is the cheap
+          # way to see whether the model is searching before spending a cohort.
+          if [ "${DEBUG}" = "1" ]; then
+            curl -sS --fail-with-body \
+              "${BASE}&key=${FUNNEL_CRON_KEY}&cohort=${COHORT}&batch=${BATCH}&debug=1" \
+              -o response.json
+            if grep -qiE '"email"|@[a-z0-9.-]+\.[a-z]{2,}' response.json; then
+              echo "Refusing to print: response contains personal data"
+              exit 1
+            fi
+            cat response.json
+            echo
+            exit 0
+          fi
 
           # Hard ceiling on iterations. A bug that stopped decrementing the
           # remaining count would otherwise loop until the job times out,
-          # spending real money on every pass.
-          for i in $(seq 1 120); do
+          # spending real money on every pass. Three leads a pass over a 265
+          # lead cohort is about 90 passes, so this leaves real headroom.
+          TOTAL_SEARCHES=0
+          TOTAL_LEADS=0
+
+          for i in $(seq 1 250); do
             curl -sS --fail-with-body \
               "${BASE}&key=${FUNNEL_CRON_KEY}&cohort=${COHORT}&batch=${BATCH}&live=${LIVE}" \
               -o response.json
@@ -69,7 +116,23 @@ jobs:
             grep -q '"ok":true' response.json
 
             REMAINING=$(python3 -c "import json;print(json.load(open('response.json')).get('remaining',0))")
-            echo "Pass ${i}: ${REMAINING} left"
+            PASS_SEARCHES=$(python3 -c "import json;print(json.load(open('response.json')).get('searchesUsed',0))")
+            PASS_LEADS=$(python3 -c "import json;print(json.load(open('response.json')).get('researched',0))")
+            TOTAL_SEARCHES=$((TOTAL_SEARCHES + PASS_SEARCHES))
+            TOTAL_LEADS=$((TOTAL_LEADS + PASS_LEADS))
+            echo "Pass ${i}: ${REMAINING} left, ${PASS_SEARCHES} searches this pass"
+
+            # The failure that produced 3 hooks from 265 leads was silent: the
+            # job ran clean, reported no errors, and every lead came back
+            # NO-TRIGGER in under four seconds because the model never
+            # searched. Nothing in the loop could tell that apart from a quiet
+            # cohort. Now it can, and it stops rather than spending the rest.
+            if [ "${LIVE}" = "1" ] && [ "${i}" -ge 3 ] && [ "${TOTAL_SEARCHES}" -eq 0 ]; then
+              echo "STOPPING: ${TOTAL_LEADS} leads researched and not one web search ran."
+              echo "The model is answering from memory, so every verdict so far is worthless."
+              echo "Re-run with debug=1 to see the raw replies before spending any more."
+              exit 1
+            fi
 
             if [ "${REMAINING}" -eq 0 ]; then
               echo "Cohort fully researched."
@@ -86,16 +149,31 @@ jobs:
             sleep 2
           done
 
+          echo "Searches across the run: ${TOTAL_SEARCHES} over ${TOTAL_LEADS} leads"
+
           python3 - <<'PY'
           import json
           d = json.load(open("response.json"))
           c = d.get("counts", {})
-          print("FINAL", json.dumps({
+          draft = c.get("DRAFT", 0) or 0
+          total = d.get("leadsInCohort", 0) or 0
+          summary = {
               "cohort": d.get("cohort"),
-              "leads": d.get("leadsInCohort"),
-              "draft": c.get("DRAFT"),
+              "leads": total,
+              "draft": draft,
               "noTrigger": c.get("NO-TRIGGER"),
               "exclude": c.get("EXCLUDE"),
+              "unresearched": c.get("UNRESEARCHED"),
               "remaining": d.get("remaining"),
-          }))
+              "hookRate": round(100.0 * draft / total, 1) if total else 0.0,
+          }
+          print("FINAL", json.dumps(summary))
+
+          # The target is 60% of the cohort carrying a personalised hook. A run
+          # well under that is not necessarily broken - some cohorts are quiet -
+          # but it is never something to find out about on send day.
+          if total and summary["hookRate"] < 35.0:
+              print("")
+              print("WARNING: hook rate is %.1f%%, well below the 60%% target." % summary["hookRate"])
+              print("Check searches per lead above. Zero or near-zero means the researcher, not the cohort.")
           PY

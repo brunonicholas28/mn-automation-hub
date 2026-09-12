@@ -14,7 +14,7 @@ d = json.load(open(src))
 if not d.get("ok"):
     raise SystemExit("export failed: %s" % d.get("error"))
 
-ALLOWED = {"dealId", "company", "domain", "researched"}
+ALLOWED = {"dealId", "company", "domain", "firstName", "researched"}
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 
 rows = []
@@ -25,7 +25,9 @@ for r in d.get("rows", []):
     blob = " ".join(str(v) for v in r.values())
     if EMAIL.search(blob):
         raise SystemExit("an address reached the roster for deal %s, refusing to write" % r.get("dealId"))
-    rows.append({k: r.get(k, "") for k in ("dealId", "company", "domain", "researched")})
+    if " " in str(r.get("firstName", "")).strip():
+        raise SystemExit("a full name reached the roster for deal %s, refusing to write" % r.get("dealId"))
+    rows.append({k: r.get(k, "") for k in ("dealId", "company", "domain", "firstName", "researched")})
 
 rows.sort(key=lambda r: int(r["dealId"]) if str(r["dealId"]).isdigit() else 0)
 

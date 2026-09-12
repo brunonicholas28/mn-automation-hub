@@ -265,10 +265,10 @@
  },
  {
   "dealId": "357",
-  "verdict": "NO-TRIGGER",
-  "trigger": "none",
-  "url": "none",
-  "date": "none",
+  "verdict": "DRAFT",
+  "trigger": "your Milken Global Conference panel on AI in the enterprise",
+  "url": "https://milkeninstitute.org/events/global-conference-2026/speakers/jamie-montgomery",
+  "date": "2026-05-04",
   "confidence": "High"
  },
  {
@@ -841,10 +841,10 @@
  },
  {
   "dealId": "429",
-  "verdict": "NO-TRIGGER",
-  "trigger": "none",
-  "url": "none",
-  "date": "none",
+  "verdict": "DRAFT",
+  "trigger": "Husk launching its AI powered distributed energy platform",
+  "url": "https://www.huskpowersystems.com/news-insights-articles/husk-launches-ai-enabled-distributed-energy-resources-(der)-platform-dedicated-to-powering-prosperity-for-30-million-in-the-global-south",
+  "date": "2025-11-25",
   "confidence": "High"
  },
  {
@@ -905,7 +905,7 @@
  },
  {
   "dealId": "437",
-  "verdict": "NO-TRIGGER",
+  "verdict": "EXCLUDE",
   "trigger": "none",
   "url": "none",
   "date": "none",
@@ -1593,11 +1593,11 @@
  },
  {
   "dealId": "523",
-  "verdict": "NO-TRIGGER",
-  "trigger": "none",
-  "url": "none",
-  "date": "none",
-  "confidence": "Low"
+  "verdict": "DRAFT",
+  "trigger": "Turnip Truck hitting 25 years in Nashville",
+  "url": "https://www.nashvillescene.com/food_drink/bites/turnip-truck-25th-birthday/article_23f54d95-dbde-45bd-a772-6686ea532ea2.html",
+  "date": "2026-04-29",
+  "confidence": "High"
  },
  {
   "dealId": "524",
@@ -1701,14 +1701,6 @@
   "trigger": "none",
   "url": "none",
   "date": "none",
-  "confidence": "High"
- },
- {
-  "dealId": "537",
-  "verdict": "DRAFT",
-  "trigger": "the Fin acquisition closing this week",
-  "url": "https://www.salesforce.com/news/press-releases/2026/09/10/salesforce-completes-acquisition-of-fin/",
-  "date": "2026-09-10",
   "confidence": "High"
  },
  {

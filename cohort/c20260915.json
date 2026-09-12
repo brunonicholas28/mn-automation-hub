@@ -1,0 +1,1596 @@
+{
+ "cohort": "c20260915",
+ "count": 265,
+ "rows": [
+  {
+   "dealId": "34",
+   "company": "",
+   "domain": "catapultlabs.xyz",
+   "researched": ""
+  },
+  {
+   "dealId": "49",
+   "company": "",
+   "domain": "halo365.com",
+   "researched": ""
+  },
+  {
+   "dealId": "55",
+   "company": "",
+   "domain": "penfida.co.uk",
+   "researched": ""
+  },
+  {
+   "dealId": "65",
+   "company": "",
+   "domain": "doubleword.ai",
+   "researched": ""
+  },
+  {
+   "dealId": "92",
+   "company": "",
+   "domain": "datapine.com",
+   "researched": ""
+  },
+  {
+   "dealId": "97",
+   "company": "",
+   "domain": "melvillecapital.com",
+   "researched": ""
+  },
+  {
+   "dealId": "161",
+   "company": "",
+   "domain": "startuptap.com",
+   "researched": ""
+  },
+  {
+   "dealId": "190",
+   "company": "",
+   "domain": "genesis-capital.com",
+   "researched": ""
+  },
+  {
+   "dealId": "193",
+   "company": "",
+   "domain": "ftpartners.com",
+   "researched": ""
+  },
+  {
+   "dealId": "194",
+   "company": "",
+   "domain": "greythorneassociates.com",
+   "researched": ""
+  },
+  {
+   "dealId": "203",
+   "company": "",
+   "domain": "enchanted.tools",
+   "researched": ""
+  },
+  {
+   "dealId": "205",
+   "company": "",
+   "domain": "velorumcapital.com",
+   "researched": ""
+  },
+  {
+   "dealId": "215",
+   "company": "",
+   "domain": "quintes.nl",
+   "researched": ""
+  },
+  {
+   "dealId": "226",
+   "company": "",
+   "domain": "aec-partners.com",
+   "researched": ""
+  },
+  {
+   "dealId": "237",
+   "company": "",
+   "domain": "peakstone.com",
+   "researched": ""
+  },
+  {
+   "dealId": "251",
+   "company": "",
+   "domain": "sileadership.com",
+   "researched": ""
+  },
+  {
+   "dealId": "287",
+   "company": "",
+   "domain": "rkjpartners.com",
+   "researched": ""
+  },
+  {
+   "dealId": "290",
+   "company": "",
+   "domain": "zeligfintech.com",
+   "researched": "EXCLUDE"
+  },
+  {
+   "dealId": "316",
+   "company": "",
+   "domain": "floom.com",
+   "researched": ""
+  },
+  {
+   "dealId": "321",
+   "company": "",
+   "domain": "ababysbreath.org",
+   "researched": ""
+  },
+  {
+   "dealId": "322",
+   "company": "",
+   "domain": "themomskart.com",
+   "researched": ""
+  },
+  {
+   "dealId": "324",
+   "company": "",
+   "domain": "saracasolutions.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "325",
+   "company": "",
+   "domain": "linde.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "326",
+   "company": "",
+   "domain": "viridiinternational.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "327",
+   "company": "",
+   "domain": "audioauthority.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "328",
+   "company": "",
+   "domain": "vention.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "329",
+   "company": "",
+   "domain": "exidasp.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "330",
+   "company": "",
+   "domain": "lcgclabs.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "331",
+   "company": "",
+   "domain": "fabrichq.ai",
+   "researched": "EXCLUDE"
+  },
+  {
+   "dealId": "332",
+   "company": "",
+   "domain": "addverb.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "333",
+   "company": "",
+   "domain": "adeptpackaging.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "334",
+   "company": "",
+   "domain": "africanoriginals.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "335",
+   "company": "",
+   "domain": "basetwo.ai",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "336",
+   "company": "",
+   "domain": "luzagroup.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "337",
+   "company": "",
+   "domain": "nextpower.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "338",
+   "company": "",
+   "domain": "theoffbeatstudios.com",
+   "researched": "EXCLUDE"
+  },
+  {
+   "dealId": "339",
+   "company": "",
+   "domain": "instrumental.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "340",
+   "company": "",
+   "domain": "proto21.ae",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "341",
+   "company": "",
+   "domain": "bigmurphys.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "342",
+   "company": "",
+   "domain": "nexxis.com.au",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "343",
+   "company": "",
+   "domain": "sunflower-labs.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "344",
+   "company": "",
+   "domain": "fibervent.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "345",
+   "company": "",
+   "domain": "surgeventures.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "346",
+   "company": "",
+   "domain": "guardiancp.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "347",
+   "company": "",
+   "domain": "makeable.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "348",
+   "company": "",
+   "domain": "arctospartners.com",
+   "researched": "EXCLUDE"
+  },
+  {
+   "dealId": "349",
+   "company": "",
+   "domain": "atemcap.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "350",
+   "company": "",
+   "domain": "westbridgecap.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "351",
+   "company": "",
+   "domain": "panteracapital.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "352",
+   "company": "",
+   "domain": "thomabravo.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "353",
+   "company": "",
+   "domain": "flourishventures.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "354",
+   "company": "",
+   "domain": "bfly.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "355",
+   "company": "",
+   "domain": "rulezero.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "356",
+   "company": "",
+   "domain": "grgve.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "357",
+   "company": "",
+   "domain": "marchcp.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "358",
+   "company": "",
+   "domain": "kedaara.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "359",
+   "company": "",
+   "domain": "human.capital",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "360",
+   "company": "",
+   "domain": "rpev.com.br",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "361",
+   "company": "",
+   "domain": "leftlanecap.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "362",
+   "company": "",
+   "domain": "gaugecapital.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "363",
+   "company": "",
+   "domain": "cataliocapital.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "364",
+   "company": "",
+   "domain": "startuphealth.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "365",
+   "company": "",
+   "domain": "forteventures.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "366",
+   "company": "",
+   "domain": "athlonfo.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "367",
+   "company": "",
+   "domain": "soundcorecap.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "368",
+   "company": "",
+   "domain": "owlvc.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "369",
+   "company": "",
+   "domain": "middleground.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "370",
+   "company": "",
+   "domain": "1komma5grad.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "371",
+   "company": "",
+   "domain": "butacons.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "372",
+   "company": "",
+   "domain": "clearmountain.io",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "373",
+   "company": "",
+   "domain": "ovgroups.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "374",
+   "company": "",
+   "domain": "verdesolutions.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "375",
+   "company": "",
+   "domain": "ritewaycustomhomes.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "376",
+   "company": "",
+   "domain": "westcorp.net",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "377",
+   "company": "",
+   "domain": "groupeduval.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "378",
+   "company": "",
+   "domain": "hemea.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "379",
+   "company": "",
+   "domain": "spacesolutions.co.uk",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "380",
+   "company": "",
+   "domain": "documentcrunch.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "381",
+   "company": "",
+   "domain": "cymcor.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "382",
+   "company": "",
+   "domain": "grahamhart.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "383",
+   "company": "",
+   "domain": "hayy.sa",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "384",
+   "company": "",
+   "domain": "protex-az.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "385",
+   "company": "",
+   "domain": "permit.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "386",
+   "company": "",
+   "domain": "tgmassociates.com",
+   "researched": "EXCLUDE"
+  },
+  {
+   "dealId": "387",
+   "company": "",
+   "domain": "themakeover.my",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "388",
+   "company": "",
+   "domain": "greatroofing.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "389",
+   "company": "",
+   "domain": "macallangroup.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "390",
+   "company": "",
+   "domain": "mckinc.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "391",
+   "company": "",
+   "domain": "gardenonthewall.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "392",
+   "company": "",
+   "domain": "bisonenergyusa.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "393",
+   "company": "",
+   "domain": "therenovatedhome.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "394",
+   "company": "",
+   "domain": "sigmonconstruction.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "395",
+   "company": "",
+   "domain": "caridon.co.uk",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "396",
+   "company": "",
+   "domain": "multitec-distribution.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "397",
+   "company": "",
+   "domain": "whsesolutions.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "398",
+   "company": "",
+   "domain": "beztak.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "399",
+   "company": "",
+   "domain": "shabakkatksa.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "400",
+   "company": "",
+   "domain": "northrenew.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "401",
+   "company": "",
+   "domain": "ineratec.de",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "402",
+   "company": "",
+   "domain": "trea-tech.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "403",
+   "company": "",
+   "domain": "nuanceenergy.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "404",
+   "company": "",
+   "domain": "onergy.in",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "405",
+   "company": "",
+   "domain": "lemon.energy",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "406",
+   "company": "",
+   "domain": "climatetrade.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "407",
+   "company": "",
+   "domain": "ffventures.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "408",
+   "company": "",
+   "domain": "climeworks.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "409",
+   "company": "",
+   "domain": "terawattinfrastructure.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "410",
+   "company": "",
+   "domain": "solarityenergia.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "411",
+   "company": "",
+   "domain": "facilityig.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "412",
+   "company": "",
+   "domain": "charmindustrial.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "413",
+   "company": "",
+   "domain": "powur.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "414",
+   "company": "",
+   "domain": "harmonyenergy.co.uk",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "415",
+   "company": "",
+   "domain": "fairmat.tech",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "416",
+   "company": "",
+   "domain": "11millionacres.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "417",
+   "company": "",
+   "domain": "quinbrook.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "418",
+   "company": "",
+   "domain": "focused-energy.world",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "419",
+   "company": "",
+   "domain": "revisionenergy.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "420",
+   "company": "",
+   "domain": "savewithprogressive.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "421",
+   "company": "",
+   "domain": "vestelingenieros.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "422",
+   "company": "",
+   "domain": "cur8.earth",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "423",
+   "company": "",
+   "domain": "atlasren.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "424",
+   "company": "",
+   "domain": "clir.eco",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "425",
+   "company": "",
+   "domain": "cabansystems.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "426",
+   "company": "",
+   "domain": "urbanchain.co.uk",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "427",
+   "company": "",
+   "domain": "okrasolar.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "428",
+   "company": "",
+   "domain": "energyvault.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "429",
+   "company": "",
+   "domain": "huskpowersystems.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "430",
+   "company": "",
+   "domain": "simble.io",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "431",
+   "company": "",
+   "domain": "energyx.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "432",
+   "company": "",
+   "domain": "novaluz.es",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "433",
+   "company": "",
+   "domain": "solfacil.com.br",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "434",
+   "company": "",
+   "domain": "gravityitresources.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "435",
+   "company": "",
+   "domain": "equusllc.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "436",
+   "company": "",
+   "domain": "lynxeye.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "437",
+   "company": "",
+   "domain": "ottofinance.com.br",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "438",
+   "company": "",
+   "domain": "york.ie",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "439",
+   "company": "",
+   "domain": "finservconsulting.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "440",
+   "company": "",
+   "domain": "bgsdc.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "441",
+   "company": "",
+   "domain": "profitadvisorygroup.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "442",
+   "company": "",
+   "domain": "alderkoten.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "443",
+   "company": "",
+   "domain": "lsnpartners.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "444",
+   "company": "",
+   "domain": "integratedgrowthadvisors.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "445",
+   "company": "",
+   "domain": "18coffees.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "446",
+   "company": "",
+   "domain": "benjaminrossgroup.com",
+   "researched": "EXCLUDE"
+  },
+  {
+   "dealId": "447",
+   "company": "",
+   "domain": "outcomecapital.com",
+   "researched": "EXCLUDE"
+  },
+  {
+   "dealId": "448",
+   "company": "",
+   "domain": "allenandpartnersinc.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "449",
+   "company": "",
+   "domain": "crido.pl",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "450",
+   "company": "",
+   "domain": "topofminds.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "451",
+   "company": "",
+   "domain": "tractioncapital.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "452",
+   "company": "",
+   "domain": "aec-partners.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "453",
+   "company": "",
+   "domain": "acmcapitalpartners.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "454",
+   "company": "",
+   "domain": "compassitc.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "455",
+   "company": "",
+   "domain": "g51.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "456",
+   "company": "",
+   "domain": "axiompath.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "457",
+   "company": "",
+   "domain": "ycp.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "458",
+   "company": "",
+   "domain": "pivotpointconsulting.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "459",
+   "company": "",
+   "domain": "moduscreate.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "460",
+   "company": "",
+   "domain": "advisoryboardarchitects.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "461",
+   "company": "",
+   "domain": "oaktreetalent.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "462",
+   "company": "",
+   "domain": "bridgeviewit.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "463",
+   "company": "",
+   "domain": "fuchs.it",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "464",
+   "company": "",
+   "domain": "breakaway.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "465",
+   "company": "",
+   "domain": "gcefe.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "466",
+   "company": "",
+   "domain": "albeck.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "467",
+   "company": "",
+   "domain": "alt-alpha.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "468",
+   "company": "",
+   "domain": "datameaning.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "469",
+   "company": "",
+   "domain": "akoyacapital.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "470",
+   "company": "",
+   "domain": "360.one",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "471",
+   "company": "",
+   "domain": "fortitudeinvestments.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "472",
+   "company": "",
+   "domain": "caldergr.com",
+   "researched": "EXCLUDE"
+  },
+  {
+   "dealId": "473",
+   "company": "",
+   "domain": "alkalipartners.com",
+   "researched": "EXCLUDE"
+  },
+  {
+   "dealId": "474",
+   "company": "",
+   "domain": "greatersumventures.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "475",
+   "company": "",
+   "domain": "asa.in",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "476",
+   "company": "",
+   "domain": "aurumequity.com",
+   "researched": "EXCLUDE"
+  },
+  {
+   "dealId": "477",
+   "company": "",
+   "domain": "argandequity.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "478",
+   "company": "",
+   "domain": "corm.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "479",
+   "company": "",
+   "domain": "greycroft.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "480",
+   "company": "",
+   "domain": "oakhcft.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "481",
+   "company": "",
+   "domain": "brydon.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "482",
+   "company": "",
+   "domain": "felicis.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "483",
+   "company": "",
+   "domain": "clearlake.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "484",
+   "company": "",
+   "domain": "kaszek.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "485",
+   "company": "",
+   "domain": "partnerswealth.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "486",
+   "company": "",
+   "domain": "flashpointvc.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "487",
+   "company": "",
+   "domain": "farragutcapitalpartners.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "488",
+   "company": "",
+   "domain": "atomic.vc",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "489",
+   "company": "",
+   "domain": "rosecliff.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "490",
+   "company": "",
+   "domain": "summittrail.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "491",
+   "company": "",
+   "domain": "bpc.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "492",
+   "company": "",
+   "domain": "apis.pe",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "493",
+   "company": "",
+   "domain": "consonancecapital.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "494",
+   "company": "",
+   "domain": "aventurescapital.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "495",
+   "company": "",
+   "domain": "creationinvestments.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "496",
+   "company": "",
+   "domain": "distinctcapitalpartners.com",
+   "researched": "EXCLUDE"
+  },
+  {
+   "dealId": "497",
+   "company": "",
+   "domain": "ieqcapital.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "498",
+   "company": "",
+   "domain": "greystonefg.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "499",
+   "company": "",
+   "domain": "kineticos.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "500",
+   "company": "",
+   "domain": "29sc.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "501",
+   "company": "",
+   "domain": "arborventures.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "502",
+   "company": "",
+   "domain": "cyclecapital.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "503",
+   "company": "",
+   "domain": "consortium-brands.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "504",
+   "company": "",
+   "domain": "tarinatarantino.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "505",
+   "company": "",
+   "domain": "thegeorgiahempcompany.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "506",
+   "company": "",
+   "domain": "mobello.se",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "507",
+   "company": "",
+   "domain": "thchealth.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "508",
+   "company": "",
+   "domain": "taleagroupspa.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "509",
+   "company": "",
+   "domain": "amsale.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "510",
+   "company": "",
+   "domain": "chari.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "511",
+   "company": "",
+   "domain": "suitsandskirtscleaners.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "512",
+   "company": "",
+   "domain": "purespectrumcbd.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "513",
+   "company": "",
+   "domain": "rickshawbags.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "514",
+   "company": "",
+   "domain": "hazelandolive.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "515",
+   "company": "",
+   "domain": "imagetec.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "516",
+   "company": "",
+   "domain": "masterofmalt.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "517",
+   "company": "",
+   "domain": "shopmonkees.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "518",
+   "company": "",
+   "domain": "taggngo.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "519",
+   "company": "",
+   "domain": "bodyenergyclub.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "520",
+   "company": "",
+   "domain": "premierorganics.org",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "521",
+   "company": "",
+   "domain": "matatraders.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "522",
+   "company": "",
+   "domain": "devrew.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "523",
+   "company": "",
+   "domain": "theturniptruck.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "524",
+   "company": "",
+   "domain": "worldwidegolfshops.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "525",
+   "company": "",
+   "domain": "canadacustomautoworks.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "526",
+   "company": "",
+   "domain": "howtobearedhead.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "527",
+   "company": "",
+   "domain": "financialguide.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "528",
+   "company": "",
+   "domain": "avantcha.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "529",
+   "company": "",
+   "domain": "cognaize.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "530",
+   "company": "",
+   "domain": "propertyplatform.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "531",
+   "company": "",
+   "domain": "pragmacraft.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "532",
+   "company": "",
+   "domain": "innoship.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "533",
+   "company": "",
+   "domain": "camptocamp.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "534",
+   "company": "",
+   "domain": "teamitg.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "535",
+   "company": "",
+   "domain": "valueglobal.net",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "536",
+   "company": "",
+   "domain": "getipe.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "537",
+   "company": "",
+   "domain": "salesforce.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "538",
+   "company": "",
+   "domain": "arenadata.io",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "539",
+   "company": "",
+   "domain": "wealth.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "540",
+   "company": "",
+   "domain": "innopsys.fr",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "541",
+   "company": "",
+   "domain": "wearehalo.co.uk",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "542",
+   "company": "",
+   "domain": "markerseven.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "543",
+   "company": "",
+   "domain": "xt-commerce.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "544",
+   "company": "",
+   "domain": "arbisoft.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "545",
+   "company": "",
+   "domain": "lalal.ai",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "546",
+   "company": "",
+   "domain": "mptechnology.ch",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "547",
+   "company": "",
+   "domain": "digitalbazaar.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "548",
+   "company": "",
+   "domain": "fascatcoaching.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "549",
+   "company": "",
+   "domain": "cadencellcus.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "550",
+   "company": "",
+   "domain": "foo.mobi",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "551",
+   "company": "",
+   "domain": "momentumitgroup.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "552",
+   "company": "",
+   "domain": "ethnictechnologies.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "553",
+   "company": "",
+   "domain": "thecorepoint.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "554",
+   "company": "",
+   "domain": "integratouch.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "555",
+   "company": "",
+   "domain": "tngtech.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "556",
+   "company": "",
+   "domain": "atomontage.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "557",
+   "company": "",
+   "domain": "hsdsuk.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "558",
+   "company": "",
+   "domain": "deliverect.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "559",
+   "company": "",
+   "domain": "cradle.bio",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "560",
+   "company": "",
+   "domain": "tdinternational.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "561",
+   "company": "",
+   "domain": "wearemaze.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "562",
+   "company": "",
+   "domain": "eagleviewcap.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "563",
+   "company": "",
+   "domain": "nanocosmos.de",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "564",
+   "company": "",
+   "domain": "blackwoodseven.com",
+   "researched": "NO-TRIGGER"
+  },
+  {
+   "dealId": "565",
+   "company": "",
+   "domain": "iba-america.com",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "566",
+   "company": "",
+   "domain": "n8n.io",
+   "researched": "DRAFT"
+  },
+  {
+   "dealId": "567",
+   "company": "",
+   "domain": "co.com",
+   "researched": "NO-TRIGGER"
+  }
+ ]
+}

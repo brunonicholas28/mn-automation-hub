@@ -29,6 +29,2011 @@
   "trigger": "none",
   "url": "none",
   "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "328",
+  "verdict": "DRAFT",
+  "trigger": "Vention raise $110M USD to scale physical AI in manufacturing",
+  "url": "https://www.prnewswire.com/news-releases/vention-raises-110m-usd-150m-cad-to-accelerate-physical-ai-deployment-across-global-manufacturing-302670544.html",
+  "date": "2026-01-27",
+  "confidence": "High"
+ },
+ {
+  "dealId": "329",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "330",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "331",
+  "verdict": "EXCLUDE",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "332",
+  "verdict": "DRAFT",
+  "trigger": "Addverb unveil Elixis-W, India's first wheeled humanoid robot",
+  "url": "https://www.indiatvnews.com/technology/news/addverb-technologies-showcases-made-in-india-humanoid-robot-elixis-w-at-ai-impact-summit-2026-2026-02-18-1030802",
+  "date": "2026-02-18",
+  "confidence": "High"
+ },
+ {
+  "dealId": "333",
+  "verdict": "DRAFT",
+  "trigger": "Adept Group named a Gartner Cool Vendor for AI and data tools",
+  "url": "https://www.prnewswire.com/news-releases/adept-group-recognized-as-a-cool-vendor-in-the-2025-gartner-cool-vendors-in-ai-and-data-tools-for-packaging-epr-reports-302667155.html",
+  "date": "2026-01-22",
+  "confidence": "High"
+ },
+ {
+  "dealId": "334",
+  "verdict": "DRAFT",
+  "trigger": "your feature in African Business's Women in Leadership 2026",
+  "url": "https://african.business/2026/03/trade-investment/african-business-women-in-leadership-2026-part-four",
+  "date": "2026-03-05",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "335",
+  "verdict": "DRAFT",
+  "trigger": "Basetwo being selected for Canada's AI Compute Access Fund",
+  "url": "https://www.globenewswire.com/news-release/2026/05/27/3302161/0/en/Basetwo-Selected-for-Canada-s-AI-Compute-Access-Fund.html",
+  "date": "2026-05-27",
+  "confidence": "High"
+ },
+ {
+  "dealId": "336",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "337",
+  "verdict": "DRAFT",
+  "trigger": "the deal to acquire Zimmermann PV-Steel Group",
+  "url": "https://investors.nextracker.com/news/news-details/2026/Nextpower-Announces-Agreement-to-Acquire-Zimmermann-PV-Steel-Group-Strengthening-Solar-Product-Portfolio-and-Market-Footprint/default.aspx",
+  "date": "2026-06-22",
+  "confidence": "High"
+ },
+ {
+  "dealId": "338",
+  "verdict": "EXCLUDE",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "339",
+  "verdict": "DRAFT",
+  "trigger": "the new investment from NVIDIA's NVentures and Root Ventures",
+  "url": "https://instrumental.com/resources/company/instrumental-announces-new-investment-to-accelerate-server-and-rack-manufacturing-data-centers/",
+  "date": "2026-03-09",
+  "confidence": "High"
+ },
+ {
+  "dealId": "340",
+  "verdict": "DRAFT",
+  "trigger": "your 16 metre 3D printed Regent Seaglider at the Dubai Airshow",
+  "url": "https://www.proto21.ae/blog/3d-printed-full-scale-16m-long-regent-seaglider-mockup-at-dubai-air-show",
+  "date": "2025-12-06",
+  "confidence": "High"
+ },
+ {
+  "dealId": "341",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "342",
+  "verdict": "DRAFT",
+  "trigger": "Nexxis acquiring BladeBUG for wind turbine inspection",
+  "url": "https://nexxis.com/nexxis-technology-acquires-bladebug-expanding-global-wind-energy-inspection-capabilities/",
+  "date": "2026-08-26",
+  "confidence": "High"
+ },
+ {
+  "dealId": "343",
+  "verdict": "DRAFT",
+  "trigger": "the FAA waiver letting one pilot fly six drones",
+  "url": "https://sunflower-labs.com/post/press-release-2026-05-05",
+  "date": "2026-05-05",
+  "confidence": "High"
+ },
+ {
+  "dealId": "344",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "345",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "346",
+  "verdict": "DRAFT",
+  "trigger": "Guardian closing Fund IV at $441 million",
+  "url": "https://www.businesswire.com/news/home/20260218073150/en/Guardian-Capital-Partners-Secures-$441-Million-for-Oversubscribed-Fund-IV-in-Seven-Months",
+  "date": "2026-02-18",
+  "confidence": "High"
+ },
+ {
+  "dealId": "347",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "348",
+  "verdict": "EXCLUDE",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "349",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "350",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "351",
+  "verdict": "DRAFT",
+  "trigger": "Pantera launching the S&P Pantera Digital Asset Index",
+  "url": "https://panteracapital.com/blockchain-letter/introducing-the-sp-pantera-digital-asset-index/",
+  "date": "2026-07-21",
+  "confidence": "High"
+ },
+ {
+  "dealId": "352",
+  "verdict": "DRAFT",
+  "trigger": "Thoma Bravo completing the $12.3 billion Dayforce acquisition",
+  "url": "https://www.barchart.com/story/news/20407/thoma-bravo-completes-acquisition-of-dayforce",
+  "date": "2026-02-04",
+  "confidence": "High"
+ },
+ {
+  "dealId": "353",
+  "verdict": "DRAFT",
+  "trigger": "Flourish co-leading Kulipa's $6.2 million seed round",
+  "url": "https://launchbaseafrica.com/2026/04/02/flourish-ventures-backs-flutterwave-stablecoin-partner-kulipa-in-6-2m-seed-round/",
+  "date": "2026-04-02",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "354",
+  "verdict": "DRAFT",
+  "trigger": "your investment in Custom Flavors alongside Graham Partners",
+  "url": "https://finance.yahoo.com/small-business/articles/custom-flavors-announces-partnership-butterfly-130300451.html",
+  "date": "2026-07-22",
+  "confidence": "High"
+ },
+ {
+  "dealId": "355",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "356",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "357",
+  "verdict": "DRAFT",
+  "trigger": "your Milken Global Conference panel on AI in the enterprise",
+  "url": "https://milkeninstitute.org/events/global-conference-2026/speakers/jamie-montgomery",
+  "date": "2026-05-04",
+  "confidence": "High"
+ },
+ {
+  "dealId": "358",
+  "verdict": "DRAFT",
+  "trigger": "Kedaara's $200 million strategic investment in Tynor",
+  "url": "https://www.business-standard.com/content/press-releases-ani/kedaara-capital-announces-a-usd-200-million-strategic-investment-in-tynor-india-s-leading-orthopaedic-support-and-rehabilitation-brand-126082500567_1.html",
+  "date": "2026-08-25",
+  "confidence": "High"
+ },
+ {
+  "dealId": "359",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "360",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "361",
+  "verdict": "DRAFT",
+  "trigger": "Left Lane's new wave of senior promotions and six investor hires",
+  "url": "https://www.prnewswire.com/news-releases/left-lane-capital-announces-new-wave-of-senior-promotions-and-hires-302842053.html",
+  "date": "2026-08-04",
+  "confidence": "High"
+ },
+ {
+  "dealId": "362",
+  "verdict": "DRAFT",
+  "trigger": "Gauge's growth investment in Ecosystems",
+  "url": "https://www.prnewswire.com/news-releases/gauge-capital-announces-strategic-growth-investment-in-ecosystems-302662987.html",
+  "date": "2026-01-20",
+  "confidence": "High"
+ },
+ {
+  "dealId": "363",
+  "verdict": "DRAFT",
+  "trigger": "Catalio closing over $325 million for its second credit fund",
+  "url": "https://www.businesswire.com/news/home/20260107517000/en/Catalio-Capital-Management-Raises-More-than-$325M-in-its-Oversubscribed-Second-Credit-Fund-to-Enable-Healthcare-Innovation-Through-Structured-Credit",
+  "date": "2026-01-07",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "364",
+  "verdict": "DRAFT",
+  "trigger": "StartUp Health realigning the 2026 Digital Health Awards around Health Moonshots",
+  "url": "https://www.startuphealth.com/startup-health-blog/startup-health-and-digital-health-hub-foundation-align-2026-digital-health-awards-with-health-moonshots",
+  "date": "2026-01-13",
+  "confidence": "High"
+ },
+ {
+  "dealId": "365",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "366",
+  "verdict": "DRAFT",
+  "trigger": "Athlon hosting the 2nd Annual Elite Family Office Sports Summit",
+  "url": "https://www.globenewswire.com/news-release/2026/05/19/3297653/0/en/athlon-family-office-proudly-hosts-the-2nd-annual-elite-family-office-sports-summit-in-boca-raton-florida.html",
+  "date": "2026-05-19",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "367",
+  "verdict": "DRAFT",
+  "trigger": "Soundcore closing Fund III oversubscribed at $450 million",
+  "url": "https://www.prnewswire.com/news-releases/soundcore-capital-partners-closes-oversubscribed-fund-iii-at-450-million-302692517.html",
+  "date": "2026-02-19",
+  "confidence": "High"
+ },
+ {
+  "dealId": "368",
+  "verdict": "DRAFT",
+  "trigger": "Owl Ventures leading Cloudforce's $10 million Series A",
+  "url": "https://www.edtechinnovationhub.com/news/owl-ventures-leads-10m-series-a-in-cloudforce-as-regulated-ai-demand-accelerates",
+  "date": "2026-01-12",
+  "confidence": "High"
+ },
+ {
+  "dealId": "369",
+  "verdict": "DRAFT",
+  "trigger": "MiddleGround acquiring Pi Innovo from Dana for the New Eagle platform",
+  "url": "https://middleground.com/news/middleground-capital-completes-add-on-for-new-eagle-platform-with-acquisition-of-pi-innovo/",
+  "date": "2026-02-03",
+  "confidence": "High"
+ },
+ {
+  "dealId": "370",
+  "verdict": "DRAFT",
+  "trigger": "1KOMMA5 mobilising 1 billion euro for home heat pumps and solar",
+  "url": "https://1komma5.com/en/press/press-releases/1komma5-mobilizes-euro1-billion-for-residential-heat-pumps-batteries-and-solar-systems/",
+  "date": "2026-06-17",
+  "confidence": "High"
+ },
+ {
+  "dealId": "371",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "372",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "373",
+  "verdict": "DRAFT",
+  "trigger": "Ocean Vantage's Petronas IWCS panel appointment across ten packages",
+  "url": "https://www.thestar.com.my/business/business-news/2026/08/14/ocean-vantage-units-appointed-petronas-panel-contractors",
+  "date": "2026-08-14",
+  "confidence": "High"
+ },
+ {
+  "dealId": "374",
+  "verdict": "DRAFT",
+  "trigger": "Verde Solutions making the 2026 Inc. 5000 at No. 1,832",
+  "url": "https://www.inc.com/profile/verde-solutions",
+  "date": "2026-08-01",
+  "confidence": "High"
+ },
+ {
+  "dealId": "375",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "376",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "377",
+  "verdict": "DRAFT",
+  "trigger": "you won the Cite administrative de Lille transformation",
+  "url": "https://www.groupeduval.com/le-groupe-duval-remporte-la-transformation-de-la-cite-administrative-de-lille/",
+  "date": "2026-05-29",
+  "confidence": "High"
+ },
+ {
+  "dealId": "378",
+  "verdict": "DRAFT",
+  "trigger": "Alain Dinin joining hemea's board",
+  "url": "https://lexpress-franchise.com/franchise/hemea/actualites/une-figure-emblematique-de-limmobilier-rejoint-le-conseil-dadministration-de-hemea/",
+  "date": "2026-02-10",
+  "confidence": "High"
+ },
+ {
+  "dealId": "379",
+  "verdict": "DRAFT",
+  "trigger": "your ASA Design Awards win for the Energy Transition Skills Hub",
+  "url": "https://www.spacesolutions.co.uk/space-solutions-recognised-at-aberdeen-society-of-architects-design-awards-2026-for-transformational-energy-transition-skills-hub/",
+  "date": "2026-03-18",
+  "confidence": "High"
+ },
+ {
+  "dealId": "380",
+  "verdict": "DRAFT",
+  "trigger": "Trimble acquiring Document Crunch",
+  "url": "https://news.trimble.com/2026-04-02-Trimble-to-Acquire-Document-Crunch-to-Add-AI-Powered-Risk-Management-and-Document-Compliance-to-Trimble-Construction-One-Project-Delivery-Ecosystem",
+  "date": "2026-04-02",
+  "confidence": "High"
+ },
+ {
+  "dealId": "381",
+  "verdict": "DRAFT",
+  "trigger": "CYMCOR joining Limbach",
+  "url": "https://www.limbachinc.com/news-events/press-releases/limbach-announces-acquisition-of-cymcor-to-strengthen-data-center-services-platform/",
+  "date": "2026-08-04",
+  "confidence": "High"
+ },
+ {
+  "dealId": "382",
+  "verdict": "DRAFT",
+  "trigger": "James Wrigg joining as your new COO",
+  "url": "https://www.grahamhart.com/news/meet-our-new-chief-operating-officer-a-vision-for-the-future-of-graham-hart-home-builder",
+  "date": "2026-08-04",
+  "confidence": "High"
+ },
+ {
+  "dealId": "383",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "384",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "385",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "386",
+  "verdict": "EXCLUDE",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "387",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "388",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "389",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "390",
+  "verdict": "DRAFT",
+  "trigger": "your ULI Washington award for Cedar Hill Regional Medical Center",
+  "url": "https://www.mckinc.com/news/2026-excellence-in-civic-development-award",
+  "date": "2026-05-06",
+  "confidence": "High"
+ },
+ {
+  "dealId": "391",
+  "verdict": "DRAFT",
+  "trigger": "your new partnership with Myceen on mycelium acoustic panels",
+  "url": "https://www.gardenonthewall.com/news/garden-on-the-wall-and-myceen-announce-strategic-collaboration-to-bring-carbon-negative-mycelium-acoustic-panels-to-the-us-commercial-interior-design-market",
+  "date": "2026-04-29",
+  "confidence": "High"
+ },
+ {
+  "dealId": "392",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "393",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "394",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "395",
+  "verdict": "DRAFT",
+  "trigger": "Caridon Foundation taking Bronze at the International CSR Excellence Awards",
+  "url": "https://www.caridongroup.co.uk/news/caridon-foundation-wins-bronze-at-the-international-csr-excellence-awards-2026/",
+  "date": "2026-06-02",
+  "confidence": "High"
+ },
+ {
+  "dealId": "396",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "397",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "398",
+  "verdict": "DRAFT",
+  "trigger": "the grand opening of the Bank Tower Apartments in Southgate",
+  "url": "https://beztak.com/wp-content/uploads/2026/08/Bank-Tower-Grand-Opening.pdf",
+  "date": "2026-08-19",
+  "confidence": "High"
+ },
+ {
+  "dealId": "399",
+  "verdict": "DRAFT",
+  "trigger": "Shabakkat KSA signing the TAWAL infrastructure O&M agreement",
+  "url": "https://iptpowertech.com/news-events/tawal-shabakkat-agreement",
+  "date": "2026-09-08",
+  "confidence": "High"
+ },
+ {
+  "dealId": "400",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "401",
+  "verdict": "DRAFT",
+  "trigger": "your fuel-to-flight demo with Deutsche Aircraft at ILA Berlin",
+  "url": "https://www.deutscheaircraft.com/news/deutsche-aircraft-and-ineratec-demonstrate-fuel-to-flight-concept-at-ila-berlin",
+  "date": "2026-06-11",
+  "confidence": "High"
+ },
+ {
+  "dealId": "402",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "403",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "404",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "405",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "406",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "407",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "408",
+  "verdict": "DRAFT",
+  "trigger": "your 10 year carbon removal agreement with TD Bank",
+  "url": "https://climeworks.com/press-release/climeworks-solutions-signs-10-year-cdr-agreement-with-td-bank",
+  "date": "2026-06-01",
+  "confidence": "High"
+ },
+ {
+  "dealId": "409",
+  "verdict": "DRAFT",
+  "trigger": "Terawatt's $300m debt financing in June",
+  "url": "https://www.prnewswire.com/news-releases/terawatt-infrastructure-secures-300m-in-secured-debt-financing-to-expand-its-full-stack-autonomous-vehicle-infrastructure-platform-302808743.html",
+  "date": "2026-06-24",
+  "confidence": "High"
+ },
+ {
+  "dealId": "410",
+  "verdict": "DRAFT",
+  "trigger": "your acquisition of EVOL's 30 solar plants in Chile",
+  "url": "https://www.pv-magazine-latam.com/2026/09/01/solarity-compra-en-chile-30-plantas-solares-que-suman-52-mwp-y-supera-las-300-instalaciones-en-operacion/",
+  "date": "2026-09-01",
+  "confidence": "High"
+ },
+ {
+  "dealId": "411",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "412",
+  "verdict": "DRAFT",
+  "trigger": "the JPMorganChase 61,500 tonne deal and $20m debt facility",
+  "url": "https://charmindustrial.com/press/jp-morgan-chase-and-charm-industrial-build-on-longstanding-relationship",
+  "date": "2026-06-04",
+  "confidence": "High"
+ },
+ {
+  "dealId": "413",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "414",
+  "verdict": "DRAFT",
+  "trigger": "your Accelerating the Clean Energy Transition win at the British Renewable Energy Awards",
+  "url": "https://harmonyenergy.co.uk/harmony-energy-wins-accelerating-clean-energy-transition-award-brea-2026/",
+  "date": "2026-06-16",
+  "confidence": "High"
+ },
+ {
+  "dealId": "415",
+  "verdict": "DRAFT",
+  "trigger": "the Airbus contract on recovering value from A350 composite panels",
+  "url": "https://www.fairmat.tech/press-releases/collaboration-airbus",
+  "date": "2026-03-12",
+  "confidence": "High"
+ },
+ {
+  "dealId": "416",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "417",
+  "verdict": "DRAFT",
+  "trigger": "closing Renewables Impact Fund II at 587 million pounds, oversubscribed",
+  "url": "https://www.quinbrook.com/news-insights/quinbrook-closes-gbp-587-million-renewables-impact-fund-ii-oversubscribed/",
+  "date": "2026-07-08",
+  "confidence": "High"
+ },
+ {
+  "dealId": "418",
+  "verdict": "DRAFT",
+  "trigger": "the 240 million dollar Series A, the largest fully secured round in fusion",
+  "url": "https://www.focused-energy.co/news-release/focused-energy-sichert-240-millionen-us-dollar",
+  "date": "2026-05-27",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "419",
+  "verdict": "DRAFT",
+  "trigger": "ReVision ranked number one solar installer in New England by Solar Power World",
+  "url": "https://www.revisionenergy.com/blog/top-solar-installer-2026/",
+  "date": "2026-08-07",
+  "confidence": "High"
+ },
+ {
+  "dealId": "420",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "421",
+  "verdict": "DRAFT",
+  "trigger": "the NxN Datacenters deal engineering power for ten Spanish data centres",
+  "url": "https://www.vestelingenieros.com/conexion-electrica-nxn-datacenters/",
+  "date": "2026-05-14",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "422",
+  "verdict": "DRAFT",
+  "trigger": "CUR8's 2030 Portfolio launch with Isometric in April",
+  "url": "https://decarbonfuse.com/posts/cur8-and-isometric-launch-derisked-carbon-removal-portfolio-for-corporate-net-zero-goals",
+  "date": "2026-04-03",
+  "confidence": "High"
+ },
+ {
+  "dealId": "423",
+  "verdict": "DRAFT",
+  "trigger": "the landmark 3 billion dollar refinancing across Chile, Brazil and Mexico",
+  "url": "https://atlasrenewableenergy.com/news-and-insights/atlas-renewable-energy-secures-landmark-usd-3-billion-refinancing-for-its-portfolio-in-latin-america/",
+  "date": "2026-02-23",
+  "confidence": "High"
+ },
+ {
+  "dealId": "424",
+  "verdict": "DRAFT",
+  "trigger": "Clir's $3.25m NRC IRAP funding for solar data standardisation research",
+  "url": "https://www.clir.eco/news/receives-funding-for-data-standardization-and-validation-research-to-accelerate-solar-energy-performance",
+  "date": "2026-07-09",
+  "confidence": "High"
+ },
+ {
+  "dealId": "425",
+  "verdict": "DRAFT",
+  "trigger": "Caban Energy launching its Energy as a Service model in Colombia",
+  "url": "https://www.eltiempo.com/economia/empresas/caban-energy-impulsa-en-colombia-energia-renovable-sin-inversion-inicial-asi-funciona-su-nuevo-modelo-para-empresas-3555810",
+  "date": "2026-05-14",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "426",
+  "verdict": "DRAFT",
+  "trigger": "the 15 year AMPYR solar PPA with SoWatt",
+  "url": "https://www.urbanchain.co.uk/news/urbanchain-and-sowatt-scale-private-energy-market-with-15-year-ampyr-solar-ppa",
+  "date": "2026-06-17",
+  "confidence": "High"
+ },
+ {
+  "dealId": "427",
+  "verdict": "DRAFT",
+  "trigger": "Okra's first debt financed mesh grid project with InfraCredit in Nigeria",
+  "url": "https://businessday.ng/energy/article/mesh-grid-solar-project-extends-power-access-to-25000-off-grid-nigerians/",
+  "date": "2026-01-27",
+  "confidence": "High"
+ },
+ {
+  "dealId": "428",
+  "verdict": "DRAFT",
+  "trigger": "the $275m Eagle Point financing for 275 MW of generation capacity",
+  "url": "https://www.businesswire.com/news/home/20260910716916/en/Energy-Vault-Closes-Financing-on-275-MW-of-Rolls-Royce-MTU-Reciprocating-Engine-Generation-Capacity-for-Hyperscale-AI-Infrastructure",
+  "date": "2026-09-10",
+  "confidence": "High"
+ },
+ {
+  "dealId": "429",
+  "verdict": "DRAFT",
+  "trigger": "Husk launching its AI powered distributed energy platform",
+  "url": "https://www.huskpowersystems.com/news-insights-articles/husk-launches-ai-enabled-distributed-energy-resources-(der)-platform-dedicated-to-powering-prosperity-for-30-million-in-the-global-south",
+  "date": "2025-11-25",
+  "confidence": "High"
+ },
+ {
+  "dealId": "430",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "431",
+  "verdict": "DRAFT",
+  "trigger": "Invest Qatar backing EnergyX's global command centre in Qatar",
+  "url": "https://www.gccbusinessnews.com/energyx-global-command-center-in-qatar/",
+  "date": "2026-02-02",
+  "confidence": "High"
+ },
+ {
+  "dealId": "432",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "433",
+  "verdict": "DRAFT",
+  "trigger": "Solfacil's new distribution centre opening in Tubarao, Santa Catarina",
+  "url": "https://canalsolar.com.br/solfacil-inaugura-centro-de-distribuicao/",
+  "date": "2026-05-19",
+  "confidence": "High"
+ },
+ {
+  "dealId": "434",
+  "verdict": "DRAFT",
+  "trigger": "Gravity making the 2026 Inc. 5000 at No. 3,816",
+  "url": "https://www.inc.com/profile/gravity-resources",
+  "date": "2026-08-11",
+  "confidence": "High"
+ },
+ {
+  "dealId": "435",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "436",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "437",
+  "verdict": "EXCLUDE",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "438",
+  "verdict": "DRAFT",
+  "trigger": "York IE adding OpenView veteran Tom Holahan as general partner",
+  "url": "https://york.ie/blog/york-ie-adds-tom-holahan-as-general-partner/",
+  "date": "2026-02-12",
+  "confidence": "High"
+ },
+ {
+  "dealId": "439",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "440",
+  "verdict": "DRAFT",
+  "trigger": "Beacon launching its new Energy Practice with Clayton Seigle",
+  "url": "https://bgsdc.com/news_article/beacon-global-strategies-announces-launch-of-energy-practice-welcomes-clayton-seigle-as-managing-director/",
+  "date": "2026-07-09",
+  "confidence": "High"
+ },
+ {
+  "dealId": "441",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "442",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "443",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "444",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "445",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "446",
+  "verdict": "EXCLUDE",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "447",
+  "verdict": "EXCLUDE",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "448",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "449",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "450",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "451",
+  "verdict": "DRAFT",
+  "trigger": "your $1M investment in Refr Sports",
+  "url": "https://tractioncapital.com/refr-sports/",
+  "date": "2026-07-13",
+  "confidence": "High"
+ },
+ {
+  "dealId": "452",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "453",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "454",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "455",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "456",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "457",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "458",
+  "verdict": "DRAFT",
+  "trigger": "Pivot Point's Modern Healthcare Best Places to Work win in May",
+  "url": "https://www.prnewswire.com/news-releases/pivot-point-consulting-named-one-of-modern-healthcares-best-places-to-work-for-2026-during-transformative-year-of-growth-302777643.html",
+  "date": "2026-05-20",
+  "confidence": "High"
+ },
+ {
+  "dealId": "459",
+  "verdict": "DRAFT",
+  "trigger": "Modus Create earning its fourth AWS Competency in security",
+  "url": "https://www.businesswire.com/news/home/20260520198125/en/Modus-Create-Earns-AWS-Security-Competency-Recognized-for-Deep-Technical-Expertise-in-Highly-Regulated-Industries",
+  "date": "2026-05-20",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "460",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "461",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "462",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "463",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "464",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "465",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "466",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "467",
+  "verdict": "DRAFT",
+  "trigger": "your 51% acquisition of the Mekhali Power transmission project",
+  "url": "https://www.freepressjournal.in/business/dilip-buildcon-divests-mekhali-power-project-for-2914-crore-alpha-alternatives-to-acquire-51-equity",
+  "date": "2026-09-09",
+  "confidence": "High"
+ },
+ {
+  "dealId": "468",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "469",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "470",
+  "verdict": "DRAFT",
+  "trigger": "360 ONE's FY26 results in April, profit up 20.7%",
+  "url": "https://www.freepressjournal.in/business/360-one-wam-fy26-profit-rises-207-to-1225-crore-q4-revenue-grows-185-to-780-crore",
+  "date": "2026-04-21",
+  "confidence": "High"
+ },
+ {
+  "dealId": "471",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "472",
+  "verdict": "EXCLUDE",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "473",
+  "verdict": "EXCLUDE",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "474",
+  "verdict": "DRAFT",
+  "trigger": "your majority investment in Tapin2",
+  "url": "https://greatersumventures.com/news/greater-sum-ventures-announces-majority-investment-in-tapin2",
+  "date": "2026-05-07",
+  "confidence": "High"
+ },
+ {
+  "dealId": "475",
+  "verdict": "DRAFT",
+  "trigger": "you advised Membrane Group on the Kurita transaction",
+  "url": "https://www.bakertilly.in/news/membrane-group-kurita-strategic-transaction",
+  "date": "2026-08-26",
+  "confidence": "High"
+ },
+ {
+  "dealId": "476",
+  "verdict": "EXCLUDE",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "477",
+  "verdict": "DRAFT",
+  "trigger": "Argand named a 2026 Top 50 middle market PE firm",
+  "url": "https://argandequity.com/argand-recognized-for-the-third-year-in-the-top-pe-firms-in-the-middle-market-awards-2/",
+  "date": "2026-03-02",
+  "confidence": "High"
+ },
+ {
+  "dealId": "478",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "479",
+  "verdict": "DRAFT",
+  "trigger": "you led ConductorOne's $79M Series B",
+  "url": "https://www.greycroft.com/perspectives/building-the-future-of-ai-native-identity-security-greycroft-leads-conductorones-series-b/",
+  "date": "2025-10-28",
+  "confidence": "High"
+ },
+ {
+  "dealId": "480",
+  "verdict": "DRAFT",
+  "trigger": "Marc Andrusko joining as fintech partner from a16z",
+  "url": "https://www.oakhcft.com/news/welcoming-marc-andrusko-to-oak-hc-ft",
+  "date": "2026-03-18",
+  "confidence": "High"
+ },
+ {
+  "dealId": "481",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "482",
+  "verdict": "DRAFT",
+  "trigger": "Tony Shi joining Felicis as investment partner",
+  "url": "https://www.felicis.com/blog/tony-shi-felicis-partner-researcher-founders",
+  "date": "2026-09-02",
+  "confidence": "High"
+ },
+ {
+  "dealId": "483",
+  "verdict": "DRAFT",
+  "trigger": "Clearlake's $14.8bn Fund VIII close in June",
+  "url": "https://clearlake.com/news/clearlake-capital-closes-on-148-billion-to-capitalize-on-ai-driven-transformation-and-continue-sector-focused-investment-strategy/",
+  "date": "2026-06-16",
+  "confidence": "High"
+ },
+ {
+  "dealId": "484",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "485",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "486",
+  "verdict": "DRAFT",
+  "trigger": "your first close on Direct Secondary Fund II targeting $75M to $100M",
+  "url": "https://www.prnewswire.com/news-releases/strong-investor-demand-drives-first-close-for-flashpoints-second-direct-secondary-fund-targeting-us75-100m-302667698.html",
+  "date": "2026-01-22",
+  "confidence": "High"
+ },
+ {
+  "dealId": "487",
+  "verdict": "DRAFT",
+  "trigger": "your investment in Mainstage Theatrical alongside Sidereal",
+  "url": "https://farragutcapitalpartners.com/news-list/2025farragut-invests-in-mainstage",
+  "date": "2026-04-01",
+  "confidence": "High"
+ },
+ {
+  "dealId": "488",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "489",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "490",
+  "verdict": "DRAFT",
+  "trigger": "your $21 billion deal to join Corient",
+  "url": "https://www.investmentnews.com/ria-news/corient-welcomes-21-billion-summit-trail-advisors-in-supersize-deal/267699",
+  "date": "2026-08-05",
+  "confidence": "High"
+ },
+ {
+  "dealId": "491",
+  "verdict": "DRAFT",
+  "trigger": "your investment in Person Centred Software",
+  "url": "https://www.bpc.com/insights/person-centred-software-announces-new-investment-and-strategic-partnership-as-it-enters-next-chapter-of-growth",
+  "date": "2025-12-04",
+  "confidence": "High"
+ },
+ {
+  "dealId": "492",
+  "verdict": "DRAFT",
+  "trigger": "your $1.23 billion Fund III close, double its predecessor",
+  "url": "https://www.apis.pe/news/apis-partners-announces-final-close-of-123-billion-fund-iii-double-its-predecessor/",
+  "date": "2026-05-07",
+  "confidence": "High"
+ },
+ {
+  "dealId": "493",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "494",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "495",
+  "verdict": "DRAFT",
+  "trigger": "Impact Credit Fund II's $46m final close in January",
+  "url": "https://www.prnewswire.com/news-releases/creation-investments-announces-final-close-of-impact-credit-fund-ii-302655291.html",
+  "date": "2026-01-07",
+  "confidence": "High"
+ },
+ {
+  "dealId": "496",
+  "verdict": "EXCLUDE",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "497",
+  "verdict": "DRAFT",
+  "trigger": "Kim Stolz joining IEQ as Senior Managing Director in New York",
+  "url": "https://www.prnewswire.com/news-releases/ieq-capital-welcomes-kim-stolz-as-senior-managing-director-302831379.html",
+  "date": "2026-07-22",
+  "confidence": "High"
+ },
+ {
+  "dealId": "498",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "499",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "500",
+  "verdict": "DRAFT",
+  "trigger": "your 1,225 unit Prince George's County multifamily portfolio acquisition",
+  "url": "https://www.29sc.com/29th-street-capital-acquires-three-multifamily-communities-in-pg-county-maryland",
+  "date": "2026-02-20",
+  "confidence": "High"
+ },
+ {
+  "dealId": "501",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "502",
+  "verdict": "DRAFT",
+  "trigger": "you leading Quintessent's $40M Series A",
+  "url": "https://www.finsmes.com/2026/08/quintessent-raises-40m-in-series-a-funding.html",
+  "date": "2026-08-24",
+  "confidence": "High"
+ },
+ {
+  "dealId": "503",
+  "verdict": "DRAFT",
+  "trigger": "your acquisition of California Pizza Kitchen",
+  "url": "https://www.businesswire.com/news/home/20251216781126/en/Consortium-Brand-Partners-to-Acquire-California-Pizza-Kitchen-in-Partnership-with-Eldridge-Industries-Aurify-Brands-and-Convive-Brands",
+  "date": "2025-12-16",
+  "confidence": "High"
+ },
+ {
+  "dealId": "504",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "505",
+  "verdict": "DRAFT",
+  "trigger": "the Bless Your Heart sweet high tea launch",
+  "url": "https://thegeorgiahempcompany.com/introducing-bless-your-heart-sweet-high-tea/",
+  "date": "2026-02-02",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "506",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "507",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "508",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "509",
+  "verdict": "DRAFT",
+  "trigger": "your Spring 2026 collection at New York Bridal Fashion Week",
+  "url": "https://cfda.com/news/view-the-official-nyfw-bridal-april-2026-schedule/",
+  "date": "2026-03-04",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "510",
+  "verdict": "DRAFT",
+  "trigger": "your $12M Series A led by SPE Capital and Orange Ventures",
+  "url": "https://fintech.global/2025/10/16/moroccan-fintech-chari-bags-12m-series-a-round/",
+  "date": "2025-10-16",
+  "confidence": "High"
+ },
+ {
+  "dealId": "511",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "512",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "513",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "514",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "515",
+  "verdict": "DRAFT",
+  "trigger": "your acquisition of Warehouse Direct's Managed Print Division",
+  "url": "https://imagetec.com/imagetec-l-p-acquires-the-managed-print-division-of-warehouse-direct/",
+  "date": "2026-03-02",
+  "confidence": "High"
+ },
+ {
+  "dealId": "516",
+  "verdict": "DRAFT",
+  "trigger": "your five bottle 90s football whisky range for the World Cup",
+  "url": "https://www.thespiritsbusiness.com/2026/04/master-of-malt-brings-90s-football-nostalgia-to-range/",
+  "date": "2026-04-15",
+  "confidence": "High"
+ },
+ {
+  "dealId": "517",
+  "verdict": "DRAFT",
+  "trigger": "New Jersey's first Monkee's boutique opening in Bedminster",
+  "url": "https://www.prnewswire.com/news-releases/new-jerseys-first-monkees-boutique-brings-a-highly-personal-shopping-destination-to-somerset-hills-302836422.html",
+  "date": "2026-07-28",
+  "confidence": "High"
+ },
+ {
+  "dealId": "518",
+  "verdict": "DRAFT",
+  "trigger": "your acquisition of Wash Factory in Utah",
+  "url": "https://www.carwash.org/car-wash-news/miracle-car-wash-advisors-represents-wash-factory-in-sale-to-tagg-n-go",
+  "date": "2026-07-31",
+  "confidence": "High"
+ },
+ {
+  "dealId": "519",
+  "verdict": "DRAFT",
+  "trigger": "the Olympic Village franchise grand opening in June",
+  "url": "https://www.globenewswire.com/news-release/2026/06/09/3308712/0/en/from-store-manager-to-franchise-owner-body-energy-club-celebrates-ritesh-s-full-circle-journey-at-olympic-village-grand-opening-june-13-2026.html",
+  "date": "2026-06-09",
+  "confidence": "High"
+ },
+ {
+  "dealId": "520",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "521",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "522",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "523",
+  "verdict": "DRAFT",
+  "trigger": "Turnip Truck hitting 25 years in Nashville",
+  "url": "https://www.nashvillescene.com/food_drink/bites/turnip-truck-25th-birthday/article_23f54d95-dbde-45bd-a772-6686ea532ea2.html",
+  "date": "2026-04-29",
+  "confidence": "High"
+ },
+ {
+  "dealId": "524",
+  "verdict": "DRAFT",
+  "trigger": "your acquisition of Big 5 Sporting Goods",
+  "url": "https://shop-eat-surf-outdoor.com/press-releases/big-5-sporting-goods-corporation-completes-merger-with-worldwide-golf-and-capitol-hill-group/612525/",
+  "date": "2025-10-03",
+  "confidence": "High"
+ },
+ {
+  "dealId": "525",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "526",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "527",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "528",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "529",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "530",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "531",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "532",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "533",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "534",
+  "verdict": "DRAFT",
+  "trigger": "the Tractor Supply partnership cutting their email marketing cost 32%",
+  "url": "https://www.prnewswire.com/news-releases/tractor-supply-co-transforms-its-marketing-content-through-new-itg-partnership-302757285.html",
+  "date": "2026-04-29",
+  "confidence": "High"
+ },
+ {
+  "dealId": "535",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "536",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "538",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "539",
+  "verdict": "DRAFT",
+  "trigger": "your $65M Series B to power AI wealth management",
+  "url": "https://www.businesswire.com/news/home/20260416563869/en/Wealth.com-Raises-%2465-Million-Series-B-to-Power-AI-Future-of-Wealth-Management",
+  "date": "2026-04-16",
+  "confidence": "High"
+ },
+ {
+  "dealId": "540",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "541",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "542",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "543",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "544",
+  "verdict": "DRAFT",
+  "trigger": "Arbisoft's MOU with Thakaat to expand digital education in Saudi Arabia",
+  "url": "https://www.einpresswire.com/article/895751443/arbisoft-and-thakaat-sign-mou-to-advance-digital-education-in-alignment-with-saudi-vision-2030",
+  "date": "2026-03-02",
+  "confidence": "High"
+ },
+ {
+  "dealId": "545",
+  "verdict": "DRAFT",
+  "trigger": "your six stem VST plugin running fully offline in the DAW",
+  "url": "https://www.recordoftheday.com/news-and-press/lalalai-expands-its-vst-plugin-to-six-stem-separation-fully-offline-directly-inside-your-daw",
+  "date": "2026-04-28",
+  "confidence": "High"
+ },
+ {
+  "dealId": "546",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "547",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "548",
+  "verdict": "DRAFT",
+  "trigger": "the CoachCat 4.0 launch with your new AI coach feature",
+  "url": "https://fascatcoaching.com/blogs/training-tips/coachcat-4-0-new-app-experience/",
+  "date": "2026-08-05",
+  "confidence": "High"
+ },
+ {
+  "dealId": "549",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "550",
+  "verdict": "DRAFT",
+  "trigger": "FOO powering OMPAY's new digital wallet across Oman",
+  "url": "https://techafricanews.com/2026/04/13/uaes-foo-partners-with-ompay-to-power-omans-digital-wallet-ecosystem/",
+  "date": "2026-04-13",
+  "confidence": "High"
+ },
+ {
+  "dealId": "551",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "552",
+  "verdict": "DRAFT",
+  "trigger": "the E-Tech 2026 release with expanded African and Filipino data",
+  "url": "https://multicultural.com/articles/ethnic-technologies-is-pleased-to-announce-the-release-of-their-new-commercial-product-e-tech-2026/",
+  "date": "2026-01-23",
+  "confidence": "High"
+ },
+ {
+  "dealId": "553",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "554",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "555",
+  "verdict": "DRAFT",
+  "trigger": "your TNG R1T Chimera open weights model release",
+  "url": "https://www.tngtech.com/en/about-us/company/open-source/",
+  "date": "2025-11",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "556",
+  "verdict": "DRAFT",
+  "trigger": "the Virtual Matter platform soft launch in June",
+  "url": "https://www.atomontage.com/",
+  "date": "2026-06-25",
+  "confidence": "High"
+ },
+ {
+  "dealId": "557",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "558",
+  "verdict": "DRAFT",
+  "trigger": "your global partnership with Bounteous for first party digital ordering",
+  "url": "https://www.prnewswire.com/news-releases/deliverect-and-bounteous-forge-global-partnership-to-advance-branded-digital-ordering-302858088.html",
+  "date": "2026-08-24",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "559",
+  "verdict": "DRAFT",
+  "trigger": "your three year AI protein engineering partnership with Bayer",
+  "url": "https://www.biospace.com/press-releases/bayer-and-cradle-enter-collaboration-to-enhance-ai-enabled-antibody-discovery-and-optimization",
+  "date": "2026-01-07",
+  "confidence": "High"
+ },
+ {
+  "dealId": "560",
+  "verdict": "DRAFT",
+  "trigger": "the launch of TDI Solutions for tech enabled risk intelligence",
+  "url": "https://www.businesswire.com/news/home/20251215238295/en/TDI-Solutions-Launches-Transforming-How-Companies-Navigate-Global-Risk-with-Tech-Enabled-Intelligence",
+  "date": "2025-12-15",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "561",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "562",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "563",
+  "verdict": "DRAFT",
+  "trigger": "your launch of nanoStream Control for real time streaming security",
+  "url": "https://www.advanced-television.com/2026/03/30/nanocosmos-launches-nanostream-control/",
+  "date": "2026-03-30",
+  "confidence": "High"
+ },
+ {
+  "dealId": "564",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "565",
+  "verdict": "DRAFT",
+  "trigger": "MD Anderson selecting IBA to supply three Proteus ONE systems",
+  "url": "https://www.iba-worldwide.com/iba-tx-supply-three-proteusrone-systems",
+  "date": "2026-01-19",
+  "confidence": "High"
+ },
+ {
+  "dealId": "566",
+  "verdict": "DRAFT",
+  "trigger": "SAP investing in n8n at a $5.2 billion valuation",
+  "url": "https://www.trendingtopics.eu/sap-bets-big-on-ai-invests-in-n8n-at-a-5-2-billion-valuation/",
+  "date": "2026-05-12",
+  "confidence": "High"
+ },
+ {
+  "dealId": "567",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ }
+][
+ {
+  "dealId": "324",
+  "verdict": "DRAFT",
+  "trigger": "Dr Tapas Chakravarty joining SARACA as Principal Scientific Advisor",
+  "url": "https://natlawreview.com/press-releases/new-scientific-advisor-strengthens-saracas-engineering-and-innovation",
+  "date": "2026-05-12",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "325",
+  "verdict": "DRAFT",
+  "trigger": "Linde Engineering selected to deliver FEED for the WAH2 clean ammonia project",
+  "url": "https://www.chemengonline.com/linde-engineering-selected-for-nh3-clean-energy-ammonia-project/",
+  "date": "2026-04-02",
+  "confidence": "High"
+ },
+ {
+  "dealId": "326",
+  "verdict": "DRAFT",
+  "trigger": "Viridi and Budderfly scaling commercial battery storage to 100 sites nationwide",
+  "url": "https://www.prnewswire.com/news-releases/viridi-and-budderfly-scale-commercial-battery-storage-to-100-sites-nationwide-302802407.html",
+  "date": "2026-06-17",
+  "confidence": "High"
+ },
+ {
+  "dealId": "327",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
   "confidence": "High"
  },
  {

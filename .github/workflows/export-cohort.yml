@@ -59,13 +59,19 @@ jobs:
 
           python3 scripts/write_cohort_roster.py raw.json "cohort/${COHORT}.json"
 
-          if git diff --quiet -- "cohort/${COHORT}.json"; then
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Stage BEFORE testing for changes. A plain `git diff` does not see
+          # an untracked file, so on the very first run for a cohort it
+          # reported "unchanged" and committed nothing, which is exactly the
+          # run that matters.
+          git add "cohort/${COHORT}.json"
+
+          if git diff --cached --quiet -- "cohort/${COHORT}.json"; then
             echo "Roster unchanged, nothing to commit."
             exit 0
           fi
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "cohort/${COHORT}.json"
           git commit -m "Roster for ${COHORT}"
           git push

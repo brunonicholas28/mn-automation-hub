@@ -16,6 +16,7 @@ import linkedinScore from "../../lib/jobs/linkedin-score.js";
 import pollFunnel from "../../lib/jobs/poll-funnel.js";
 import recoveryClicked from "../../lib/jobs/recovery-clicked.js";
 import generateHooks from "../../lib/jobs/generate-hooks.js";
+import hookIo from "../../lib/jobs/hook-io.js";
 
 export const config = { maxDuration: 60 };
 
@@ -25,6 +26,7 @@ const JOBS = {
   "poll-funnel": pollFunnel,
   "recovery-clicked": recoveryClicked,
   "generate-hooks": generateHooks,
+  "hook-io": hookIo,
 };
 
 export default async function handler(req, res) {

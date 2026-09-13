@@ -9,6 +9,10 @@
 # second channel alongside the email the job itself sends. The email is the
 # one that will actually reach you; this is the backstop for the backstop.
 #
+# To prove the email actually arrives without waiting for a real outage, run
+# this workflow manually and set the "drill" input to out_of_credits. That
+# sends a clearly-marked test alert and touches no stored state.
+#
 # Like the other workflows here it runs on GitHub Actions rather than Vercel
 # Cron: the Hobby plan allows two cron jobs per account and apollo-sync and
 # linkedin-score already hold both, and Hobby crons only fire once a day.
@@ -22,6 +26,17 @@ on:
   schedule:
     - cron: "47 * * * *"
   workflow_dispatch:
+    inputs:
+      drill:
+        description: "Send a test alert email instead of checking. Leave blank for a real check."
+        required: false
+        default: ""
+        type: choice
+        options:
+          - ""
+          - out_of_credits
+          - auth
+          - no_key
 
 jobs:
   check:
@@ -30,10 +45,15 @@ jobs:
       - name: Probe the Anthropic API through the credit-check job
         env:
           FUNNEL_CRON_KEY: ${{ secrets.FUNNEL_CRON_KEY }}
+          DRILL: ${{ inputs.drill }}
         run: |
           set -euo pipefail
-          response=$(curl -sS -w '\n%{http_code}' --max-time 60 \
-            "https://mn-automation-hub.vercel.app/api/cron/run?job=credit-check&key=${FUNNEL_CRON_KEY}")
+          url="https://mn-automation-hub.vercel.app/api/cron/run?job=credit-check&key=${FUNNEL_CRON_KEY}"
+          if [ -n "${DRILL:-}" ]; then
+            url="${url}&drill=${DRILL}"
+            echo "FIRE DRILL: sending a test alert for ${DRILL}. Nothing is actually wrong."
+          fi
+          response=$(curl -sS -w '\n%{http_code}' --max-time 60 "$url")
           body=$(printf '%s' "$response" | sed '$d')
           code=$(printf '%s' "$response" | tail -n1)
           echo "$body"

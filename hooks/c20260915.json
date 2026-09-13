@@ -1,5 +1,173 @@
 [
  {
+  "dealId": "34",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "49",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "55",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "65",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "92",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "97",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "161",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "190",
+  "verdict": "EXCLUDE",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "193",
+  "verdict": "EXCLUDE",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "194",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "203",
+  "verdict": "DRAFT",
+  "trigger": "11 Mirokai robots rolling out across APREH care facilities",
+  "url": "https://enchanted.tools/events/apreh/",
+  "date": "2025-12-01",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "205",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "215",
+  "verdict": "DRAFT",
+  "trigger": "your acquisition of Bon Adviesgroep in Almere",
+  "url": "https://www.amweb.nl/159164/quintes-doet-overname-in-almere",
+  "date": "2026-08-03",
+  "confidence": "High"
+ },
+ {
+  "dealId": "226",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "237",
+  "verdict": "EXCLUDE",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "251",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "287",
+  "verdict": "EXCLUDE",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "290",
+  "verdict": "EXCLUDE",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "316",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "321",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
+  "dealId": "322",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low"
+ },
+ {
   "dealId": "324",
   "verdict": "DRAFT",
   "trigger": "Dr Tapas Chakravarty joining SARACA as Principal Scientific Advisor",
@@ -1761,6 +1929,14 @@
   "trigger": "none",
   "url": "none",
   "date": "none",
+  "confidence": "High"
+ },
+ {
+  "dealId": "537",
+  "verdict": "DRAFT",
+  "trigger": "the $3.6bn Fin acquisition to power Agentforce",
+  "url": "https://www.salesforce.com/news/press-releases/2026/06/15/salesforce-signs-definitive-agreement-to-acquire-fin/",
+  "date": "2026-06-15",
   "confidence": "High"
  },
  {

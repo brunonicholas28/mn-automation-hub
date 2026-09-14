@@ -30,6 +30,9 @@
 //      &cap=80               how many make the cut (default 80)
 //      &mode=inspect         coverage counts only, no personal data
 //      &mode=followups       Day 7 voice-note scripts for requests sent 3-14 days ago
+//
+// Every row also carries its funnel stage and the voice-note script written for
+// that stage - see STAGES / voiceScript() below.
 //      &refresh=1            rebuild rather than serve the 10-minute cache
 //      &live=1               also write Lane2 Score + LinkedIn Batch to Pipedrive
 //
@@ -196,6 +199,30 @@ async function listAllPersons() {
     start += 500;
   }
   return out;
+}
+
+// The lowest-scoring of the nine report areas, written onto the deal by the
+// report pipeline. "Top Blocker Title" is an existing Deal field - it was created for exactly
+// this and then never wired to anything, which is why it has been sitting
+// empty. Resolved by NAME rather than a hardcoded hash so neither side needs a
+// redeploy if it is ever renamed or recreated.
+// Returns null if the field is missing, in which case the completed-report
+// script keeps its visible [lowest-scoring area] placeholder rather than
+// inventing one.
+const TOP_BLOCKER_FIELD_NAME =
+  process.env.PIPEDRIVE_TOP_BLOCKER_FIELD || "Top Blocker Title";
+
+async function topBlockerFieldKey() {
+  try {
+    const fields = await pd("/dealFields?limit=500");
+    const want = TOP_BLOCKER_FIELD_NAME.trim().toLowerCase();
+    const hit = (fields || []).find(
+      (f) => String(f && f.name ? f.name : "").trim().toLowerCase() === want
+    );
+    return (hit && hit.key) || null;
+  } catch (err) {
+    return null;
+  }
 }
 
 async function listPipelineDeals() {
@@ -480,11 +507,12 @@ async function buildRoster() {
   const cohortCampaigns = await listCohortCampaigns();
   if (!cohortCampaigns.length) cohortCampaigns.push({ id: SOURCE_CAMPAIGN, cohort: null });
 
-  const [blocklist, persons, deals, apollo, notes] = await Promise.all([
+  const [blocklist, persons, deals, apollo, blockerKey, notes] = await Promise.all([
     listBlocklist(),
     listAllPersons(),
     listPipelineDeals(),
     listApolloContacts().catch(() => []),
+    topBlockerFieldKey().catch(() => null),
     // A missing note is a missing personal opener, not a missing person. The
     // list still has to build if Pipedrive's notes endpoint is unhappy.
     listAllNotes().catch(() => []),
@@ -608,8 +636,11 @@ async function buildRoster() {
       visitedAt: state.visitedAt || null,
       startedAt: state.startedAt || null,
       nudgedAt: state.nudgedAt || null,
+      completedAt: state.completedAt || null,
       repeatClicker: Number(state.visitCount || 0) > 1 && !state.startedAt,
       trigger: (deal && (triggerByDealId.get(deal.id) || {}).fact) || null,
+      topBlocker:
+        (blockerKey && deal && deal[blockerKey] ? String(deal[blockerKey]).trim() : "") || null,
       personId: (person && person.id) || null,
       dealId: (deal && deal.id) || null,
       dealUrl: deal && PD_DOMAIN ? "https://" + PD_DOMAIN + ".pipedrive.com/deal/" + deal.id : null,
@@ -621,6 +652,10 @@ async function buildRoster() {
     const scored = scoreOf(row);
     row.score = scored.score;
     row.reasons = scored.reasons;
+    row.stage = stageOf(row);
+    const voice = voiceScript(row);
+    row.voiceScript = voice.text;
+    row.voiceGaps = voice.gaps;
     rows.push(row);
   }
 
@@ -658,6 +693,10 @@ async function buildRoster() {
       withDeal: rows.filter((r) => r.dealId).length,
       withTrigger: rows.filter((r) => r.trigger).length,
       replied: rows.filter((r) => r.replied).length,
+      byStage: Object.keys(STAGES).reduce(function (acc, k) {
+        acc[k] = rows.filter((r) => !r.excluded && r.stage === k).length;
+        return acc;
+      }, {}),
       clicked: rows.filter((r) => r.visitedAt).length,
       excluded: rows.filter((r) => r.excluded).length,
       blocklistSize: blocklist.entries.length,
@@ -738,14 +777,20 @@ const PAGE_CSS = [
   ".cnt{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}",
   ".cnt.over{color:#C0392B;font-weight:700}",
   ".warn{font-size:12px;color:var(--muted)}",
+  ".chip.stage{font-weight:650;color:var(--ink);border-color:var(--ink)}",
+  ".chip.s-replied{color:var(--on-accent);background:var(--accent);border-color:var(--accent)}",
+  ".chip.s-completed{color:var(--on-accent);background:var(--teal);border-color:var(--teal)}",
+  ".chip.s-abandoned,.chip.s-repeat{color:var(--teal);border-color:var(--teal)}",
+  ".chip.s-clicked,.chip.s-cold{font-weight:500;color:var(--muted);border-color:var(--line)}",
+  ".note.voice .warn{color:#C0392B}",
   ".noterow .copy{margin-left:auto}",
   ".btn.copied{background:var(--teal);border-color:var(--teal);color:var(--on-accent)}",
   "footer{max-width:940px;margin:0 auto 60px;padding:0 16px;font-size:13px;color:var(--muted)}",
   "footer p{margin:8px 0}",
   "@media(max-width:700px){.row{grid-template-columns:30px 1fr;",
-  "grid-template-areas:'r w' '. s' '. a' 'n n'}.rank{grid-area:r}.who{grid-area:w}",
+  "grid-template-areas:'r w' '. s' '. a' 'n n' 'v v'}.rank{grid-area:r}.who{grid-area:w}",
   ".score{grid-area:s;text-align:left}.actions{grid-area:a;margin-top:6px}",
-  ".note{grid-area:n}}",
+  ".note{grid-area:n}.note.voice{grid-area:v}}",
 ].join("");
 
 const PAGE_JS = [
@@ -1165,6 +1210,160 @@ function renderFollowupPage(due, stats, key) {
     "</footer><script>" + PAGE_JS + "</scr" + "ipt></body></html>";
 }
 
+// ---------------------------------------------------------------------------
+// Funnel stage, and the voice note that belongs to it.
+//
+// The 80 weekly slots stopped being one audience the moment the lane became a
+// conversion-recovery channel rather than a prospecting one. Someone who has
+// just read their own diagnostic scores and someone who has never clicked
+// anything need different opening lines, and the strongest opening available
+// anywhere in this funnel - "your lowest score came back on X" - was being
+// spent on copy written for a cold contact.
+//
+// The five scripts live here verbatim, for the same reason assembleNote() owns
+// the connection-note template: no model output can then drift them. Full
+// rationale, and the reasoning behind each one, in
+// linkedin-voice-note-scripts-by-funnel-stage-v1.md.
+//
+// Two fields the scripts want do not exist in the data yet. They are rendered
+// as visible [brackets] rather than quietly dropped or invented:
+//   [what they said]        ReplyGist. Human-written by design - a generated
+//                           summary of someone's reply reads as generated,
+//                           which destroys the only thing that note has going
+//                           for it.
+//   [lowest-scoring area]   TopBlocker. The report pipeline computes the nine
+//                           area scores but never writes the lowest one onto
+//                           the deal, so the shortlist cannot read it.
+//   [company]               Only when Apollo gave us no organisation name.
+const STAGES = {
+  replied: { label: "Replied" },
+  completed: { label: "Report completed" },
+  abandoned: { label: "Started, abandoned" },
+  repeat: { label: "Repeat clicker" },
+  clicked: { label: "Clicked once" },
+  cold: { label: "No engagement" },
+};
+
+// Strongest signal wins. A replier who also clicked is a replier.
+function stageOf(row) {
+  if (row.replied) return "replied";
+  if (row.completedAt) return "completed";
+  if (row.startedAt) return "abandoned";
+  if (row.repeatClicker) return "repeat";
+  if (row.visitedAt) return "clicked";
+  return "cold";
+}
+
+function voiceScript(row) {
+  const stage = row.stage || stageOf(row);
+  const first = firstNameOf(row);
+  const gaps = [];
+  let company = row.company;
+  if (!company) {
+    company = "[company]";
+    gaps.push("[company]");
+  }
+
+  if (stage === "replied") {
+    gaps.push("[what they said]");
+    return {
+      gaps: gaps,
+      text:
+        "Hi " + first + ", Marina here - thanks for replying to my email. " +
+        "Thought a voice note would be quicker than going back and forth.\n\n" +
+        "You mentioned [what they said, 3-6 words] - that's exactly the sort of thing " +
+        "I'd want twenty minutes on rather than trying to type out.\n\n" +
+        "I've got a couple of slots this week if that's useful. Or if you'd rather run " +
+        "the diagnostic first and talk after, that works just as well. Either way, good " +
+        "to hear from you.",
+    };
+  }
+
+  if (stage === "completed") {
+    // Their own lowest-scoring area, if the report pipeline has written it onto
+    // the deal. Until that field exists the placeholder stays visible rather
+    // than being guessed at - saying the wrong area back to someone who has
+    // just read their real scores is worse than leaving a blank.
+    const blocker = row.topBlocker;
+    if (!blocker) gaps.push("[lowest-scoring area]");
+    return {
+      gaps: gaps,
+      text:
+        "Hi " + first + ", Marina here. You ran the growth diagnostic on " + company +
+        " a few days ago - thanks for taking the time with it.\n\n" +
+        "Your lowest score came back on " + (blocker || "[lowest-scoring area]") +
+        ", which honestly is the one " +
+        "I'd have flagged too for a business at your stage.\n\n" +
+        "The report gives you the what. The bit it can't really do is the why - and that's " +
+        "usually a twenty-minute conversation rather than a document. No pitch attached, " +
+        "happy to just talk it through. Let me know if that's useful.",
+    };
+  }
+
+  if (stage === "abandoned") {
+    return {
+      gaps: gaps,
+      text:
+        "Hi " + first + ", Marina here. You started the growth diagnostic for " + company +
+        " and didn't finish it - which usually means one of two things.\n\n" +
+        "Either it asked for something you didn't have to hand, or it just wasn't the right " +
+        "moment. Both completely fair.\n\n" +
+        "If it's the first, I'm happy to walk you through it on a call - same output, less " +
+        "digging. If it's the second, no problem at all, I'll leave it with you.",
+    };
+  }
+
+  // Repeat clickers never hear that we saw them visit. "I noticed you've looked
+  // at this a few times" reads as surveillance and loses more people than the
+  // personalisation gains. The click data decides who gets the slot; it never
+  // appears in the copy. So this script carries no [company] either.
+  if (stage === "repeat") {
+    return {
+      gaps: gaps.filter((g) => g !== "[company]"),
+      text:
+        "Hi " + first + ", Marina here - I sent you something about a growth diagnostic a " +
+        "little while back, and thought I'd follow up properly rather than put another " +
+        "email in your inbox.\n\n" +
+        "It scores a business across nine areas and gives you back your top three blockers. " +
+        "About four minutes, and there's genuinely nothing attached to it.\n\n" +
+        "If you'd rather skip it and just have a conversation instead, that's just as good. " +
+        "Whichever's easier.",
+    };
+  }
+
+  // clicked once, and the cold backfill that fills spare capacity, share the
+  // lowest-intent script. With the weakest signal the note has to earn
+  // attention on Marina being a credible human rather than on assumed interest.
+  return {
+    gaps: gaps,
+    text:
+      "Hi " + first + ", Marina here. We're not connected, so - I came across " + company +
+      " and thought I'd reach out properly rather than send another email into the void.\n\n" +
+      "I work with founders of businesses roughly your size where growth has flattened and " +
+      "it's not obvious why. That's honestly the whole of it.\n\n" +
+      "If that's not where you are, no hard feelings at all. If it is, I've got a short " +
+      "diagnostic that'll tell you more in four minutes than I can in a voice note.",
+  };
+}
+
+function renderVoice(r) {
+  const stage = r.stage || "cold";
+  const label = (STAGES[stage] || STAGES.cold).label;
+  const text = r.voiceScript || "";
+  const gaps = r.voiceGaps || [];
+  // Counter is rendered in the "N chars" shape the page's input handler keeps,
+  // so editing the script does not leave a stale number behind.
+  return '<div class="note voice">' +
+    '<span class="blanklabel slot">Voice note &middot; ' + esc(label) +
+    " &middot; record, do not read</span>" +
+    '<textarea class="notetext" rows="6" spellcheck="false">' + esc(text) + "</textarea>" +
+    '<div class="noterow"><span class="cnt">' + text.length + " chars</span>" +
+    (gaps.length
+      ? '<span class="warn">fill in by hand before recording: ' + esc(gaps.join(", ")) + "</span>"
+      : "") +
+    '<button class="btn copy" type="button">Copy script</button></div></div>';
+}
+
 function renderNote(r) {
   const n = r.note || "";
   if (!n) {
@@ -1189,9 +1388,13 @@ function renderNote(r) {
 
 function renderRow(r, i, done) {
   const meta = [r.title, r.company].filter(Boolean).map(esc).join(" &middot; ");
-  const chips = r.reasons.slice(0, 3).map(function (x) {
-    return '<span class="chip">' + esc(x) + "</span>";
-  }).join("");
+  const stage = r.stage || "cold";
+  const chips =
+    '<span class="chip stage s-' + stage + '">' +
+    esc((STAGES[stage] || STAGES.cold).label) + "</span>" +
+    r.reasons.slice(0, 3).map(function (x) {
+      return '<span class="chip">' + esc(x) + "</span>";
+    }).join("");
   return '<li class="row' + (done ? " done" : "") + '" data-k="' + esc(r.personKey) + '">' +
     '<div class="rank">' + (i + 1) + "</div>" +
     '<div class="who"><div class="nm">' + esc(r.name) + "</div>" +
@@ -1201,7 +1404,7 @@ function renderRow(r, i, done) {
     '<div class="actions">' +
     '<a class="btn open" target="_blank" rel="noopener" href="' + esc(r.linkedinUrl) + '">Open profile</a>' +
     '<button class="btn mark" type="button">' + (done ? "Sent" : "Mark sent") + "</button>" +
-    "</div>" + renderNote(r) + "</li>";
+    "</div>" + renderNote(r) + renderVoice(r) + "</li>";
 }
 
 function renderPage(roster, picked, sentAllTime, key, noteStats) {
@@ -1246,6 +1449,17 @@ function renderPage(roster, picked, sentAllTime, key, noteStats) {
     " sit in the backfill pool from earlier cohorts, used only once the active one runs out. " +
     t.excluded + " of " + t.emailed +
     " were held back: no LinkedIn URL, a bounce, an opt-out, under 5 people, or a recovery sequence still running.</p>" +
+    "<p><b>The voice note under each row is written for that person's funnel stage, not for the list.</b> " +
+    "A replier, someone who has read their own scores, someone who abandoned the form halfway and someone who has never clicked " +
+    "are four different conversations, and until now they all got the one script written for a cold contact. " +
+    "The stage chip next to the name says which one you are looking at. This cohort: " +
+    Object.keys(STAGES).map(function (k) {
+      return (t.byStage && t.byStage[k] ? t.byStage[k] : 0) + " " + STAGES[k].label.toLowerCase();
+    }).join(", ") + ".</p>" +
+    "<p>Anything in [square brackets] is a field the data cannot fill and you have to. " +
+    "<b>[what they said]</b> is deliberate - a generated summary of someone's reply reads as generated, which is the one thing that note cannot afford. " +
+    "<b>[lowest-scoring area]</b> is not deliberate: the report works out all nine area scores and then never writes the lowest one onto the deal, so this page cannot read it. " +
+    "Fixing that turns the strongest opening line in the whole funnel from a blank into an automatic one.</p>" +
     "<p>Marking someone sent removes them for good, so reloading next week gives you the next batch rather than this one again.</p>" +
     "</footer><script>" + PAGE_JS + "</scr" + "ipt></body></html>";
 }
@@ -1407,6 +1621,10 @@ export default async function handler(req, res) {
         trigger: r.trigger,
         note: r.note,
         noteSource: r.noteSource,
+        stage: r.stage,
+        topBlocker: r.topBlocker,
+        voiceScript: r.voiceScript,
+        voiceGaps: r.voiceGaps,
         dealUrl: r.dealUrl,
       })),
     });

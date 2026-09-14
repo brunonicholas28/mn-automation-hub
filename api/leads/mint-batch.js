@@ -46,6 +46,24 @@ function authorised(req) {
 
 const firstNameOf = (name) => String(name || "").trim().split(/\s+/)[0] || "";
 
+// Every one of c20260915's 265 rows minted with an empty company, because this
+// read only person.org_id.name and the Pipedrive persons on this pipeline are
+// not linked to organisations - the company name lives in the deal title
+// instead ("Cold Outreach - Acme Ltd"), which is where api/linkedin/shortlist.js
+// has been falling back to all along.
+//
+// Deliberately NOT falling back to the email domain after this. Turning
+// "catapultlabs.xyz" into "Catapult Labs" is a guess, and three of the five
+// LinkedIn voice-note scripts say the company name out loud - getting it
+// subtly wrong in someone's ear is worse than leaving it blank and letting the
+// script show its [company] placeholder.
+const companyOf = (person, deal) => {
+  const fromOrg = person && person.org_id && person.org_id.name;
+  if (fromOrg && String(fromOrg).trim()) return String(fromOrg).trim();
+  const fromTitle = String((deal && deal.title) || "").replace(/^Cold Outreach - /, "").trim();
+  return fromTitle || "";
+};
+
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   if (!authorised(req)) return res.status(401).json({ ok: false, error: "unauthorised" });
@@ -122,7 +140,7 @@ export default async function handler(req, res) {
         await putLead(lid, {
           email,
           firstName: firstNameOf(person?.name),
-          company: person?.org_id?.name || "",
+          company: companyOf(person, deal),
           cohort,
           dealId: deal.id,
         });
@@ -133,7 +151,7 @@ export default async function handler(req, res) {
         dealId: deal.id,
         email,
         firstName: firstNameOf(person?.name),
-        company: person?.org_id?.name || "",
+        company: companyOf(person, deal),
         reportLink,
       });
     }

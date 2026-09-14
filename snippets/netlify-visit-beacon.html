@@ -7,7 +7,8 @@
   Do not run both, or every visit counts twice.
 
   Change from the earlier version: forwards the per-lead token (lid) when the
-  email link carried one. Without a token this behaves exactly as before and
+  email link carried one, and forwards utm_content so the touch and the ad
+  variant are separable. Without a token this behaves exactly as before and
   records nothing but an anonymous tagged visit.
 
   Still stores no IP, no user agent, no cookie and no identifier of our own,
@@ -30,10 +31,16 @@
     sessionStorage.setItem(guard, "1");
   } catch (e) {}
 
+  // utm_content carries the touch on email links (day2 / day10 / day18) and the
+  // creative variant on ad links (v1 / v2). The cohort id lives in
+  // utm_campaign and is unchanged; this is strictly additional. Without it the
+  // server can only read the touch off the utm_campaign suffix, which is baked
+  // into each lead's stored link and therefore says "day2" for every touch.
   var payload = JSON.stringify({
     campaign: campaign,
     stage: "visit",
     source: p.get("utm_source") || "email",
+    content: p.get("utm_content") || "",
     lid: lid
   });
 

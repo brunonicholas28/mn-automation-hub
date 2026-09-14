@@ -24,6 +24,14 @@ function cors(res) {
 
 // navigator.sendBeacon posts a Blob, so the body may arrive as a raw string
 // rather than parsed JSON depending on the content type it was given.
+// Accepts "day10", "day 10" and "Day10"; anything else - an ad variant such as
+// "v1", or something a stranger appended by hand - is not a touch and is
+// recorded as a source-side dimension instead, never as a made-up touch.
+function normaliseTouch(raw) {
+  const m = String(raw || "").trim().toLowerCase().match(/^day\s*(\d+)$/);
+  return m ? "day" + m[1] : null;
+}
+
 function readBody(req) {
   const b = req.body;
   if (!b) return {};
@@ -42,7 +50,16 @@ export default async function handler(req, res) {
 
   try {
     const body = readBody(req);
-    const { cohort, touch } = splitCampaignTag(body.campaign || body.cohort);
+    const { cohort, touch: taggedTouch } = splitCampaignTag(body.campaign || body.cohort);
+
+    // Each lead's report link is minted once and stored on the lead, so its
+    // utm_campaign suffix is fixed at the first touch for the life of the
+    // cohort - every later email reuses the same link and would report as
+    // "day2" forever. utm_content is appended per email instead, so when the
+    // beacon forwards it, it is the truth about which touch produced the
+    // click. Falls back to the suffix for links minted before this, and for
+    // any traffic whose page is still running the older snippet.
+    const touch = normaliseTouch(body.content) || taggedTouch;
 
     if (!cohort) {
       // Untagged traffic is expected and fine - just not ours to count.
@@ -66,6 +83,12 @@ export default async function handler(req, res) {
 
     if (touch) {
       await kv.hincrby(`${cohortKey(cohort)}:touches`, touch, 1);
+    }
+    // An ad variant lands here rather than in :touches, so the LinkedIn test
+    // can read v1 against v2 without polluting the email touch counts.
+    const variant = String(body.content || "").trim().toLowerCase();
+    if (variant && !normaliseTouch(variant)) {
+      await kv.hincrby(`${cohortKey(cohort)}:variants`, variant.slice(0, 32), 1);
     }
     if (body.source) {
       await kv.hincrby(`${cohortKey(cohort)}:sources`, String(body.source).slice(0, 32), 1);

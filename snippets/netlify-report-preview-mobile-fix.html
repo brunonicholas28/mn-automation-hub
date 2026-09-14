@@ -1,0 +1,78 @@
+<!--
+  Netlify snippet: "Report preview - mobile fix".
+  Paste into: Netlify -> growth.marinanicholas.com -> Project configuration ->
+  Build & deploy -> Post processing -> Snippet injection -> Add new snippet,
+  insert before </body>.
+
+  Do NOT touch the snippets already there (the funnel beacon, the hero CTA
+  microcopy rewrite, and the LinkedIn Insight Tag once it goes in). This is a
+  new, additional snippet. It is CSS only - no script, no network, nothing to
+  slow the page down.
+
+  WHAT IT FIXES
+  The hero's report preview renders broken on phones. The page's own mobile
+  rule squeezes .report-frame down to max-width:300px, but the report inside it
+  (.ggr-embed) stops reflowing at about 395px - measured, not guessed. Below
+  that it simply overflows and .report-viewport's overflow:hidden crops it, so
+  headings get cut mid-word, the score bars lose their right-hand end and the
+  percentages disappear entirely. The absolutely positioned CTA then lands on
+  top of a half-visible row, which is what makes it read as broken rather than
+  as a deliberate crop.
+
+  THE FIX
+  Stop squeezing the frame below what the content can survive. Hold it at 400px
+  - just above the content's real minimum - and scale the whole frame down to
+  fit the viewport instead. That reproduces the desktop composition exactly,
+  only smaller: every bar present, the fade intact, the CTA sitting over faded
+  content the way it was designed to.
+
+  Scale is stepped rather than fluid because CSS cannot divide one length by
+  another to produce a scale factor. Each step is set so the frame keeps at
+  least a 16px gutter at the NARROWEST viewport in its bucket.
+
+  Transforms do not affect layout, so the frame still reserves its full
+  untransformed height; the negative margin-bottom gives that space back.
+  --rf-h is the frame's measured height (771px). If the preview's content ever
+  changes height, update that one number - everything else follows from it.
+
+  REVERT: delete the snippet. The deployed HTML is not modified.
+-->
+<style>
+@media (max-width: 760px) {
+  .report-frame {
+    --rf-w: 400px;   /* just above .ggr-embed's ~395px reflow floor */
+    --rf-h: 771px;   /* measured frame height, incl. the browser chrome bar */
+    --rf-s: 1;
+
+    max-width: none !important;
+    width: var(--rf-w) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+
+    transform: scale(var(--rf-s));
+    transform-origin: top center;
+    margin-bottom: calc(-1 * var(--rf-h) * (1 - var(--rf-s))) !important;
+  }
+
+  /* The overlay scales with the frame, so divide back out to land on the
+     intended rendered size rather than a shrunken one. */
+  .report-cta-overlay { bottom: 16px !important; padding: 0 14px !important; }
+  .report-cta-overlay .btn-primary {
+    font-size: calc(13px / var(--rf-s)) !important;
+    padding: calc(11px / var(--rf-s)) calc(18px / var(--rf-s)) !important;
+  }
+  .report-cta-overlay .hero-meta {
+    font-size: calc(10.5px / var(--rf-s)) !important;
+    margin-top: calc(8px / var(--rf-s)) !important;
+  }
+}
+
+/* 401-460px: 368px wide, >=16px gutter at 401px  */
+@media (max-width: 460px) { .report-frame { --rf-s: 0.92; } }
+/* 361-400px: 328px wide, >=16px gutter at 361px  (iPhone 15/16 = 393px) */
+@media (max-width: 400px) { .report-frame { --rf-s: 0.82; } }
+/* 341-360px: 304px wide, >=16px gutter at 341px  */
+@media (max-width: 360px) { .report-frame { --rf-s: 0.76; } }
+/* <=340px:   288px wide, >=16px gutter at 320px  (iPhone SE) */
+@media (max-width: 340px) { .report-frame { --rf-s: 0.72; } }
+</style>

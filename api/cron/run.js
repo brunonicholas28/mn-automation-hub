@@ -18,6 +18,7 @@ import recoveryClicked from "../../lib/jobs/recovery-clicked.js";
 import generateHooks from "../../lib/jobs/generate-hooks.js";
 import hookIo from "../../lib/jobs/hook-io.js";
 import creditCheck from "../../lib/jobs/credit-check.js";
+import funnelWatchdog from "../../lib/jobs/funnel-watchdog.js";
 
 export const config = { maxDuration: 60 };
 
@@ -29,6 +30,7 @@ const JOBS = {
   "generate-hooks": generateHooks,
   "hook-io": hookIo,
   "credit-check": creditCheck,
+  "funnel-watchdog": funnelWatchdog,
 };
 
 export default async function handler(req, res) {

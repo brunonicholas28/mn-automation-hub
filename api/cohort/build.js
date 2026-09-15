@@ -207,7 +207,19 @@ async function ensureCampaign(name, templateId, cohort, live) {
   };
 }
 
-async function loadCohortLeads(cohort) {
+// openDealIds is the set of deals still open in New Lead. A lead is only in
+// this cohort because a deal existed when it was minted, and between minting
+// on Thursday and sending on Tuesday Marina works through the list marking the
+// ones she does not want. c20260915 carried 21 of those and three reached
+// Instantly. The caller fetches the set once and hands it in; if Pipedrive
+// cannot be read the caller aborts rather than let a run proceed unchecked.
+//
+// EXCLUDE is the other filter, and it mattered more than it looked. The hook
+// screen rejects a lead when the company is defunct, is an M&A advisory or a
+// brokerage, is pre-revenue, or the named contact has died or left. Those
+// leads carry no hook - so before this they fell through into the no-hook half
+// and would have been emailed. Exactly the people the screen exists to stop.
+async function loadCohortLeads(cohort, { openDealIds } = {}) {
   const tokens = await listLeadTokens(cohort);
   const leads = await readLeads(tokens);
   const rows = [];
@@ -220,13 +232,25 @@ async function loadCohortLeads(cohort) {
     if (!lead) { bump("token has no lead record"); continue; }
     const email = String(lead.email || "").trim().toLowerCase();
     if (!email.includes("@")) { bump("no usable email"); continue; }
+
+    if (String(lead.hookVerdict || "").toUpperCase() === "EXCLUDE") {
+      bump("screened out by the ICP check");
+      continue;
+    }
+
+    const dealId = lead.dealId ? String(lead.dealId) : "";
+    if (openDealIds && dealId && !openDealIds.has(dealId)) {
+      bump("its deal is no longer open in New Lead");
+      continue;
+    }
+
     rows.push({
       lid,
       email,
       firstName: String(lead.firstName || "").trim(),
       company: String(lead.company || "").trim(),
       hook: String(lead.hook || "").trim(),
-      dealId: lead.dealId ? String(lead.dealId) : "",
+      dealId,
       reportLink: reportLinkFor(lid, cohort),
     });
   }
@@ -455,25 +479,17 @@ async function runVerify(c, { cohort, loaded, withHook, withoutHook, hookTemplat
   //    defaults that to all_not_deleted, so 21 deals Marina had personally
   //    disqualified were minted into c20260915. That is fixed at source; this
   //    catches anything disqualified after minting.
-  try {
-    const open = await listDealsByPipelineStage(ENROLMENT_PIPELINE_ID, ENROLMENT_STAGES.newLead);
-    const openIds = new Set(open.map((d) => String(d.id)));
-    const withDeal = loaded.rows.filter((r) => r.dealId);
-    const gone = withDeal.filter((r) => !openIds.has(r.dealId));
-    out.openDealsInStage = openIds.size;
-    c.fail(
-      "deals.stillOpen",
-      gone.length === 0,
-      gone.length + " of " + withDeal.length + " lead(s) sit on a deal that is no longer open in New Lead"
-    );
-    c.warn(
-      "deals.linked",
-      withDeal.length === loaded.rows.length,
-      withDeal.length + " of " + loaded.rows.length + " lead(s) carry a deal id"
-    );
-  } catch (err) {
-    c.fail("deals.stillOpen", false, "Pipedrive could not be read: " + String(err.message || err).slice(0, 120));
-  }
+  // loadCohortLeads has already dropped anyone whose deal closed, so this
+  // reports how many it dropped rather than re-checking the survivors.
+  const dropped = Number(loaded.skipped["its deal is no longer open in New Lead"] || 0);
+  const screened = Number(loaded.skipped["screened out by the ICP check"] || 0);
+  c.warn("deals.closedDropped", dropped === 0, dropped + " lead(s) dropped: their deal is no longer open");
+  c.warn("leads.screenedOut", screened === 0, screened + " lead(s) dropped: EXCLUDE on the ICP check");
+  c.warn(
+    "deals.linked",
+    loaded.rows.every((r) => r.dealId),
+    loaded.rows.filter((r) => r.dealId).length + " of " + loaded.rows.length + " lead(s) carry a deal id"
+  );
 
   // 4. Are the two templates in a state worth cloning?
   const templates = {};
@@ -539,8 +555,13 @@ async function runVerify(c, { cohort, loaded, withHook, withoutHook, hookTemplat
     //    which stretches a one-day send across the week and pulls every
     //    downstream touch off the cadence day numbering.
     try {
+      // findCampaignByName comes from listCampaigns(), which projects to id,
+      // name and status only - it carries no email_list. Reading it there gave
+      // "0 sends/day across 0 warm mailboxes" on a campaign with nine attached,
+      // which is a check that would have been ignored by its second week.
+      const full = await getCampaign(campaign.id);
       const attached = new Set(
-        (campaign.email_list || []).map((e) => String(e || "").trim().toLowerCase())
+        ((full && full.email_list) || []).map((e) => String(e || "").trim().toLowerCase())
       );
       const accounts = await listAccounts();
       const sendable = accounts.filter((a) => attached.has(a.email) && a.active && a.dailyLimit > 0);
@@ -605,7 +626,25 @@ export default async function handler(req, res) {
   };
 
   try {
-    const loaded = await loadCohortLeads(cohort);
+    // Fail closed. Not being able to tell whether a lead is still wanted is a
+    // worse reason to send than any reason to skip.
+    let openDealIds;
+    try {
+      const open = await listDealsByPipelineStage(ENROLMENT_PIPELINE_ID, ENROLMENT_STAGES.newLead);
+      openDealIds = new Set(open.map((d) => String(d.id)));
+      out.openDealsInStage = openDealIds.size;
+    } catch (err) {
+      return res.status(503).json({
+        ok: false,
+        cohort,
+        step,
+        error:
+          "Pipedrive could not be read, so there is no way to tell which deals are still open. Refusing to build or import rather than risk contacting someone already disqualified.",
+        detail: String(err.message || err).slice(0, 200),
+      });
+    }
+
+    const loaded = await loadCohortLeads(cohort, { openDealIds });
     const withHook = loaded.rows.filter((r) => r.hook);
     const withoutHook = loaded.rows.filter((r) => !r.hook);
 

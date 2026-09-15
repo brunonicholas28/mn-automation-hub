@@ -18,6 +18,15 @@ import { normaliseToken, markLeadStage } from "../lib/leads.js";
 const kv = Redis.fromEnv();
 const SEEN_TTL_SECONDS = 60 * 60 * 24 * 120;
 
+// Every submission is also recorded as "a report is owed to this person", for
+// lib/jobs/funnel-watchdog.js to chase. It clears the moment the report is
+// ready; anything still sitting here after the grace period is someone who
+// filled the form in and got nothing. Added 2026-09-15 after a firewall
+// challenge silently blocked the report webhook for fifteen hours.
+const PENDING_INDEX = "pending:report:index";
+const PENDING_PREFIX = "pending:report:";
+const PENDING_TTL_SECONDS = 60 * 60 * 24 * 3;
+
 function readBody(req) {
   const b = req.body;
   if (!b) return {};
@@ -66,6 +75,22 @@ function findParam(payload, matcher) {
 
 const findCampaign = (payload) => findParam(payload, /utm_?campaign/i);
 const findLeadToken = (payload) => findParam(payload, /^lid$/i);
+const findRid = (payload) => findParam(payload, /^rid$/i);
+
+// Name and email are real form questions rather than URL parameters, so they
+// live in a different part of the payload. Only used to put a human name in
+// the alert - nothing downstream depends on them.
+function findAnswer(payload, matchers) {
+  const lists = [payload?.submission?.questions, payload?.questions].filter(Array.isArray);
+  // Exact match first: a loose /name/i would happily return "Company Name".
+  for (const matcher of matchers) {
+    for (const list of lists) {
+      const hit = list.find((q) => matcher.test(String(q?.name || q?.title || q?.id || "").trim()));
+      if (hit && hit.value) return typeof hit.value === "string" ? hit.value : String(hit.value);
+    }
+  }
+  return null;
+}
 
 function findSubmissionId(payload) {
   return (
@@ -93,6 +118,29 @@ export default async function handler(req, res) {
     const fresh = await kv.set(seenKey, 1, { nx: true, ex: SEEN_TTL_SECONDS });
     if (!fresh) {
       return res.status(200).json({ ok: true, counted: false, reason: "duplicate" });
+    }
+
+    // Recorded before any of the cohort logic below, which has early returns -
+    // an untagged submission still deserves a report, so it still gets watched.
+    const rid = findRid(payload);
+    if (rid) {
+      try {
+        await kv.set(
+          PENDING_PREFIX + submissionId,
+          {
+            rid,
+            name: findAnswer(payload, [/^name$/i, /full ?name/i]),
+            email: findAnswer(payload, [/^e-?mail$/i, /e-?mail/i]),
+            cohort: splitCampaignTag(findCampaign(payload)).cohort || null,
+            ts: Date.now(),
+          },
+          { ex: PENDING_TTL_SECONDS }
+        );
+        await kv.zadd(PENDING_INDEX, { score: Date.now(), member: String(submissionId) });
+      } catch (err) {
+        // Never fail a webhook over the watchdog's bookkeeping.
+        console.warn("fillout-hook: could not record pending report:", err?.message || err);
+      }
     }
 
     const { cohort } = splitCampaignTag(findCampaign(payload));

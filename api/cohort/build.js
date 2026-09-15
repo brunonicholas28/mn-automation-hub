@@ -219,6 +219,10 @@ async function ensureCampaign(name, templateId, cohort, live) {
 // brokerage, is pre-revenue, or the named contact has died or left. Those
 // leads carry no hook - so before this they fell through into the no-hook half
 // and would have been emailed. Exactly the people the screen exists to stop.
+const SKIP_SCREENED = "screened out by the ICP check";
+const SKIP_DEAL_CLOSED = "its deal is no longer open in New Lead";
+const INTENDED_SKIPS = new Set([SKIP_SCREENED, SKIP_DEAL_CLOSED]);
+
 async function loadCohortLeads(cohort, { openDealIds } = {}) {
   const tokens = await listLeadTokens(cohort);
   const leads = await readLeads(tokens);
@@ -234,13 +238,13 @@ async function loadCohortLeads(cohort, { openDealIds } = {}) {
     if (!email.includes("@")) { bump("no usable email"); continue; }
 
     if (String(lead.hookVerdict || "").toUpperCase() === "EXCLUDE") {
-      bump("screened out by the ICP check");
+      bump(SKIP_SCREENED);
       continue;
     }
 
     const dealId = lead.dealId ? String(lead.dealId) : "";
     if (openDealIds && dealId && !openDealIds.has(dealId)) {
-      bump("its deal is no longer open in New Lead");
+      bump(SKIP_DEAL_CLOSED);
       continue;
     }
 
@@ -458,10 +462,22 @@ async function runVerify(c, { cohort, loaded, withHook, withoutHook, hookTemplat
 
   // 1. Is there a cohort at all yet?
   c.fail("cohort.minted", loaded.tokenCount > 0, loaded.tokenCount + " token(s) minted");
+
+  // rows < tokens is now normal: loadCohortLeads deliberately drops the
+  // screened-out and the disqualified, and those two are reported below as
+  // their own counts. What must not happen is a lead going missing for a
+  // reason nobody chose - a KV record that expired, an address that stopped
+  // parsing. Asserting rows === tokens, as this did when it was written, made
+  // the filters added afterwards look like a failure every single week.
+  const unexpected = Object.entries(loaded.skipped)
+    .filter(([reason]) => !INTENDED_SKIPS.has(reason))
+    .map(([reason, n]) => n + " " + reason);
   c.fail(
     "cohort.usable",
-    loaded.rows.length === loaded.tokenCount,
-    loaded.rows.length + " of " + loaded.tokenCount + " tokens resolve to a usable lead"
+    unexpected.length === 0,
+    unexpected.length
+      ? "dropped for an unexpected reason: " + unexpected.join("; ")
+      : loaded.rows.length + " of " + loaded.tokenCount + " tokens are sendable, the rest deliberately filtered"
   );
 
   // 2. Fields the emails actually merge. company is a warn rather than a fail
@@ -481,8 +497,8 @@ async function runVerify(c, { cohort, loaded, withHook, withoutHook, hookTemplat
   //    catches anything disqualified after minting.
   // loadCohortLeads has already dropped anyone whose deal closed, so this
   // reports how many it dropped rather than re-checking the survivors.
-  const dropped = Number(loaded.skipped["its deal is no longer open in New Lead"] || 0);
-  const screened = Number(loaded.skipped["screened out by the ICP check"] || 0);
+  const dropped = Number(loaded.skipped[SKIP_DEAL_CLOSED] || 0);
+  const screened = Number(loaded.skipped[SKIP_SCREENED] || 0);
   c.warn("deals.closedDropped", dropped === 0, dropped + " lead(s) dropped: their deal is no longer open");
   c.warn("leads.screenedOut", screened === 0, screened + " lead(s) dropped: EXCLUDE on the ICP check");
   c.warn(

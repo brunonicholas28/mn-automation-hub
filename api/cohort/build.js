@@ -35,15 +35,31 @@
 // Deliberately returns counts and reasons only, never an email address or a
 // name. The GitHub Actions workflow that calls it writes its response into a
 // run log, and this repository is public.
+//
+// 2026-09-15: this file used to answer ok:true no matter what happened. On
+// 2026-09-15 the no-hook campaign was never created - its template had an
+// empty first step - so importLeads returned {skipped: "..."} for that half,
+// 131 of 249 leads never reached Instantly, and the workflow went green
+// because its only test was grep '"ok":true'. The failure was found on send
+// morning. Everything below that can come back short is now an assertion in
+// checks[], ok is false when any of them fails, and the endpoint answers 409
+// so curl --fail-with-body turns it into a red run. step=verify re-runs those
+// same assertions read-only, which is what the preflight schedule calls.
 
 import {
   findCampaignByName,
   getCampaign,
   createCampaign,
   createLead,
+  listAccounts,
   listCampaignLeads,
   listCampaigns,
 } from "../../lib/instantly.js";
+import {
+  ENROLMENT_PIPELINE_ID,
+  ENROLMENT_STAGES,
+  listDealsByPipelineStage,
+} from "../../lib/pipedrive.js";
 import { listLeadTokens, readLeads } from "../../lib/leads.js";
 import { normaliseCohortId } from "../../lib/cohort.js";
 
@@ -210,6 +226,7 @@ async function loadCohortLeads(cohort) {
       firstName: String(lead.firstName || "").trim(),
       company: String(lead.company || "").trim(),
       hook: String(lead.hook || "").trim(),
+      dealId: lead.dealId ? String(lead.dealId) : "",
       reportLink: reportLinkFor(lid, cohort),
     });
   }
@@ -268,6 +285,289 @@ async function importLeads(rows, campaignId, live) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Assertions.
+//
+// A check is a named claim about the world with a severity. "fail" means this
+// run is wrong now. "warn" means it is not wrong yet but will be by Tuesday -
+// on Friday the campaigns legitimately do not exist yet, and a gate that
+// screamed about that every Friday would be ignored by the second week.
+// strict=1 promotes every warn to a fail, which is what the Monday and
+// Tuesday runs use, so the same assertions serve an early heads-up and a
+// hard pre-send gate without being written twice.
+// ---------------------------------------------------------------------------
+export function checker(strict) {
+  const checks = [];
+  const add = (name, severity, ok, detail) => {
+    checks.push({ name, severity, ok: Boolean(ok), detail: detail || "" });
+    return Boolean(ok);
+  };
+  return {
+    checks,
+    fail: (name, ok, detail) => add(name, "fail", ok, detail),
+    warn: (name, ok, detail) => add(name, "warn", ok, detail),
+    failures: () => checks.filter((c) => !c.ok && (c.severity === "fail" || strict)),
+  };
+}
+
+// Every way an import half can come back short. The count assertion is the
+// important one: imported + already-there must equal what we set out to load,
+// because an import that quietly does nothing looks identical to one that had
+// nothing to do.
+export function assertImported(c, half, result, expected) {
+  if (expected === 0) return c.fail("import." + half, true, "nothing to load");
+  if (!result) return c.fail("import." + half, false, "no import result");
+  if (result.skipped) return c.fail("import." + half, false, result.skipped);
+  if (result.aborted) return c.fail("import." + half, false, result.aborted);
+  if (result.failed) {
+    c.fail(
+      "import." + half + ".rejected",
+      false,
+      result.failed + " lead(s) rejected: " + (result.failureSample || []).join(" | ")
+    );
+  }
+  const landed = Number(result.imported || 0) + Number(result.skippedAlreadyInCampaign || 0);
+  return c.fail(
+    "import." + half + ".count",
+    landed === expected,
+    landed + " of " + expected + " accounted for"
+  );
+}
+
+// Walk whatever shape Instantly hands back and collect every object carrying a
+// subject or a body. Written as a walk rather than against a fixed path on
+// purpose: the empty first step that broke the no-hook clone would have slid
+// past any check that assumed it knew where the steps lived.
+export function collectVariants(node, out = []) {
+  if (!node || typeof node !== "object") return out;
+  if (Array.isArray(node)) {
+    for (const n of node) collectVariants(n, out);
+    return out;
+  }
+  const has = (k) => Object.prototype.hasOwnProperty.call(node, k);
+  if (has("subject") || has("body")) {
+    out.push({
+      subject: String(node.subject || "").trim(),
+      body: String(node.body || "").trim(),
+    });
+  }
+  for (const k of Object.keys(node)) collectVariants(node[k], out);
+  return out;
+}
+
+// The merge fields importLeads actually populates, plus the Instantly
+// built-ins it fills from first_name and company_name. A template asking for
+// anything outside this set renders a blank in every email it sends.
+const SATISFIABLE_VARIABLES = new Set([
+  "firstName",
+  "companyName",
+  "email",
+  "reportLink",
+  "hook",
+]);
+
+async function assertTemplate(c, label, templateId, { needsHook }) {
+  const key = "template." + label;
+  if (!templateId) {
+    return c.fail(key, false, "INSTANTLY_TEMPLATE_" + label.toUpperCase() + " is not set");
+  }
+  let template;
+  try {
+    template = await getCampaign(templateId);
+  } catch (err) {
+    return c.fail(key, false, "could not be read: " + String(err.message || err).slice(0, 120));
+  }
+
+  const variants = collectVariants(template.sequences || []);
+  if (!variants.length) {
+    return c.fail(key, false, "carries no sequence steps at all");
+  }
+
+  const blank = variants.filter((v) => !v.body).length;
+  c.fail(key + ".steps", blank === 0, blank + " of " + variants.length + " step(s) have an empty body");
+
+  const used = new Set();
+  for (const v of variants) {
+    for (const m of (v.subject + " " + v.body).matchAll(/\{\{\s*([A-Za-z0-9_]+)\s*\}\}/g)) {
+      used.add(m[1]);
+    }
+  }
+  const unknown = [...used].filter((v) => !SATISFIABLE_VARIABLES.has(v));
+  c.fail(
+    key + ".variables",
+    unknown.length === 0,
+    unknown.length ? "asks for " + unknown.join(", ") + ", which nothing populates" : "all satisfiable"
+  );
+
+  // The whole reason the cohort is split in two. A no-hook template that
+  // still references the hook would send a blank line to everyone in it.
+  c.fail(
+    key + ".hookUse",
+    needsHook ? used.has("hook") : !used.has("hook"),
+    needsHook
+      ? used.has("hook") ? "uses hook" : "does not use hook, so the researched personalisation is thrown away"
+      : used.has("hook") ? "references hook but its leads have none" : "correctly does not use hook"
+  );
+
+  return template;
+}
+
+// One place decides whether a run passed, so no caller can forget to look.
+//
+// The status code matters as much as the body: the GitHub workflows call this
+// with curl --fail-with-body, so a 409 is what turns a half-loaded cohort into
+// a red run. Returning 200 with a problem buried in the body is exactly how
+// 131 leads went missing without anyone noticing.
+function respond(res, out, c) {
+  const failures = c.failures();
+  out.checks = c.checks;
+  out.ok = failures.length === 0;
+  out.failed = failures.map((f) => f.name + ": " + f.detail);
+  out.passed = c.checks.filter((x) => x.ok).length;
+  return res.status(out.ok ? 200 : 409).json(out);
+}
+
+// Reads the world back and asserts it matches what the build set out to do.
+// Writes nothing, so it is safe to run on a schedule as often as is useful.
+async function runVerify(c, { cohort, loaded, withHook, withoutHook, hookTemplate, noHookTemplate }) {
+  const out = {};
+
+  // 1. Is there a cohort at all yet?
+  c.fail("cohort.minted", loaded.tokenCount > 0, loaded.tokenCount + " token(s) minted");
+  c.fail(
+    "cohort.usable",
+    loaded.rows.length === loaded.tokenCount,
+    loaded.rows.length + " of " + loaded.tokenCount + " tokens resolve to a usable lead"
+  );
+
+  // 2. Fields the emails actually merge. company is a warn rather than a fail
+  //    because the whole of c20260915 shipped with it blank and a hard fail
+  //    would block every run until that is fixed at source in mint-batch.
+  const noFirstName = loaded.rows.filter((r) => !r.firstName).length;
+  const noLink = loaded.rows.filter((r) => !r.reportLink).length;
+  const noCompany = loaded.rows.filter((r) => !r.company).length;
+  c.fail("leads.firstName", noFirstName === 0, noFirstName + " lead(s) have no first name");
+  c.fail("leads.reportLink", noLink === 0, noLink + " lead(s) have no report link");
+  c.warn("leads.company", noCompany === 0, noCompany + " of " + loaded.rows.length + " lead(s) have no company");
+
+  // 3. Is everyone in the cohort still someone we are allowed to email?
+  //    mint-batch used to read /deals without a status filter, and Pipedrive
+  //    defaults that to all_not_deleted, so 21 deals Marina had personally
+  //    disqualified were minted into c20260915. That is fixed at source; this
+  //    catches anything disqualified after minting.
+  try {
+    const open = await listDealsByPipelineStage(ENROLMENT_PIPELINE_ID, ENROLMENT_STAGES.newLead);
+    const openIds = new Set(open.map((d) => String(d.id)));
+    const withDeal = loaded.rows.filter((r) => r.dealId);
+    const gone = withDeal.filter((r) => !openIds.has(r.dealId));
+    out.openDealsInStage = openIds.size;
+    c.fail(
+      "deals.stillOpen",
+      gone.length === 0,
+      gone.length + " of " + withDeal.length + " lead(s) sit on a deal that is no longer open in New Lead"
+    );
+    c.warn(
+      "deals.linked",
+      withDeal.length === loaded.rows.length,
+      withDeal.length + " of " + loaded.rows.length + " lead(s) carry a deal id"
+    );
+  } catch (err) {
+    c.fail("deals.stillOpen", false, "Pipedrive could not be read: " + String(err.message || err).slice(0, 120));
+  }
+
+  // 4. Are the two templates in a state worth cloning?
+  const templates = {};
+  templates.hook = await assertTemplate(c, "hook", hookTemplate, { needsHook: true });
+  templates.noHook = await assertTemplate(c, "nohook", noHookTemplate, { needsHook: false });
+
+  // 5. Did the campaigns get built, and did the right people land in them?
+  const pairs = [
+    { half: "hook", name: cohort, expected: withHook.length, wantsHook: true },
+    { half: "noHook", name: cohort + " B", expected: withoutHook.length, wantsHook: false },
+  ];
+  out.campaigns = {};
+
+  for (const pair of pairs) {
+    const campaign = await findCampaignByName(pair.name);
+    const key = "campaign." + pair.half;
+
+    if (!campaign) {
+      // Before Monday's build this is simply not done yet, which is why it is
+      // a warn. From Monday on the preflight runs strict and it is a failure.
+      c.warn(key + ".exists", pair.expected === 0, "no campaign named " + pair.name + " yet");
+      out.campaigns[pair.half] = { name: pair.name, exists: false, expected: pair.expected };
+      continue;
+    }
+
+    let leads = [];
+    let readError = null;
+    try {
+      leads = await listCampaignLeads(campaign.id);
+    } catch (err) {
+      readError = String(err.message || err).slice(0, 120);
+    }
+
+    if (readError) {
+      c.fail(key + ".leads", false, "could not read its leads: " + readError);
+      out.campaigns[pair.half] = { name: pair.name, exists: true, expected: pair.expected };
+      continue;
+    }
+
+    c.fail(
+      key + ".leadCount",
+      leads.length === pair.expected,
+      leads.length + " in the campaign, " + pair.expected + " expected"
+    );
+
+    // Merge variables on the leads themselves. If Instantly's list response
+    // carries no variables at all we say so rather than reporting a pass we
+    // did not actually earn.
+    const seen = leads.filter((l) => l.customVariables && typeof l.customVariables === "object");
+    if (!seen.length && leads.length) {
+      c.warn(key + ".variables", false, "Instantly returned no custom variables to check");
+    } else {
+      const missingLink = seen.filter((l) => !l.customVariables.reportLink).length;
+      c.fail(key + ".reportLink", missingLink === 0, missingLink + " lead(s) carry no report link");
+      if (pair.wantsHook) {
+        const missingHook = seen.filter((l) => !l.customVariables.hook).length;
+        c.fail(key + ".hook", missingHook === 0, missingHook + " lead(s) in the hook campaign carry no hook");
+      }
+    }
+
+    // 6. Capacity. Instantly does not error when a cohort outgrows its
+    //    mailboxes - it carries the remainder into the next sending day,
+    //    which stretches a one-day send across the week and pulls every
+    //    downstream touch off the cadence day numbering.
+    try {
+      const attached = new Set(
+        (campaign.email_list || []).map((e) => String(e || "").trim().toLowerCase())
+      );
+      const accounts = await listAccounts();
+      const sendable = accounts.filter((a) => attached.has(a.email) && a.active && a.dailyLimit > 0);
+      const perDay = sendable.reduce((n, a) => n + a.dailyLimit, 0);
+      out.campaigns[pair.half] = {
+        name: pair.name,
+        exists: true,
+        expected: pair.expected,
+        loaded: leads.length,
+        mailboxes: sendable.length,
+        mailboxesAttached: attached.size,
+        dailyCapacity: perDay,
+      };
+      c.warn(
+        key + ".capacity",
+        perDay >= pair.expected,
+        perDay + " sends/day across " + sendable.length + " warm mailbox(es) for " + pair.expected + " lead(s)"
+      );
+    } catch (err) {
+      c.warn(key + ".capacity", false, "accounts could not be read: " + String(err.message || err).slice(0, 120));
+      out.campaigns[pair.half] = { name: pair.name, exists: true, expected: pair.expected, loaded: leads.length };
+    }
+  }
+
+  return out;
+}
+
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
@@ -279,11 +579,13 @@ export default async function handler(req, res) {
   }
 
   const step = String(req.query.step || "inspect").trim().toLowerCase();
-  const KNOWN_STEPS = ["inspect", "campaign", "import", "all"];
+  const KNOWN_STEPS = ["inspect", "campaign", "import", "all", "verify"];
   if (!KNOWN_STEPS.includes(step)) {
     return res.status(400).json({ ok: false, error: "unknown step: " + step, knownSteps: KNOWN_STEPS });
   }
   const live = String(req.query.live || "") === "1";
+  const strict = String(req.query.strict || "") === "1";
+  const gate = checker(strict);
 
   const hookTemplate = process.env.INSTANTLY_TEMPLATE_HOOK || "";
   const noHookTemplate = process.env.INSTANTLY_TEMPLATE_NOHOOK || "";
@@ -294,6 +596,7 @@ export default async function handler(req, res) {
     cohortDay: cohortDay(cohort),
     step,
     live,
+    strict,
     config: {
       hookTemplateSet: Boolean(hookTemplate),
       noHookTemplateSet: Boolean(noHookTemplate),
@@ -335,10 +638,26 @@ export default async function handler(req, res) {
     // A cohort with nothing in it means mint-batch has not run yet. Creating
     // an empty pair of campaigns every Monday would quietly fill Instantly
     // with clutter and make the real ones harder to find, so stop instead.
-    if (loaded.rows.length === 0 && step !== "inspect") {
+    if (loaded.rows.length === 0 && step !== "inspect" && step !== "verify") {
       out.note =
         "No leads are minted for this cohort yet, so nothing was created. Run mint-batch first, then run this again.";
-      return res.status(200).json(out);
+      gate.fail("cohort.minted", false, "nothing is minted for " + cohort);
+      return respond(res, out, gate);
+    }
+
+    if (step === "verify") {
+      out.verified = await runVerify(gate, {
+        cohort,
+        loaded,
+        withHook,
+        withoutHook,
+        hookTemplate,
+        noHookTemplate,
+      });
+      out.note = strict
+        ? "Read-only. Strict: anything not passing is a failure."
+        : "Read-only. Warnings are things that are not wrong yet but must be true by Tuesday.";
+      return respond(res, out, gate);
     }
 
     if (step === "campaign" || step === "all") {
@@ -346,6 +665,18 @@ export default async function handler(req, res) {
         hook: await ensureCampaign(cohort, hookTemplate, cohort, live),
         noHook: await ensureCampaign(cohort + " B", noHookTemplate, cohort, live),
       };
+
+      // "no template campaign configured" used to be a string in the response
+      // that nothing read. If a half has leads waiting, not having somewhere
+      // to put them is a failure of this run, not a note.
+      for (const [half, expected] of [["hook", withHook.length], ["noHook", withoutHook.length]]) {
+        const built = out.campaignsBuilt[half] || {};
+        if (expected === 0) continue;
+        gate.fail("campaign." + half + ".built", !built.error, built.error || "ready");
+        if (live) {
+          gate.fail("campaign." + half + ".id", Boolean(built.id), built.id ? "created or reused" : "no campaign id came back");
+        }
+      }
     }
 
     if (step === "import" || step === "all") {
@@ -360,6 +691,12 @@ export default async function handler(req, res) {
           ? await importLeads(withoutHook, noHookCampaign.id, live)
           : { skipped: "the no-hook campaign does not exist yet, run step=campaign with live=1 first" },
       };
+
+      // The assertion this file was missing on 2026-09-15.
+      if (live) {
+        assertImported(gate, "hook", out.importRun.hook, withHook.length);
+        assertImported(gate, "noHook", out.importRun.noHook, withoutHook.length);
+      }
     }
 
     if (!live) {
@@ -368,7 +705,7 @@ export default async function handler(req, res) {
       out.note = "Campaigns are created paused. Nothing sends until someone presses Launch in Instantly.";
     }
 
-    return res.status(200).json(out);
+    return respond(res, out, gate);
   } catch (err) {
     return res.status(500).json({
       ok: false,

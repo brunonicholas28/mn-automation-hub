@@ -44,9 +44,15 @@ jobs:
           STEP: ${{ github.event.inputs.step || 'all' }}
           LIVE: ${{ github.event.inputs.live || (github.event_name == 'schedule' && '1') || '0' }}
         run: |
-          curl -sS --fail-with-body \
-            "https://mn-automation-hub.vercel.app/api/cohort/build?key=${FUNNEL_CRON_KEY}&cohort=${COHORT}&step=${STEP}&live=${LIVE}" \
-            | tee response.json
+          # pipefail matters here. Without it the exit status of the pipeline
+          # is tee's, so curl --fail-with-body could report a 409 and the step
+          # would still go green - which is the same class of bug as the one
+          # this workflow now guards against.
+          set -euo pipefail
+
+          url="https://mn-automation-hub.vercel.app/api/cohort/build"
+          url="${url}?key=${FUNNEL_CRON_KEY}&cohort=${COHORT}&step=${STEP}&live=${LIVE}"
+          code=$(curl -sS -o response.json -w '%{http_code}' --max-time 120 "$url")
 
           # The endpoint returns counts only, never a name or an email. This
           # repository is public and these logs are public with it, so fail
@@ -56,6 +62,22 @@ jobs:
             exit 1
           fi
 
-          # A fail-closed abort returns ok:false and must show up as a red
-          # run, not a silent pass.
+          python3 - <<'PY'
+          import json
+          d = json.load(open("response.json"))
+          print(json.dumps({k: v for k, v in d.items() if k != "checks"}, indent=2))
+          for c in d.get("checks", []):
+              mark = "PASS" if c["ok"] else ("FAIL" if c["severity"] == "fail" else "WARN")
+              print(f'  {mark:4}  {c["name"]:34}  {c["detail"]}')
+          PY
+
+          # Every way this run can come back short is an assertion in checks[]
+          # and the endpoint answers 409 when one of them failed. Before
+          # 2026-09-15 the only test was grep '"ok":true', and a half-loaded
+          # cohort passed it.
+          if [ "$code" != "200" ]; then
+            echo
+            echo "cohort-build failed its own checks with HTTP $code"
+            exit 1
+          fi
           grep -q '"ok":true' response.json

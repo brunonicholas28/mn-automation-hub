@@ -1,0 +1,93 @@
+# Checks the week's cohort is actually ready to send, four times, starting
+# four days out.
+#
+# This exists because on 2026-09-15 cohort-build reported success while 131 of
+# 249 leads had never reached Instantly, and nobody found out until the
+# morning of the send. Nothing here writes anything - it re-reads Instantly
+# and Pipedrive and asserts they match what the build set out to do.
+#
+# Writes nothing, so running it often costs nothing but a minute of Actions.
+#
+# The schedule is built around what is true when:
+#
+#   Fri 09:00  generate-hooks has run at 07:00. The campaigns do not exist yet
+#              and are not expected to - this run is about the upstream state:
+#              is the cohort minted, are the two templates still healthy, is
+#              anyone in it now disqualified, is there enough warm capacity.
+#   Sun 18:00  Same checks with the weekend's changes in. Last quiet moment.
+#   Mon 10:00  cohort-build ran at 08:00. Strict from here: the campaigns must
+#              exist and hold exactly the right leads. A red run here leaves a
+#              full working day to fix it.
+#   Tue 06:30  Thirty minutes before the sending window opens. Last gate.
+#
+# Strict runs promote warnings to failures. Before Monday a missing campaign
+# is simply work not done yet; from Monday it is a problem.
+name: cohort-preflight
+
+on:
+  schedule:
+    - cron: "0 8 * * 5"
+    - cron: "0 17 * * 0"
+    - cron: "0 9 * * 1"
+    - cron: "30 5 * * 2"
+  workflow_dispatch:
+    inputs:
+      cohort:
+        description: "Cohort id, e.g. c20260922. Leave blank for the next Tuesday."
+        required: false
+        default: ""
+      strict:
+        description: "Set to 1 to treat every warning as a failure"
+        required: false
+        default: "1"
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify the cohort is ready to send
+        env:
+          FUNNEL_CRON_KEY: ${{ secrets.FUNNEL_CRON_KEY }}
+          COHORT: ${{ github.event.inputs.cohort || '' }}
+          # The Monday and Tuesday runs are the gate; the earlier two are a
+          # heads-up. A manual dispatch is strict unless it says otherwise.
+          STRICT: >-
+            ${{ github.event.inputs.strict
+                || ((github.event.schedule == '0 9 * * 1' || github.event.schedule == '30 5 * * 2') && '1')
+                || '0' }}
+        run: |
+          set -euo pipefail
+
+          url="https://mn-automation-hub.vercel.app/api/cohort/build"
+          url="${url}?key=${FUNNEL_CRON_KEY}&cohort=${COHORT}&step=verify&strict=${STRICT}"
+
+          # 409 is how the endpoint reports failed checks, and --fail-with-body
+          # still prints the body before exiting non-zero. Capture the code
+          # rather than letting curl abort, so the checks can be printed first.
+          code=$(curl -sS -o response.json -w '%{http_code}' --max-time 120 "$url")
+
+          # This repository is public and so are these logs. The endpoint
+          # returns counts only; fail loudly rather than print a person if that
+          # ever stops being true.
+          if grep -qiE '"email"|@[a-z0-9.-]+\.[a-z]{2,}' response.json; then
+            echo "Refusing to print: response contains personal data"
+            exit 1
+          fi
+
+          echo "Strict: ${STRICT}"
+          python3 - <<'PY'
+          import json
+          d = json.load(open("response.json"))
+          print("cohort", d.get("cohort"), "- day", d.get("cohortDay"))
+          for c in d.get("checks", []):
+              mark = "PASS" if c["ok"] else ("FAIL" if c["severity"] == "fail" else "WARN")
+              print(f'  {mark:4}  {c["name"]:34}  {c["detail"]}')
+          print()
+          print(f'{d.get("passed", 0)} passed, {len(d.get("failed", []))} blocking')
+          PY
+
+          if [ "$code" != "200" ]; then
+            echo
+            echo "Preflight failed with HTTP $code. The cohort is not ready to send."
+            exit 1
+          fi

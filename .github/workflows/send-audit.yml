@@ -1,0 +1,78 @@
+# Reads what Instantly actually sent, early in the sending window.
+#
+# Every check in cohort-preflight runs before the send and reads configuration.
+# On 15 and 16 Sep 2026 all eighteen passed while 412 emails went out with the
+# subject line rendered literally as {a|b} - Instantly does not expand spintax
+# on this account. Nothing looked at a sent message, so the fault surfaced when
+# Bruno opened his laptop the next morning.
+#
+# This is the other half: it samples real sent mail and goes red if any
+# template syntax survived into it. First run is ~20 minutes after the window
+# opens, so a bad render costs a few dozen emails rather than a whole cohort.
+#
+# Sending window is 07:00-15:00 Europe/London, Tue/Wed/Thu. Crons below are
+# UTC and sit inside that window year round - during GMT they land an hour
+# later in local terms, which is still inside it.
+name: send-audit
+
+on:
+  schedule:
+    - cron: "20 6 * * 2,3,4"
+    - cron: "50 6 * * 2,3,4"
+    - cron: "40 7 * * 2,3,4"
+    - cron: "30 9 * * 2,3,4"
+  workflow_dispatch:
+    inputs:
+      campaign:
+        description: "Instantly campaign id. Leave blank to audit every active campaign."
+        required: false
+        default: ""
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check what actually went out
+        env:
+          FUNNEL_CRON_KEY: ${{ secrets.FUNNEL_CRON_KEY }}
+          CAMPAIGN: ${{ github.event.inputs.campaign || '' }}
+        run: |
+          set -euo pipefail
+
+          url="https://mn-automation-hub.vercel.app/api/cron/run"
+          url="${url}?job=send-audit&key=${FUNNEL_CRON_KEY}&campaign=${CAMPAIGN}"
+
+          code=$(curl -sS -o response.json -w '%{http_code}' --max-time 120 "$url")
+
+          # This repository is public and so are these logs. The endpoint
+          # returns campaign names and counts only; fail loudly rather than
+          # print a prospect if that ever stops being true.
+          if grep -qiE '"to"|@[a-z0-9.-]+\.[a-z]{2,}' response.json; then
+            echo "Refusing to print: response contains personal data"
+            exit 1
+          fi
+
+          python3 - <<'PY'
+          import json
+          d = json.load(open("response.json"))
+          print("checked", d.get("checkedAt"))
+          print(d.get("campaignsAudited", 0), "campaign(s),",
+                d.get("emailsInspected", 0), "message(s) inspected,",
+                d.get("sentToday", 0), "sent today")
+          for row in d.get("detail", []):
+              mark = "FAIL" if row.get("faults") else ("WARN" if row.get("error") else "ok")
+              note = row.get("worst") or row.get("error") or "clean"
+              print(f'  {mark:4}  {row.get("campaign"):44}  {note}')
+          print()
+          print(d.get("faults", 0), "faulty message(s);",
+                "alert emailed" if d.get("emailed") else "no alert sent")
+          if d.get("emailError"):
+              print("alert email FAILED:", d["emailError"])
+          PY
+
+          if [ "$code" != "200" ]; then
+            echo
+            echo "send-audit failed with HTTP $code."
+            echo "Something is reaching inboxes in a state we did not write."
+            exit 1
+          fi

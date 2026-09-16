@@ -7,6 +7,7 @@
 //
 // Run: node scripts/test_cohort_build_checks.mjs
 import { checker, assertImported, collectVariants } from "../api/cohort/build.js";
+import { renderFaults, renderFaultsIn } from "../lib/render-check.js";
 
 let failures = 0;
 const t = (name, fn) => {
@@ -114,6 +115,49 @@ t("a healthy template reports no blank steps", () => {
     { variants: [{ subject: "b", body: "Here is {{reportLink}}" }] },
   ] }];
   eq(collectVariants(sequences).filter((v) => !v.body).length, 0, "blank steps");
+});
+
+console.log("\n2026-09-15 / 09-16 regression: spintax reached the inbox");
+
+// What actually landed in 412 inboxes. Instantly substituted the variables and
+// sent the braces and the pipe verbatim.
+t("the subject that shipped on 15 Sep is caught", () => {
+  const subject = "{quick one, {{firstName}}|before the year closes out, {{firstName}}}";
+  eq(renderFaults(subject, { allowVariables: true }).length, 1, "faults");
+});
+
+t("the subject that shipped on 16 Sep is caught", () => {
+  const subject = "{6 out of 10|most won't say this out loud}";
+  eq(renderFaults(subject, { allowVariables: true }).length, 1, "faults");
+});
+
+t("the subject Bruno chose passes", () => {
+  eq(renderFaults("the 6 out of 10 number", { allowVariables: true }).length, 0, "faults");
+  eq(renderFaults("closing the loop", { allowVariables: true }).length, 0, "faults");
+});
+
+t("a template variable is fine in a template and a fault in a sent email", () => {
+  eq(renderFaults("Hi {{firstName}},", { allowVariables: true }).length, 0, "template");
+  eq(renderFaults("Hi {{firstName}},", { allowVariables: false }).length, 1, "sent");
+});
+
+t("spintax anywhere in a sequence is found, subject or body", () => {
+  const sequences = [{ steps: [
+    { variants: [{ subject: "clean", body: "Hi {{firstName}}" }] },
+    { variants: [{ subject: "also clean", body: "pick {one|the other}" }] },
+  ] }];
+  const faults = collectVariants(sequences).flatMap((v) => renderFaultsIn(v, { allowVariables: true }));
+  eq(faults.length, 1, "faults");
+  eq(faults[0].where, "body", "where");
+});
+
+t("the placeholder from the 267 stale drafts is still caught", () => {
+  eq(renderFaults("[INSERT THIS CONTACT'S GROWTH GAP REPORT LINK]", { allowVariables: true }).length, 1, "faults");
+});
+
+t("ordinary prose with a brace is not a false positive", () => {
+  eq(renderFaults("we scored 9/10 {see attached}", { allowVariables: true }).length, 0, "faults");
+  eq(renderFaults("a | b in a table row", { allowVariables: true }).length, 0, "faults");
 });
 
 console.log(failures ? "\n" + failures + " test(s) failed" : "\nall tests passed");

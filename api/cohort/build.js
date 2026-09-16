@@ -55,6 +55,7 @@ import {
   listCampaignLeads,
   listCampaigns,
 } from "../../lib/instantly.js";
+import { renderFaultsIn, describeFaults } from "../../lib/render-check.js";
 import {
   ENROLMENT_PIPELINE_ID,
   ENROLMENT_STAGES,
@@ -394,6 +395,15 @@ const SATISFIABLE_VARIABLES = new Set([
   "hook",
 ]);
 
+// Returns the [ok, detail] pair for a rendersClean assertion over a set of
+// subject/body variants. {{variables}} are legitimate here - this is the
+// template, not the sent email - so only spintax and leftover placeholders
+// count against it.
+function spintaxCheck(variants) {
+  const faults = variants.flatMap((v) => renderFaultsIn(v, { allowVariables: true }));
+  return [faults.length === 0, describeFaults(faults)];
+}
+
 async function assertTemplate(c, label, templateId, { needsHook }) {
   const key = "template." + label;
   if (!templateId) {
@@ -426,6 +436,12 @@ async function assertTemplate(c, label, templateId, { needsHook }) {
     unknown.length === 0,
     unknown.length ? "asks for " + unknown.join(", ") + ", which nothing populates" : "all satisfiable"
   );
+
+  // Instantly does not expand spintax on this account - it sends {a|b}
+  // verbatim, braces and pipe. 412 emails went out that way on 15 and 16 Sep
+  // before anyone looked at a sent message. Any spintax in a template is a
+  // defect, not a style choice.
+  c.fail(key + ".rendersClean", ...spintaxCheck(variants));
 
   // The whole reason the cohort is split in two. A no-hook template that
   // still references the hook would send a blank line to everyone in it.
@@ -529,6 +545,25 @@ async function runVerify(c, { cohort, loaded, withHook, withoutHook, hookTemplat
       c.warn(key + ".exists", pair.expected === 0, "no campaign named " + pair.name + " yet");
       out.campaigns[pair.half] = { name: pair.name, exists: false, expected: pair.expected };
       continue;
+    }
+
+    // The template is what we meant to send; this is what will actually go
+    // out. They drift - the c20260915 campaigns were edited by hand after the
+    // clone - so the copy that sends gets its own assertion.
+    try {
+      const built = await getCampaign(campaign.id);
+      const variants = collectVariants(built.sequences || []);
+      if (!variants.length) {
+        c.fail(key + ".rendersClean", false, "the built campaign carries no sequence steps");
+      } else {
+        c.fail(key + ".rendersClean", ...spintaxCheck(variants));
+      }
+    } catch (err) {
+      c.fail(
+        key + ".rendersClean",
+        false,
+        "could not read its sequence: " + String(err.message || err).slice(0, 120)
+      );
     }
 
     let leads = [];

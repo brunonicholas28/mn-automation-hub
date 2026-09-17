@@ -1,4 +1,50 @@
 <!--
+  DEAD END, recorded 2026-09-17. Do not try to fix this with another snippet.
+
+  This beacon is correct but never runs for a prospect: Fillout gates custom
+  code behind the Business plan and does not inject it into embedded renders,
+  and the inline embed has been the only path since 2026-09-10. Measured, same
+  browser, one minute apart:
+
+    landing page with the form inline   visits 1   started 0
+    the form at its own URL             visits 0   started 1
+
+  So "reports started" read zero for six days because it could not fire.
+
+  THREE PARENT-PAGE REPLACEMENTS WERE TRIED AND ALL THREE FAILED:
+
+    v1  fire on Fillout's page_change postMessage
+        -> fired on a bare page load; Fillout emits a page_change during embed
+           init, so started equalled visits. Live for about a day. Worse than
+           the bug, because a number that tracks visits looks healthy.
+    v2  require a user gesture and a stepId the form did not open on
+        -> never fired; this form keeps one stepId (pgyy) across its questions.
+    v3  fire on the second page_change
+        -> never fired either.
+
+  The reason, measured with a listener armed and watching: answering a question
+  inside the embed produces NO postMessage, and neither does clicking Next and
+  genuinely advancing from page 1 to page 2. The embed posts form_resized, one
+  page_change at init, and check_scroll_up. Nothing about what the person does.
+  window.blur + activeElement === IFRAME is not reliable either - it fired on
+  one click into the iframe and not on another.
+
+  (The first experiment that appeared to show page_change was an engagement
+  signal had its listener armed AFTER page load, so the init event had already
+  gone and the one it saw was that event arriving late. Arm before load, or do
+  not trust the result.)
+
+  THERE IS NO BROWSER-SIDE SIGNAL FOR ENGAGEMENT HERE.
+
+  USE /api/fillout-stats INSTEAD. It already reads Fillout's API server-side,
+  counts partial submissions per cohort via listSubmissions(formId, {status:
+  "in_progress"}) and campaignOf() in lib/fillout.js, and has been live since
+  2026-09-08. A partial exists the moment someone answers enough to be
+  resumable, which is exactly what "started" should mean.
+
+  Kept here as the record of what was tried, so nobody spends another day on it.
+-->
+<!--
   Fillout snippet: "report started" beacon.
   Paste into: Fillout -> your form -> Settings -> Custom code.
   Requires the Business plan (custom code is gated behind it).

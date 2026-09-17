@@ -4,33 +4,13 @@
 // GET /api/metrics            -> every cohort, newest first
 // GET /api/metrics?cohort=... -> one cohort
 
-import { readAllCohorts, readCohort, normaliseCohortId } from "../lib/cohort.js";
+import { readAllCohorts, readCohort, normaliseCohortId, isHiddenCohort } from "../lib/cohort.js";
 import { getState } from "../lib/kv.js";
 
-// Rows that exist in the store but must never reach a reader.
-// - c19700101: the 1970-dated verification row written while wiring the beacon.
-// - no-phone-cadence-...: the first poll ran before the Instantly campaign
-//   name was aliased onto c20260908, so it wrote the same 2026-09-08 sends
-//   under the raw campaign slug. Left in place but hidden, because showing it
-//   would count that batch twice in the totals.
-const HIDDEN_COHORTS = new Set([
-  // The 1970-dated verification row written while wiring the beacon.
-  "c19700101",
-  // The first poll ran before the Instantly campaign name was aliased onto
-  // c20260908, so it wrote the same 2026-09-08 sends under the raw campaign
-  // slug. Hidden because showing it would count that batch twice.
-  "no-phone-cadence---cold-outreach-v1untitled-camp",
-  // Written before placeholder tags were rejected at the source; Fillout's
-  // preview link carries utm_campaign=xxxxx.
-  "xxxxx",
-]);
-
-// Anything tagged ctest-* is a deliberate end-to-end check. Making the rule a
-// pattern rather than a list means a future test hides itself instead of
-// needing a code change to tidy up after it.
-function isHidden(cohort) {
-  return HIDDEN_COHORTS.has(cohort) || /^ctest[-_]/.test(cohort || "");
-}
+// The list of rows that must never reach a reader now lives in lib/cohort.js
+// as isHiddenCohort, because /api/fillout-stats needs exactly the same rule
+// and had been counting the test rows this endpoint was already hiding.
+const isHidden = isHiddenCohort;
 
 // Returns null rather than 0 when the denominator is zero, so the dashboard
 // can render "-" instead of a confident-looking 0.0% that means nothing.

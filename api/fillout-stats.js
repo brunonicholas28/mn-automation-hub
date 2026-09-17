@@ -15,7 +15,7 @@ import {
   campaignOf,
   durationSeconds,
 } from "../lib/fillout.js";
-import { normaliseCohortId } from "../lib/cohort.js";
+import { normaliseCohortId, isHiddenCohort } from "../lib/cohort.js";
 
 const FORM_NAME_MATCH = /growth\s*gap\s*report/i;
 
@@ -65,7 +65,20 @@ export default async function handler(req, res) {
     const realFinished = finished.filter((s) => !looksInternal(s));
     const internalCount = finished.length - realFinished.length;
 
-    const durations = realFinished.map(durationSeconds).filter((d) => d !== null && d < 60 * 60 * 24 * 7);
+    // Four of the seven in-progress rows on 2026-09-17 were ctest-beacon
+    // partials left behind by my own beacon tests, and this endpoint was
+    // reporting them as questionnaire starts. They are counted as test rows
+    // and named, rather than silently dropped: a number that moves without
+    // explanation is how the beacon bug survived a week.
+    const isTestSubmission = (s) => isHiddenCohort(normaliseCohortId(campaignOf(s)));
+    const realPartial = partial.filter((s) => !isTestSubmission(s));
+    const testPartialCount = partial.length - realPartial.length;
+    const realFinishedTagged = realFinished.filter((s) => !isTestSubmission(s));
+    const testFinishedCount = realFinished.length - realFinishedTagged.length;
+
+    const durations = realFinishedTagged
+      .map(durationSeconds)
+      .filter((d) => d !== null && d < 60 * 60 * 24 * 7);
 
     const byCohort = {};
     const bump = (cohort, field) => {
@@ -73,8 +86,8 @@ export default async function handler(req, res) {
       byCohort[key] = byCohort[key] || { started: 0, finished: 0 };
       byCohort[key][field] += 1;
     };
-    for (const s of realFinished) bump(normaliseCohortId(campaignOf(s)), "finished");
-    for (const s of partial) bump(normaliseCohortId(campaignOf(s)), "started");
+    for (const s of realFinishedTagged) bump(normaliseCohortId(campaignOf(s)), "finished");
+    for (const s of realPartial) bump(normaliseCohortId(campaignOf(s)), "started");
 
     return res.status(200).json({
       ok: true,
@@ -82,9 +95,14 @@ export default async function handler(req, res) {
       form: { id: form.formId, name: form.name },
       generatedAt: new Date().toISOString(),
       totals: {
-        finished: realFinished.length,
-        inProgress: partial.length,
+        finished: realFinishedTagged.length,
+        inProgress: realPartial.length,
         internalTestSubmissions: internalCount,
+        excludedTestRows: {
+          inProgress: testPartialCount,
+          finished: testFinishedCount,
+          rule: "utm_campaign matching ctest-*, watchdog-*, xxxxx or c19700101 - our own end-to-end probes",
+        },
       },
       medianSecondsToComplete: median(durations),
       durationSampleSize: durations.length,

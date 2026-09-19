@@ -59,6 +59,17 @@ jobs:
 
           python3 scripts/write_cohort_roster.py raw.json "cohort/${COHORT}.json"
 
+          # An empty roster is a failure, not a quiet success. On 16-19 Sep this
+          # wrote count:0 three times, reported green each time, and the hook
+          # research sessions correctly found nothing to do - so the cohort lost
+          # three of its five research nights before anyone noticed.
+          COUNT=$(python3 -c "import json,sys; print(json.load(open('cohort/${COHORT}.json')).get('count',0))")
+          echo "Roster count: ${COUNT}"
+          if [ "${COUNT}" = "0" ]; then
+            echo "::error::Roster for ${COHORT} is empty. mint-batch has not populated lead:index:${COHORT} - check apollo-sync and the Pipedrive New Lead pool. Hook research cannot run."
+            exit 1
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 

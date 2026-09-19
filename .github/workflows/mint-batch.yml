@@ -5,8 +5,19 @@
 # be segmented afterwards - there is no way to work out retroactively which
 # anonymous landing-page visit belonged to whom.
 #
-# Runs Thursday, before Day 1 (the Friday the profile views start), so the
-# batch always carries its tracked links by the time anyone touches it.
+# Runs WEDNESDAY 06:00, ahead of export-cohort at Wednesday 18:00.
+#
+# It used to run Thursday 08:00, which was 14 hours AFTER the export that reads
+# what it writes. On its own schedule, export-cohort could therefore never
+# produce a non-empty roster: the one 265-row roster we have came from a manual
+# dispatch. The Thursday slot was justified by "before Day 1, the Friday the
+# profile views start" - and the manual LinkedIn profile-view step has now been
+# dropped from the cadence, so nothing is holding it there.
+#
+# NOTE for whoever tidies this next: dropping profile views does NOT change the
+# day numbering. Day 1 is still the anchor the cohort id is derived from and
+# Email #1 is still Day 5. Renumbering would invalidate every utm tag, every
+# legacy alias and every historical cohort row.
 #
 # This was manual on purpose for a while, because minting is tied to a
 # specific cohort id and a specific send date and neither could be inferred.
@@ -18,7 +29,7 @@ name: mint-batch
 
 on:
   schedule:
-    - cron: "0 8 * * 4"
+    - cron: "0 6 * * 3"
   workflow_dispatch:
     inputs:
       cohort:
@@ -68,4 +79,16 @@ jobs:
           print("minted:", d.get("minted"))
           print("skipped:", json.dumps(d.get("skipped", {}), indent=2))
           print(d.get("note", ""))
+
+          # A live run that mints nothing is a supply failure, not a success.
+          # On 17 Sep this returned minted:0 against 511 already-spent deals,
+          # reported green, and the whole week's cohort died downstream with
+          # nothing alerting. Fail loudly instead.
+          import os
+          if os.environ.get("LIVE") == "1" and not d.get("minted"):
+              print("::error::Live mint produced 0 tokens - the New Lead pool has no "
+                    "unspent deals. apollo-sync is the usual cause. Nothing "
+                    "downstream (export-cohort, hook research) can work until this "
+                    "is fixed.")
+              raise SystemExit(1)
           PY

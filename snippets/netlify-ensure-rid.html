@@ -1,0 +1,7 @@
+<script>
+/* MN: guarantee a rid on the page URL before the inline Growth Gap form
+   embed builds its iframe src. Without it the Fillout ending button links
+   to /generating?rid= and dead-ends with no report. Adds rid only when one
+   is not already present (campaign links keep theirs). */
+(function(){try{var p=new URLSearchParams(window.location.search);if(p.get("rid"))return;var r=(window.crypto&&window.crypto.randomUUID)?window.crypto.randomUUID():String(Date.now())+"-"+Math.random().toString(36).slice(2,10);p.set("rid",r);window.history.replaceState(null,"",window.location.pathname+"?"+p.toString()+window.location.hash);}catch(e){}})();
+</script>

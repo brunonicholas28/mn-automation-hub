@@ -1,0 +1,197 @@
+<!-- MN inline Growth Gap Report form (v7)
+     1. Drops the existing Fillout form inline under the hero.
+     2. Moves the award badge onto the "Built by Marina Nicholas" line.
+     3. Sizes the iframe per form step so no page scrolls inside it.
+     4. Adds a heading above the sample report.
+     Paired with the embed guard in Fillout Settings > Custom code.
+     v7: every step height now measured by walking the live form, not estimated. -->
+<style>
+  #mn-form-embed{max-width:900px;margin:22px auto 0;padding:0 4px;}
+  #mn-form-embed iframe{
+    display:block;width:100%;border:1px solid var(--border,#E4E9ED);
+    border-radius:14px;background:#fff;
+    box-shadow:0 20px 60px rgba(22,50,79,.18);
+    height:780px;transition:height .25s ease;
+  }
+
+  .byline-wrap.mn-merged{gap:14px !important;flex-wrap:wrap;margin-top:22px !important;}
+  .byline-wrap.mn-merged .award-badge{padding:6px 15px !important;gap:10px !important;}
+
+  /* Undo .byline-wrap span (italic) - restore the badge type exactly. */
+  .byline-wrap.mn-merged .award-badge span{
+    font-family:Poppins,sans-serif !important;
+    font-weight:700 !important;
+    font-size:13px !important;
+    letter-spacing:.01em !important;
+    color:var(--navy) !important;
+    font-style:normal !important;
+    white-space:nowrap !important;
+  }
+  /* Undo .byline-wrap img (circular avatar) - laurels are flat artwork. */
+  .byline-wrap.mn-merged .award-badge .laurel{
+    width:15px !important;height:26px !important;object-fit:contain !important;
+    border:0 !important;border-radius:0 !important;box-shadow:none !important;
+  }
+
+  /* Heading above the sample report */
+  #mn-lead{margin:46px auto 0;max-width:640px;text-align:center;padding:0 20px;}
+  #mn-lead .mn-eyebrow{
+    font-family:Inter,system-ui,sans-serif;font-size:13px;font-weight:700;
+    letter-spacing:1.3px;text-transform:uppercase;color:var(--teal,#5DC9D6);margin:0 0 10px;
+  }
+  #mn-lead h2{
+    font-family:Poppins,sans-serif;font-weight:700;font-size:27px;line-height:1.25;
+    letter-spacing:-.01em;color:var(--navy,#16324F);margin:0;
+  }
+  #mn-lead p.mn-sub{
+    font-family:Inter,system-ui,sans-serif;font-size:16px;line-height:1.55;
+    color:var(--text-secondary,#4D6072);margin:14px 0 0;
+  }
+  .report-frame.mn-led{margin-top:26px !important;}
+
+  @media (max-width:760px){
+    #mn-form-embed{margin-top:18px;padding:0}
+    #mn-form-embed iframe{border-radius:12px;height:880px}
+    .byline-wrap.mn-merged{justify-content:center}
+    #mn-lead{margin-top:36px}
+    #mn-lead h2{font-size:23px}
+    #mn-lead p.mn-sub{font-size:15px}
+  }
+</style>
+<script>
+(function () {
+  if (window.__mnFormEmbed) return;
+  window.__mnFormEmbed = true;
+
+  var TRACK  = "https://mn-automation-hub.vercel.app/api/track";
+  var FORM   = "https://report.marinanicholas.com/growth-gap-report";
+  var ORIGIN = "https://report.marinanicholas.com";
+
+  // Measured 2026-09-10 by walking the live form. Value = what the step needs
+  // (content scrollHeight + 129px of form chrome), plus a small margin.
+  var STEP_HEIGHT = {
+    xaaz: 790,   // opening question            needs  749
+    pgyy: 1010,  // Strategy & Market Position   needs  971
+    n27A: 990,   // Sales, Marketing & Customers needs  949
+    kb3P: 990,   // Product, Operations & Scale  needs  949
+    hbGm: 990,   // Financial Health & Team      needs  949
+    "379s": 1400, // Risk & Growth Outlook       needs 1359
+    uk1P: 1080,  // Your Details                 needs 1043
+    gQeb: 620    // Ending - not measured (would require a real submission)
+  };
+  var DEFAULT_HEIGHT = 1080;
+
+  var PASS_THROUGH = ["lid", "rid", "utm_source", "utm_medium", "utm_campaign"];
+
+  var query;
+  try { query = new URLSearchParams(window.location.search); }
+  catch (e) { query = new URLSearchParams(""); }
+
+  var lid      = query.get("lid") || "";
+  var campaign = query.get("utm_campaign") || query.get("c") || query.get("campaign") || "";
+  var embedId  = "mn-" + Math.random().toString(36).slice(2, 10);
+  var frame, host;
+
+  function track(stage) {
+    try {
+      fetch(TRACK, {
+        method: "POST",
+        keepalive: true,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: stage, source: "landing-inline", content: (new URLSearchParams(location.search)).get('utm_' + 'content') || '', lid: lid, campaign: campaign })
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
+  function formSrc() {
+    var parts = [
+      "fillout-embed-id=" + encodeURIComponent(embedId),
+      "fillout-embed-type=standard",
+      "fillout-embed-dynamic-resize=true"
+    ];
+    PASS_THROUGH.forEach(function (key) {
+      var v = query.get(key);
+      if (v) parts.push(encodeURIComponent(key) + "=" + encodeURIComponent(v));
+    });
+    if (document.referrer) parts.push("referrer=" + encodeURIComponent(document.referrer));
+    return FORM + "?" + parts.join("&");
+  }
+
+  function tightenHero() {
+    var byline = document.querySelector(".byline-wrap");
+    var badge  = document.querySelector(".award-badge");
+    var wrap   = document.querySelector(".award-badge-wrap");
+    if (!byline || !badge || byline.classList.contains("mn-merged")) return;
+    byline.appendChild(badge);
+    byline.classList.add("mn-merged");
+    if (wrap) wrap.style.display = "none";
+  }
+
+  function addReportLead() {
+    var rf = document.querySelector(".report-frame");
+    if (!rf || document.getElementById("mn-lead")) return;
+    var lead = document.createElement("div");
+    lead.id = "mn-lead";
+    lead.innerHTML =
+      '<p class="mn-eyebrow">Your report</p>' +
+      '<h2>Here\u2019s what you get back</h2>' +
+      '<p class="mn-sub">You already know something is holding growth back. ' +
+      'Nine areas scored. The three blockers that matter most. And which one to ' +
+      'fix first. In your inbox in minutes.</p>';
+    rf.parentNode.insertBefore(lead, rf);
+    rf.classList.add("mn-led");
+  }
+
+  function mount() {
+    var anchor = document.querySelector(".award-badge-wrap");
+    if (!anchor || document.getElementById("mn-form-embed")) return;
+
+    tightenHero();
+    addReportLead();
+
+    host = document.createElement("div");
+    host.id = "mn-form-embed";
+
+    frame = document.createElement("iframe");
+    frame.title = "Growth Gap Report";
+    frame.setAttribute("loading", "eager");
+    frame.src = formSrc();
+    host.appendChild(frame);
+
+    anchor.parentNode.insertBefore(host, anchor.nextSibling);
+
+    var cta = document.querySelector(".report-cta-overlay a.btn-primary");
+    if (cta) {
+      cta.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        host.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  }
+
+  // form_init fires on load for everyone, so it is not an engagement signal.
+  var firstStep = null, started = false;
+
+  window.addEventListener("message", function (ev) {
+    if (ev.origin !== ORIGIN) return;
+    var d = ev.data;
+    if (typeof d === "string") { try { d = JSON.parse(d); } catch (e) { return; } }
+    if (!d || d.embedId !== embedId) return;
+
+    if (d.type === "page_change") {
+      if (frame && d.stepId) {
+        frame.style.height = (STEP_HEIGHT[d.stepId] || DEFAULT_HEIGHT) + "px";
+      }
+      if (firstStep === null) { firstStep = d.stepId; return; }
+      if (host) host.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (!started && d.stepId !== firstStep) { started = true; track("started"); }
+    }
+  });
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", mount);
+  } else {
+    mount();
+  }
+})();
+</script>

@@ -1,0 +1,38 @@
+<script>
+/* Rewrites Fillout CTA links onto report.marinanicholas.com and carries the
+   UTM tags plus the per-lead token (lid) through to the form.
+   Runs again at click time because the CTA script writes its params late. */
+(function () {
+  var FROM = 'marinanicholas.fillout.com', TO = 'report.marinanicholas.com';
+  var CARRY = ['utm_' + 'campaign', 'utm_' + 'source', 'utm_' + 'medium', 'lid'];
+  function pageParams() {
+    try { return new URLSearchParams(window.location.search); }
+    catch (e) { return new URLSearchParams(); }
+  }
+  function fix(a) {
+    var href = a.getAttribute('href') || '';
+    if (href.indexOf(FROM) === -1 && href.indexOf(TO) === -1) return;
+    try {
+      var u = new URL(href, window.location.href);
+      if (u.hostname === FROM) u.hostname = TO;
+      var p = pageParams();
+      for (var i = 0; i < CARRY.length; i++) {
+        var v = p.get(CARRY[i]);
+        if (v) u.searchParams.set(CARRY[i], v);
+      }
+      a.setAttribute('href', u.toString());
+    } catch (e) {}
+  }
+  function sweep() {
+    var l = document.getElementsByTagName('a');
+    for (var i = 0; i < l.length; i++) fix(l[i]);
+  }
+  sweep();
+  document.addEventListener('DOMContentLoaded', sweep);
+  window.addEventListener('load', sweep);
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest ? e.target.closest('a') : null;
+    if (a) fix(a);
+  }, true);
+})();
+</script>

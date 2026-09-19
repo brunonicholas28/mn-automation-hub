@@ -7,7 +7,7 @@
 process.env.UPSTASH_REDIS_REST_URL ||= "https://example.invalid";
 process.env.UPSTASH_REDIS_REST_TOKEN ||= "stub";
 
-const { wouldExceedBudget, emailDigest } = await import("../lib/jobs/apollo-sync.js");
+const { wouldExceedBudget, emailDigest, hasSweptQueue } = await import("../lib/jobs/apollo-sync.js");
 
 let pass = 0; const fails = [];
 const ok = (n, c, d) => (c ? pass++ : fails.push(n + (d ? " -> " + d : "")));
@@ -44,6 +44,27 @@ ok("different emails differ", emailDigest("a@b.com") !== emailDigest("c@d.com"))
 ok("digest is stable across calls", emailDigest("a@b.com") === emailDigest("a@b.com"));
 // It must not be reversible to an address - it is stored in a shared KV.
 ok("digest does not contain the address", !a.includes("someone") && !a.includes("example"));
+
+// --- cursor advance guard, added 2026-09-19 after the Vercel 504 ---------
+// Advancing the cursor after an early stop is silent: every later run then
+// stops at the first contact it looks at and reports a clean "nothing to do"
+// while the queue sits untouched.
+ok("reaching the cursor counts as a full sweep",
+  hasSweptQueue({ reachedCursor: true, pagesExhausted: false, budgetStopped: false, timeStopped: false }) === true);
+ok("running out of pages counts as a full sweep",
+  hasSweptQueue({ reachedCursor: false, pagesExhausted: true, budgetStopped: false, timeStopped: false }) === true);
+ok("a time-stopped run has not swept the queue",
+  hasSweptQueue({ reachedCursor: false, pagesExhausted: false, budgetStopped: false, timeStopped: true }) === false);
+ok("a budget-stopped run has not swept the queue",
+  hasSweptQueue({ reachedCursor: false, pagesExhausted: false, budgetStopped: true, timeStopped: false }) === false);
+ok("an early stop overrides a sweep flag set earlier in the run",
+  hasSweptQueue({ reachedCursor: true, pagesExhausted: false, budgetStopped: false, timeStopped: true }) === false);
+ok("the budget guard overrides both sweep flags",
+  hasSweptQueue({ reachedCursor: true, pagesExhausted: true, budgetStopped: true, timeStopped: false }) === false);
+ok("a run that did neither has not swept the queue",
+  hasSweptQueue({ reachedCursor: false, pagesExhausted: false, budgetStopped: false, timeStopped: false }) === false);
+ok("missing flags do not imply a sweep", hasSweptQueue({}) === false);
+
 
 console.log(`${pass} passed, ${fails.length} failed`);
 for (const f of fails) console.log("  FAIL " + f);

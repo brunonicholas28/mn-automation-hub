@@ -8,6 +8,7 @@ process.env.UPSTASH_REDIS_REST_URL ||= "https://example.invalid";
 process.env.UPSTASH_REDIS_REST_TOKEN ||= "stub";
 
 const { wouldExceedBudget, emailDigest, hasSweptQueue } = await import("../lib/jobs/apollo-sync.js");
+const { PIPEDRIVE_DAILY_BUDGET } = await import("../lib/pipedrive.js");
 
 let pass = 0; const fails = [];
 const ok = (n, c, d) => (c ? pass++ : fails.push(n + (d ? " -> " + d : "")));
@@ -64,6 +65,20 @@ ok("the budget guard overrides both sweep flags",
 ok("a run that did neither has not swept the queue",
   hasSweptQueue({ reachedCursor: false, pagesExhausted: false, budgetStopped: false, timeStopped: false }) === false);
 ok("missing flags do not imply a sweep", hasSweptQueue({}) === false);
+
+
+// --- the shared ceiling, added 2026-09-19 after run #6 ------------------
+// Pipedrive refused us at 1106 calls while apollo-sync's own tally read 1080
+// of its private 1200. The ceiling must sit below what we have actually seen
+// refused, with room for the other jobs on the same token.
+ok("the default ceiling is below the observed refusal point",
+  PIPEDRIVE_DAILY_BUDGET < 1106, String(PIPEDRIVE_DAILY_BUDGET));
+ok("the default ceiling leaves real headroom, not a token margin",
+  PIPEDRIVE_DAILY_BUDGET <= 1000, String(PIPEDRIVE_DAILY_BUDGET));
+ok("the guard uses that shared ceiling by default",
+  wouldExceedBudget(PIPEDRIVE_DAILY_BUDGET - 2, 0) === true);
+ok("and still lets work through well under it",
+  wouldExceedBudget(0, 0) === false);
 
 
 console.log(`${pass} passed, ${fails.length} failed`);

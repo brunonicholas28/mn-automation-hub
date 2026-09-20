@@ -123,8 +123,31 @@ export default async function handler(req, res) {
       const personId = deal.person_id?.value || deal.person_id;
       if (!personId) { bump("no person on the deal"); continue; }
 
-      const person = await getPersonById(personId);
-      const email = (person?.email?.[0]?.value || person?.email || "").trim().toLowerCase();
+      // Pipedrive returns person_id on a deal as an object carrying the
+      // person's name and email, not a bare id - which is why the line above
+      // reads person_id.value. So the GET /persons/{id} that used to sit here
+      // was re-reading data the deal already had, once per deal.
+      //
+      // That cost one Pipedrive call for every deal in the New Lead pool,
+      // including the several hundred that were about to be skipped for having
+      // been contacted already. On 2026-09-20 that was most of a day's budget
+      // spent to learn nothing, and it is what stood between a fixed pipeline
+      // and a cohort going out on time.
+      //
+      // The call is still made, but only when the deal does not carry an
+      // email - so the behaviour is unchanged where the embedded data is
+      // missing, and free where it is not.
+      const embedded = deal.person_id && typeof deal.person_id === "object" ? deal.person_id : null;
+      const embeddedEmail = Array.isArray(embedded?.email)
+        ? (embedded.email.find((e) => e && e.primary) || embedded.email[0] || {}).value
+        : null;
+
+      let person = embedded && embeddedEmail ? embedded : null;
+      let email = String(embeddedEmail || "").trim().toLowerCase();
+      if (!email.includes("@")) {
+        person = await getPersonById(personId);
+        email = (person?.email?.[0]?.value || person?.email || "").trim().toLowerCase();
+      }
       if (!email.includes("@")) { bump("no usable email"); continue; }
       if (alreadySent.has(email)) { bump("already contacted in a previous batch"); continue; }
 

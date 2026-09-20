@@ -44,6 +44,10 @@ on:
         description: "Set to 1 to actually mint and write to Pipedrive"
         required: false
         default: "0"
+      limit:
+        description: "Max leads to mint in this run. Lower it when the Pipedrive day budget is tight."
+        required: false
+        default: "500"
 
 jobs:
   mint:
@@ -55,6 +59,7 @@ jobs:
           COHORT: ${{ github.event.inputs.cohort || '' }}
           TOUCH: ${{ github.event.inputs.touch || 'day2' }}
           LIVE: ${{ github.event.inputs.live || (github.event_name == 'schedule' && '1') || '0' }}
+          LIMIT: ${{ github.event.inputs.limit || '500' }}
         run: |
           # A cohort id is the Tuesday its Email #1 goes out. On the schedule
           # there is no input to read, so work it out rather than ask.
@@ -62,7 +67,7 @@ jobs:
           echo "Cohort: $COHORT"
 
           curl -sS --fail-with-body \
-            "https://mn-automation-hub.vercel.app/api/leads/mint-batch?key=${FUNNEL_CRON_KEY}&cohort=${COHORT}&touch=${TOUCH}&live=${LIVE}" \
+            "https://mn-automation-hub.vercel.app/api/leads/mint-batch?key=${FUNNEL_CRON_KEY}&cohort=${COHORT}&touch=${TOUCH}&live=${LIVE}&limit=${LIMIT}" \
             -o response.json
           # The response carries prospect email addresses on a live run, so
           # only the counts go into the log. Read the full list in Pipedrive,

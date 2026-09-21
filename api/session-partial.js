@@ -155,15 +155,36 @@ export default async function handler(req, res) {
       await createNote(dealId, note, { pinned: true });
     }
 
-    // Keyed by deal so the recovery sweep can tell "captured and still not
-    // booked" from "captured, then booked an hour later". The Calendly
-    // webhook clears it. Ninety days is long enough for any sane follow-up
-    // window and short enough that this never becomes a shadow database.
+    // The record the recovery sweep works from. personId is stored because
+    // the sweep decides whether to keep going by re-reading the deal's real
+    // stage in Pipedrive rather than trusting a flag written here - the same
+    // reasoning as phoenix's report chase, which self-cancels off actual
+    // state because a cached "booked" flag is exactly the thing that goes
+    // stale without anyone noticing.
+    //
+    // Ninety days is long enough for any sane follow-up window and short
+    // enough that this never quietly becomes a shadow CRM.
     await kv.set(
       `session:partial:${email}`,
-      { dealId, email, first, company, source, campaign, at: Date.now(), booked: false },
+      {
+        dealId,
+        personId: person.id,
+        email,
+        first,
+        company,
+        source,
+        campaign,
+        at: Date.now(),
+        sent: {},
+      },
       { ex: 90 * 24 * 60 * 60 }
     );
+
+    // An index, because Upstash SCAN across a whole keyspace is the kind of
+    // thing that works fine at fifty records and becomes a problem later.
+    // The sweep reads this set; entries whose record has expired are pruned
+    // by the sweep itself.
+    await kv.sadd("session:partials:index", email);
 
     return res.status(200).json({ ok: true, captured: true, dealId });
   } catch (err) {

@@ -20,6 +20,7 @@ import hookIo from "../../lib/jobs/hook-io.js";
 import creditCheck from "../../lib/jobs/credit-check.js";
 import funnelWatchdog from "../../lib/jobs/funnel-watchdog.js";
 import sendAudit from "../../lib/jobs/send-audit.js";
+import sessionRecovery from "../../lib/jobs/session-recovery.js";
 
 export const config = { maxDuration: 60 };
 
@@ -33,6 +34,7 @@ const JOBS = {
   "credit-check": creditCheck,
   "funnel-watchdog": funnelWatchdog,
   "send-audit": sendAudit,
+  "session-recovery": sessionRecovery,
 };
 
 export default async function handler(req, res) {

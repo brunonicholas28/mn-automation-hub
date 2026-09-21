@@ -1456,5 +1456,662 @@
   "date": "2026-09-16",
   "confidence": "High",
   "pass2": "done"
+ },
+ {
+  "dealId": "736",
+  "verdict": "DRAFT",
+  "trigger": "SAP choosing Enode to power residential flexibility",
+  "url": "https://enode.com/blog/partnerships/enode-x-sap-sap-has-chosen-enode-to-enable-residential-flexibility",
+  "date": "2026-03-03",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "737",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "738",
+  "verdict": "DRAFT",
+  "trigger": "Google's $4.75 billion acquisition of Intersect",
+  "url": "https://pv-magazine-usa.com/2026/01/02/google-acquires-clean-energy-developer-intersect-power-for-nearly-5-billion/",
+  "date": "2026-01-02",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "739",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "740",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "741",
+  "verdict": "DRAFT",
+  "trigger": "enspired entering Italy with Energreen Trading",
+  "url": "https://www.enspired-trading.com/press-releases/enspired-enters-italy-in-partnership-with-energreen-trading",
+  "date": "2026-04-16",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "742",
+  "verdict": "DRAFT",
+  "trigger": "the Clearbrook community solar partnership across Chicago",
+  "url": "https://www.commonenergy.us/press",
+  "date": "2026-08-11",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "743",
+  "verdict": "DRAFT",
+  "trigger": "Isometric's Series A reaching $50 million with ICE joining",
+  "url": "https://www.eu-startups.com/2026/09/uk-climatetech-startup-isometric-brings-series-a-to-e43-million-as-it-expands-beyond-carbon-removal",
+  "date": "2026-09-15",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "744",
+  "verdict": "DRAFT",
+  "trigger": "the Jena Flow Batteries tie-up to scale your flow battery",
+  "url": "https://channellife.co.uk/story/allegro-partners-with-jena-batteries-on-flow-rollout",
+  "date": "2026-08-20",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "745",
+  "verdict": "DRAFT",
+  "trigger": "your flexibility marketplace launching in Belgium with ORES",
+  "url": "https://www.piclo.com/press-releases/piclo-expands-its-global-flexibility-marketplace-into-belgium",
+  "date": "2026-04-15",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "746",
+  "verdict": "DRAFT",
+  "trigger": "your acquisition of the Waunakee digester facility in Wisconsin",
+  "url": "https://biomassmagazine.com/articles/ag-grid-energy-acquires-waunakee-renewable-energy-facility",
+  "date": "2026-07-22",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "747",
+  "verdict": "DRAFT",
+  "trigger": "your strategic partnership with ITM Power on UK green hydrogen",
+  "url": "https://itm-power.com/news/strategic-partnership-with-protium-for-uk-green-hydrogen-projects",
+  "date": "2026-06-03",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "748",
+  "verdict": "DRAFT",
+  "trigger": "Perdaman naming you preferred electrolyser vendor for Project Helios",
+  "url": "https://fuelcellsworks.com/2026/08/20/clean-energy/perdaman-appoints-electric-hydrogen-as-preferred-electrolyser-vendor-for-project-helios",
+  "date": "2026-08-20",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "749",
+  "verdict": "DRAFT",
+  "trigger": "your 8.8 million raise backed by Great British Energy",
+  "url": "https://www.eu-startups.com/2026/08/crawley-based-naked-energy-secures-e10-35-million-to-build-uk-solar-thermal-technology-manufacturing-facility/",
+  "date": "2026-08-15",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "750",
+  "verdict": "DRAFT",
+  "trigger": "construction starting on the Trail Road battery project",
+  "url": "https://www.globenewswire.com/news-release/2026/06/10/3309862/0/en/scout-clean-energy-moves-into-new-ottawa-office-and-celebrates-trail-road-bess-construction-start.html",
+  "date": "2026-06-10",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "751",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "752",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "753",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "754",
+  "verdict": "DRAFT",
+  "trigger": "your ChargePoint partnership for smart charging across Europe",
+  "url": "https://www.hivepower.tech/resources/news-and-events",
+  "date": "2025-11-15",
+  "confidence": "Low",
+  "pass2": "done"
+ },
+ {
+  "dealId": "755",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "756",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "757",
+  "verdict": "DRAFT",
+  "trigger": "Octopus Energy Generation taking its commitment to $100M",
+  "url": "https://www.newswire.com/news/cultivo-signs-major-agreement-with-octopus-energy-generation-expanding-u-s",
+  "date": "2026-03-12",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "758",
+  "verdict": "DRAFT",
+  "trigger": "the 43MWp Irish solar portfolio sale to Impax",
+  "url": "https://bnrg.ie/news/",
+  "date": "2026-07-29",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "759",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "760",
+  "verdict": "DRAFT",
+  "trigger": "the UNMETRO land tokenisation launch",
+  "url": "https://www.perfil.com/noticias/cordoba/unmetro-la-apuesta-de-proaco-en-cordoba-para-invertir-en-tierra-de-forma-accesible.phtml",
+  "date": "2026-01-07",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "761",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "762",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "763",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "Low",
+  "pass2": "done"
+ },
+ {
+  "dealId": "764",
+  "verdict": "DRAFT",
+  "trigger": "Lords winning No.1 Church Lane in North Sydney",
+  "url": "https://www.lordsgroup.com.au/news/lords-awarded-no-1-church-lane-north-sydney",
+  "date": "2026-07-24",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "765",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "766",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "767",
+  "verdict": "DRAFT",
+  "trigger": "your ninth acquisition, Tucker Hill in Phoenix",
+  "url": "https://thechillbrothers.com/the-chill-brothers-expands-into-arizona-with-acquisition-of-tucker-hill-air-plumbing-electrical/",
+  "date": "2026-02-18",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "768",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "769",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "770",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "771",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "772",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "773",
+  "verdict": "DRAFT",
+  "trigger": "SimonCRE's $12M Island Plaza acquisition in Oak Harbor",
+  "url": "https://www.connectcre.com/stories/simoncre-acquires-wa-retail-plaza-for-12m-plans-redevelopment/",
+  "date": "2026-08-03",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "774",
+  "verdict": "DRAFT",
+  "trigger": "Mullins Mechanical at No. 1,016 on the 2026 Inc. 5000",
+  "url": "https://www.inc.com/profile/mullins-mechanical",
+  "date": "2026-08-12",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "775",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "776",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "777",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "778",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "779",
+  "verdict": "DRAFT",
+  "trigger": "SolarSense opening its new Manchester hub",
+  "url": "https://www.thebusinessdesk.com/northwest/news/2175128-renewable-energy-business-extends-reach-to-north-west-with-new-manchester-hub/",
+  "date": "2026-07-01",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "780",
+  "verdict": "DRAFT",
+  "trigger": "the new Spray-Net franchise opening in East Cobb",
+  "url": "https://www.prnewswire.com/news-releases/recent-kennesaw-state-graduate-opens-spray-net-franchise-in-east-cobb-302834677.html",
+  "date": "2026-07-30",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "781",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "782",
+  "verdict": "DRAFT",
+  "trigger": "Bridgit launching its AI agents for workforce planning",
+  "url": "https://constructionmaguk.co.uk/bridgit-launches-the-first-ai-agents-built-for-workforce-planning/",
+  "date": "2026-08-13",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "783",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "784",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "785",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "786",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "787",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "788",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "789",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "790",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "791",
+  "verdict": "DRAFT",
+  "trigger": "the AU$9.6m contract to electrify the Jandakot bus depot",
+  "url": "https://www.evinfrastructurenews.com/ev-networks/western-australia-selects-jet-charge-to-electrify-another-bus-depot-in-au-9-6-million-push",
+  "date": "2026-01-06",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "792",
+  "verdict": "DRAFT",
+  "trigger": "your GCC partnership with the Nemetschek Group",
+  "url": "https://www.nemetschek.com/en/news-media/nemetschek-wakecap-partnership",
+  "date": "2025-10-09",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "793",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "794",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "795",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "796",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "797",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "798",
+  "verdict": "DRAFT",
+  "trigger": "the $100m first close on Anterra Fund III",
+  "url": "https://tech.eu/2026/06/15/anterra-capital-reaches-100m-first-close-for-fund-iii-to-back-next-gen-food-and-agritech-innovation/",
+  "date": "2026-06-15",
+  "confidence": "Low",
+  "pass2": "done"
+ },
+ {
+  "dealId": "799",
+  "verdict": "DRAFT",
+  "trigger": "Mac Hofeditz joining Riverwood as Managing Director of Capital Formation",
+  "url": "https://www.businesswire.com/news/home/20260501769395/en/Riverwood-Capital-Appoints-Managing-Director",
+  "date": "2026-05-01",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "800",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "801",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "802",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "803",
+  "verdict": "DRAFT",
+  "trigger": "Chicago Pacific Founders backing Attune's agentic healthcare platform",
+  "url": "https://www.prnewswire.com/news-releases/chicago-pacific-founders-backs-attune-to-tackle-american-healthcares-coordination-crisis-and-unlock-its-unrealized-clinical-capacity-302808808.html",
+  "date": "2026-06-24",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "804",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "805",
+  "verdict": "DRAFT",
+  "trigger": "5th Century closing Fund II above target at $276 million",
+  "url": "https://www.businesswire.com/news/home/20260506276774/en/5th-Century-Partners-Announces-Final-Close-of-Fund-II-Above-Target-at-$276-Million",
+  "date": "2026-05-06",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "806",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "807",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
+ },
+ {
+  "dealId": "808",
+  "verdict": "NO-TRIGGER",
+  "trigger": "none",
+  "url": "none",
+  "date": "none",
+  "confidence": "High",
+  "pass2": "done"
  }
 ]

@@ -15,6 +15,7 @@
 // Fire-and-forget from the browser. It always answers 200, because a capture
 // failure must never surface to a prospect who is mid-booking.
 
+import crypto from "crypto";
 import { Redis } from "@upstash/redis";
 import {
   findOrCreatePerson,
@@ -24,6 +25,7 @@ import {
   ENROLMENT_PIPELINE_ID,
   ENROLMENT_STAGES,
 } from "../lib/pipedrive.js";
+import { sendConversion, looksLinkedInSourced } from "../lib/linkedinCapi.js";
 
 const kv = Redis.fromEnv();
 
@@ -88,6 +90,13 @@ export default async function handler(req, res) {
     const source = clean(body.source, 60) || "growth-gap-session-page";
     const campaign = clean(body.campaign, 60);
     const answers = body.answers && typeof body.answers === "object" ? body.answers : {};
+
+    // The LinkedIn click ID, read off the ad's landing URL by the page. Stored
+    // as well as used, because this is the earliest point in the funnel where
+    // we hold one: if it fails to survive the hop through Calendly, the
+    // booking webhook can recover it by looking this record up on email.
+    const liFatId = clean(body.liFatId, 200) || null;
+    const utmSource = clean(body.utmSource, 60) || null;
 
     await kv.hincrby(COUNTER_KEY, "reached_step2", 1);
 
@@ -174,6 +183,8 @@ export default async function handler(req, res) {
         company,
         source,
         campaign,
+        liFatId,
+        utmSource,
         at: Date.now(),
         sent: {},
       },
@@ -185,6 +196,37 @@ export default async function handler(req, res) {
     // The sweep reads this set; entries whose record has expired are pruned
     // by the sweep itself.
     await kv.sadd("session:partials:index", email);
+
+    // Report it to LinkedIn as a lead.
+    //
+    // This is the higher-volume of the two conversions by some distance: the
+    // central case for the flight is ~318 clicks and ~8 bookings, and two
+    // events a week is not a signal. Step-2 completions happen several times
+    // more often, and they are a real lead — four qualification answers and
+    // contact details, given before anyone reached the calendar.
+    //
+    // Note this fires whether or not they go on to book. That is correct:
+    // it is a different conversion measuring a different, earlier thing.
+    if (looksLinkedInSourced({ liFatId, utmSource })) {
+      // Stable for one person on one day, so a double-submit collapses while a
+      // genuine return visit next week still counts.
+      const day = new Date().toISOString().slice(0, 10);
+      const eventId = crypto
+        .createHash("sha256")
+        .update(`partial:${email}:${day}`)
+        .digest("hex");
+
+      const capi = await sendConversion({
+        conversionId: process.env.LINKEDIN_CONV_DETAILS_SUBMITTED,
+        email,
+        liFatId,
+        eventId,
+        firstName: first,
+        lastName: last,
+        companyName: company,
+      });
+      console.log("session-partial linkedin conversion:", JSON.stringify(capi));
+    }
 
     return res.status(200).json({ ok: true, captured: true, dealId });
   } catch (err) {

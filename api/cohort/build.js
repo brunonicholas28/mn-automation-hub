@@ -54,6 +54,9 @@ import {
   listAccounts,
   listCampaignLeads,
   listCampaigns,
+  activateCampaign,
+  campaignStatusName,
+  CAMPAIGN_STATUS_ACTIVE,
 } from "../../lib/instantly.js";
 import { renderFaultsIn, describeFaults } from "../../lib/render-check.js";
 import {
@@ -471,6 +474,32 @@ function respond(res, out, c) {
   return res.status(out.ok ? 200 : 409).json(out);
 }
 
+// Warnings that are this system working correctly rather than problems to
+// fix, and so must not hold a launch.
+//
+// The distinction matters because the Monday and Tuesday preflights run
+// strict, and strict promotes every warning to a failure. That is right for a
+// human reading a report - a screened-out lead is worth seeing - and wrong for
+// a gate that decides whether to send, because a cohort that excluded even one
+// lead on the ICP check would never launch. These three are intended outcomes:
+// the ICP screen rejecting someone, Marina disqualifying someone after
+// minting, and the long-standing blank-company defect in mint-batch, which
+// degrades the copy but not the delivery.
+//
+// Everything else blocks, warn or fail. Capacity in particular is a warning
+// and must stay blocking: a cohort that outgrows its mailboxes does not error,
+// it silently spills into the following days and pulls every downstream touch
+// off the cadence numbering.
+const LAUNCH_IGNORED_WARNINGS = new Set([
+  "leads.screenedOut",
+  "deals.closedDropped",
+  "leads.company",
+]);
+
+export function launchBlockers(checks) {
+  return checks.filter((c) => !c.ok && !LAUNCH_IGNORED_WARNINGS.has(c.name));
+}
+
 // Reads the world back and asserts it matches what the build set out to do.
 // Writes nothing, so it is safe to run on a schedule as often as is useful.
 async function runVerify(c, { cohort, loaded, withHook, withoutHook, hookTemplate, noHookTemplate }) {
@@ -651,7 +680,7 @@ export default async function handler(req, res) {
   }
 
   const step = String(req.query.step || "inspect").trim().toLowerCase();
-  const KNOWN_STEPS = ["inspect", "campaign", "import", "all", "verify"];
+  const KNOWN_STEPS = ["inspect", "campaign", "import", "all", "verify", "launch"];
   if (!KNOWN_STEPS.includes(step)) {
     return res.status(400).json({ ok: false, error: "unknown step: " + step, knownSteps: KNOWN_STEPS });
   }
@@ -748,6 +777,147 @@ export default async function handler(req, res) {
         ? "Read-only. Strict: anything not passing is a failure."
         : "Read-only. Warnings are things that are not wrong yet but must be true by Tuesday.";
       return respond(res, out, gate);
+    }
+
+    // Presses send. Everything above this point either reads or prepares; this
+    // is the only step in the repo that puts email in front of a person
+    // without a human in the loop, so it does the full verify first and
+    // refuses on anything that is not an intended skip.
+    //
+    // Deliberately not a separate endpoint: the gate is runVerify, and a
+    // launcher that reimplemented any part of it would drift from the
+    // preflight that everyone reads, which is exactly how a cohort ships
+    // against checks nobody actually ran.
+    if (step === "launch") {
+      out.verified = await runVerify(gate, {
+        cohort,
+        loaded,
+        withHook,
+        withoutHook,
+        hookTemplate,
+        noHookTemplate,
+      });
+
+      const blockers = launchBlockers(gate.checks);
+      out.ignoredWarnings = gate.checks
+        .filter((c) => !c.ok && LAUNCH_IGNORED_WARNINGS.has(c.name))
+        .map((c) => c.name + ": " + c.detail);
+
+      if (blockers.length) {
+        out.checks = gate.checks;
+        out.ok = false;
+        out.failed = blockers.map((b) => b.name + ": " + b.detail);
+        out.passed = gate.checks.filter((x) => x.ok).length;
+        out.note =
+          "Refused to launch: " + blockers.length + " check(s) did not pass. Nothing was started.";
+        return res.status(409).json(out);
+      }
+
+      const launched = {};
+      for (const [half, name] of [["hook", cohort], ["noHook", cohort + " B"]]) {
+        const expected = half === "hook" ? withHook.length : withoutHook.length;
+
+        // A half with nobody in it is not a campaign worth starting, and
+        // starting an empty one would sit "active" all week looking healthy.
+        if (expected === 0) {
+          launched[half] = { name, skipped: "no leads in this half" };
+          continue;
+        }
+
+        const found = await findCampaignByName(name);
+        if (!found) {
+          gate.fail("launch." + half, false, "no campaign named " + name);
+          launched[half] = { name, error: "not found" };
+          continue;
+        }
+
+        // Read the status fresh rather than trusting the list projection, and
+        // skip anything already running. Re-activating is not reliably a
+        // no-op, and a second start on a campaign mid-send is not a risk worth
+        // taking to make a log line tidier.
+        let status;
+        try {
+          status = (await getCampaign(found.id)).status;
+        } catch (err) {
+          gate.fail("launch." + half, false, "status unreadable: " + String(err.message || err).slice(0, 120));
+          launched[half] = { name, id: found.id, error: "status unreadable" };
+          continue;
+        }
+
+        if (Number(status) === CAMPAIGN_STATUS_ACTIVE) {
+          gate.fail("launch." + half, true, "already active, left alone");
+          launched[half] = { name, id: found.id, alreadyActive: true, leads: expected };
+          continue;
+        }
+
+        if (!live) {
+          launched[half] = {
+            name,
+            id: found.id,
+            wouldLaunch: true,
+            from: campaignStatusName(status),
+            leads: expected,
+          };
+          continue;
+        }
+
+        const res2 = await activateCampaign(found.id);
+        if (!res2.ok) {
+          gate.fail(
+            "launch." + half,
+            false,
+            "activate failed on every known path: " + res2.attempts.map((a) => a.path).join(", ")
+          );
+          launched[half] = { name, id: found.id, error: "activate failed", attempts: res2.attempts };
+          continue;
+        }
+
+        // Read it back. "The POST returned 200" and "the campaign is running"
+        // are not the same claim, and only the second one is worth reporting.
+        let after;
+        try {
+          after = (await getCampaign(found.id)).status;
+        } catch {
+          after = null;
+        }
+        const active = Number(after) === CAMPAIGN_STATUS_ACTIVE;
+        gate.fail(
+          "launch." + half,
+          active,
+          active
+            ? "active, " + expected + " lead(s)"
+            : "activate was accepted but the campaign reads " + campaignStatusName(after)
+        );
+        launched[half] = {
+          name,
+          id: found.id,
+          launched: active,
+          status: campaignStatusName(after),
+          leads: expected,
+          path: res2.path,
+        };
+      }
+
+      out.launched = launched;
+
+      // strict is ignored on this step, and the response is built here rather
+      // than through respond() to make sure of it. respond() promotes every
+      // warning to a failure under strict, which on a launch would mean
+      // reporting 409 on a run that had just correctly started both
+      // campaigns - a red run that actually sent is the worst signal this
+      // pipeline could produce.
+      const after = launchBlockers(gate.checks);
+      out.checks = gate.checks;
+      out.strictIgnoredOnLaunch = true;
+      out.ok = after.length === 0;
+      out.failed = after.map((f) => f.name + ": " + f.detail);
+      out.passed = gate.checks.filter((x) => x.ok).length;
+      out.note = !live
+        ? "Dry run - the checks ran and nothing was started. Add live=1 to launch."
+        : out.ok
+          ? "Sending begins as soon as each campaign's sending window is open."
+          : "Some campaigns did not start. Check launched{} before assuming this cohort went out.";
+      return res.status(out.ok ? 200 : 409).json(out);
     }
 
     if (step === "campaign" || step === "all") {

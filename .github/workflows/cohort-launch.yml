@@ -1,0 +1,103 @@
+# Starts the week's cohort sending, on Tuesday morning, without anyone
+# pressing a button.
+#
+# This exists because on 2026-09-22 c20260922 was built correctly, passed every
+# check that mattered, and then sat in Draft until 08:54 because pressing
+# Launch in Instantly was a human step nobody had got to. Two hours of a
+# one-day sending window, lost to a button.
+#
+# It is not a blind auto-send. The endpoint runs the full preflight first and
+# refuses on anything that is not an intended skip - see LAUNCH_IGNORED_WARNINGS
+# in api/cohort/build.js. A cohort that is short of leads, carries spintax, or
+# has outgrown its mailboxes does not go out; the run goes red instead and
+# nothing is started.
+#
+# Timing. GitHub cron is UTC, so this is 07:00 UK through British Summer Time
+# and 06:00 UK once the clocks go back on 25 October. That is deliberate rather
+# than a bug being tolerated: launching before the sending window opens is
+# harmless, because Instantly holds the send until the window does. Launching
+# an hour LATE would cost real sending capacity, so the schedule errs early.
+# Minute 7 rather than 0 for the same reason - GitHub's scheduler is busiest on
+# the hour and can delay a run by a quarter of an hour.
+#
+# Safe to re-run. A campaign already active is read, recognised and left alone.
+name: cohort-launch
+
+on:
+  schedule:
+    - cron: "7 6 * * 2"
+  workflow_dispatch:
+    inputs:
+      cohort:
+        description: "Cohort id, e.g. c20260929. Leave blank for the next Tuesday."
+        required: false
+        default: ""
+      live:
+        description: "Set to 1 to actually start sending. 0 runs the checks and starts nothing."
+        required: false
+        default: "0"
+
+jobs:
+  launch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify the cohort, then start it sending
+        env:
+          FUNNEL_CRON_KEY: ${{ secrets.FUNNEL_CRON_KEY }}
+          COHORT: ${{ github.event.inputs.cohort || '' }}
+          # A manual dispatch must opt in to sending. The schedule is the whole
+          # point of this workflow, so it does not have to.
+          LIVE: ${{ github.event.inputs.live || (github.event_name == 'schedule' && '1') || '0' }}
+        run: |
+          set -euo pipefail
+
+          url="https://mn-automation-hub.vercel.app/api/cohort/build"
+          url="${url}?key=${FUNNEL_CRON_KEY}&cohort=${COHORT}&step=launch&live=${LIVE}"
+
+          # 409 is how the endpoint reports "did not launch, and here is why".
+          # Capture the code rather than letting curl abort, so the checks get
+          # printed before the step fails.
+          code=$(curl -sS -o response.json -w '%{http_code}' --max-time 120 "$url")
+
+          # This repository is public and so are these logs. The endpoint
+          # returns counts only; fail loudly rather than print a person if that
+          # ever stops being true.
+          if grep -qiE '"email"|@[a-z0-9.-]+\.[a-z]{2,}' response.json; then
+            echo "Refusing to print: response contains personal data"
+            exit 1
+          fi
+
+          echo "Live: ${LIVE}"
+          python3 - <<'PY'
+          import json
+          d = json.load(open("response.json"))
+          print("cohort", d.get("cohort"), "- day", d.get("cohortDay"))
+          print()
+          for c in d.get("checks", []):
+              mark = "PASS" if c["ok"] else ("FAIL" if c["severity"] == "fail" else "WARN")
+              print(f'  {mark:4}  {c["name"]:34}  {c["detail"]}')
+          for line in d.get("ignoredWarnings", []):
+              print(f'  NOTE  {line}   (intended, does not block a launch)')
+          print()
+          for half, r in (d.get("launched") or {}).items():
+              if r.get("launched"):
+                  print(f'  STARTED   {r["name"]}  ({r.get("leads")} leads, via {r.get("path")})')
+              elif r.get("alreadyActive"):
+                  print(f'  RUNNING   {r["name"]}  was already active, left alone')
+              elif r.get("wouldLaunch"):
+                  print(f'  WOULD     {r["name"]}  ({r.get("leads")} leads, currently {r.get("from")})')
+              elif r.get("skipped"):
+                  print(f'  SKIPPED   {r["name"]}  {r["skipped"]}')
+              else:
+                  print(f'  PROBLEM   {r.get("name")}  {r.get("error")}')
+          print()
+          print(f'{d.get("passed", 0)} passed, {len(d.get("failed", []))} blocking')
+          print(d.get("note", ""))
+          PY
+
+          if [ "$code" != "200" ]; then
+            echo
+            echo "cohort-launch failed with HTTP $code."
+            echo "Read the lines above: anything not STARTED or RUNNING did not go out."
+            exit 1
+          fi

@@ -6,8 +6,9 @@
 // report success.
 //
 // Run: node scripts/test_cohort_build_checks.mjs
-import { checker, assertImported, collectVariants } from "../api/cohort/build.js";
+import { checker, assertImported, collectVariants, launchBlockers } from "../api/cohort/build.js";
 import { renderFaults, renderFaultsIn } from "../lib/render-check.js";
+import { campaignStatusName, CAMPAIGN_STATUS_ACTIVE } from "../lib/instantly.js";
 
 let failures = 0;
 const t = (name, fn) => {
@@ -158,6 +159,54 @@ t("the placeholder from the 267 stale drafts is still caught", () => {
 t("ordinary prose with a brace is not a false positive", () => {
   eq(renderFaults("we scored 9/10 {see attached}", { allowVariables: true }).length, 0, "faults");
   eq(renderFaults("a | b in a table row", { allowVariables: true }).length, 0, "faults");
+});
+
+console.log("\n2026-09-22 launch gate");
+
+t("a clean cohort launches", () => {
+  const c = checker(false);
+  c.fail("campaign.hook.leadCount", true, "98 in the campaign, 98 expected");
+  c.fail("campaign.hook.rendersClean", true, "no template syntax left unrendered");
+  eq(launchBlockers(c.checks).length, 0, "blockers");
+});
+
+// The reason this gate is not just strict=1. Every healthy cohort screens
+// somebody out, and strict calls that a failure.
+t("the ICP screen rejecting leads does not block a launch", () => {
+  const c = checker(true);
+  c.warn("leads.screenedOut", false, "4 lead(s) dropped: EXCLUDE on the ICP check");
+  c.warn("deals.closedDropped", false, "2 lead(s) dropped: their deal is no longer open");
+  c.warn("leads.company", false, "3 of 231 lead(s) have no company");
+  eq(c.failures().length, 3, "strict would have blocked all three");
+  eq(launchBlockers(c.checks).length, 0, "blockers");
+});
+
+t("spintax in the built campaign blocks the launch", () => {
+  const c = checker(false);
+  c.fail("campaign.hook.rendersClean", false, "spintax in subject");
+  eq(launchBlockers(c.checks).length, 1, "blockers");
+});
+
+t("a short campaign blocks the launch", () => {
+  const c = checker(false);
+  c.fail("campaign.noHook.leadCount", false, "104 in the campaign, 133 expected");
+  eq(launchBlockers(c.checks).length, 1, "blockers");
+});
+
+// Capacity is a warn, and it must still block: Instantly does not error when a
+// cohort outgrows its mailboxes, it spills the remainder into the next days.
+t("not enough sending capacity blocks the launch", () => {
+  const c = checker(false);
+  c.warn("campaign.hook.capacity", false, "90 sends/day across 3 warm mailbox(es) for 231 lead(s)");
+  eq(c.failures().length, 0, "not a failure to a non-strict reader");
+  eq(launchBlockers(c.checks).length, 1, "blockers");
+});
+
+t("campaign status names", () => {
+  eq(campaignStatusName(0), "draft", "0");
+  eq(campaignStatusName(CAMPAIGN_STATUS_ACTIVE), "active", "1");
+  eq(campaignStatusName(2), "paused", "2");
+  eq(campaignStatusName(9), "unknown(9)", "9");
 });
 
 console.log(failures ? "\n" + failures + " test(s) failed" : "\nall tests passed");

@@ -1,0 +1,419 @@
+{
+ "cohort": "c20260929",
+ "count": 59,
+ "rows": [
+  {
+   "dealId": "809",
+   "company": "Meaningful Partners",
+   "domain": "meaningfulpartners.com",
+   "firstName": "Jake",
+   "researched": ""
+  },
+  {
+   "dealId": "810",
+   "company": "Grays Peak Capital",
+   "domain": "grayspeakcapital.com",
+   "firstName": "Scott",
+   "researched": ""
+  },
+  {
+   "dealId": "811",
+   "company": "BrandProject",
+   "domain": "brandproject.com",
+   "firstName": "Andrew",
+   "researched": ""
+  },
+  {
+   "dealId": "812",
+   "company": "BBG Ventures",
+   "domain": "bbgv.com",
+   "firstName": "Susan",
+   "researched": ""
+  },
+  {
+   "dealId": "813",
+   "company": "Brown Venture Group",
+   "domain": "brownventuregroup.com",
+   "firstName": "Paul",
+   "researched": ""
+  },
+  {
+   "dealId": "814",
+   "company": "York IE",
+   "domain": "york.ie",
+   "firstName": "Kyle",
+   "researched": ""
+  },
+  {
+   "dealId": "815",
+   "company": "Enable Ventures",
+   "domain": "enableventures.vc",
+   "firstName": "Regina",
+   "researched": ""
+  },
+  {
+   "dealId": "816",
+   "company": "Samaipata",
+   "domain": "samaipata.vc",
+   "firstName": "Jose",
+   "researched": ""
+  },
+  {
+   "dealId": "817",
+   "company": "Bencis",
+   "domain": "bencis.com",
+   "firstName": "Zoran",
+   "researched": ""
+  },
+  {
+   "dealId": "818",
+   "company": "HealthX Ventures",
+   "domain": "healthxventures.com",
+   "firstName": "Mark",
+   "researched": ""
+  },
+  {
+   "dealId": "819",
+   "company": "Volition Capital",
+   "domain": "volitioncapital.com",
+   "firstName": "Larry",
+   "researched": ""
+  },
+  {
+   "dealId": "820",
+   "company": "Illuminate Ventures",
+   "domain": "illuminate.com",
+   "firstName": "Cindy",
+   "researched": ""
+  },
+  {
+   "dealId": "821",
+   "company": "PeakSpan Capital",
+   "domain": "peakspancapital.com",
+   "firstName": "Philip",
+   "researched": ""
+  },
+  {
+   "dealId": "822",
+   "company": "Goodwater Capital",
+   "domain": "goodwatercap.com",
+   "firstName": "Eric",
+   "researched": ""
+  },
+  {
+   "dealId": "823",
+   "company": "Gauge Capital",
+   "domain": "gaugecapital.com",
+   "firstName": "Drew",
+   "researched": ""
+  },
+  {
+   "dealId": "824",
+   "company": "212",
+   "domain": "212.vc",
+   "firstName": "Numan",
+   "researched": ""
+  },
+  {
+   "dealId": "825",
+   "company": "Designer Fund",
+   "domain": "designerfund.com",
+   "firstName": "Ben",
+   "researched": ""
+  },
+  {
+   "dealId": "826",
+   "company": "Prusa Research",
+   "domain": "prusa3d.cz",
+   "firstName": "Josef",
+   "researched": ""
+  },
+  {
+   "dealId": "827",
+   "company": "Tvasta",
+   "domain": "tvasta3d.com",
+   "firstName": "Adithya",
+   "researched": ""
+  },
+  {
+   "dealId": "828",
+   "company": "Elev\u0101t",
+   "domain": "getelevat.com",
+   "firstName": "Adam",
+   "researched": ""
+  },
+  {
+   "dealId": "829",
+   "company": "Triple Crown",
+   "domain": "tripleco.com",
+   "firstName": "David",
+   "researched": ""
+  },
+  {
+   "dealId": "830",
+   "company": "EarthSense, Inc.",
+   "domain": "earthsense.co",
+   "firstName": "Chinmay",
+   "researched": ""
+  },
+  {
+   "dealId": "831",
+   "company": "Fortera",
+   "domain": "forterausa.com",
+   "firstName": "Ryan",
+   "researched": ""
+  },
+  {
+   "dealId": "832",
+   "company": "Interstellar Lab",
+   "domain": "interstellarlab.earth",
+   "firstName": "Barbara",
+   "researched": ""
+  },
+  {
+   "dealId": "833",
+   "company": "Angel4Future",
+   "domain": "angel4future.com",
+   "firstName": "Matteo",
+   "researched": ""
+  },
+  {
+   "dealId": "834",
+   "company": "KLIMA CLEANROOM\u2122",
+   "domain": "klimapharm.com",
+   "firstName": "Sarfaraz",
+   "researched": ""
+  },
+  {
+   "dealId": "835",
+   "company": "Revology Cars",
+   "domain": "revologycars.com",
+   "firstName": "Tom",
+   "researched": ""
+  },
+  {
+   "dealId": "836",
+   "company": "Smart Materials Limited",
+   "domain": "thesmartmaterials.com",
+   "firstName": "Keith",
+   "researched": ""
+  },
+  {
+   "dealId": "837",
+   "company": "Kubik, Inc.",
+   "domain": "buildkubik.com",
+   "firstName": "Kidus",
+   "researched": ""
+  },
+  {
+   "dealId": "838",
+   "company": "ZETWERK",
+   "domain": "zetwerk.com",
+   "firstName": "Amrit",
+   "researched": ""
+  },
+  {
+   "dealId": "839",
+   "company": "Wandelbots",
+   "domain": "wandelbots.com",
+   "firstName": "Christian",
+   "researched": ""
+  },
+  {
+   "dealId": "840",
+   "company": "Piaggio Fast Forward",
+   "domain": "piaggiofastforward.com",
+   "firstName": "Greg",
+   "researched": ""
+  },
+  {
+   "dealId": "841",
+   "company": "Ather Energy",
+   "domain": "atherenergy.com",
+   "firstName": "Tarun",
+   "researched": ""
+  },
+  {
+   "dealId": "842",
+   "company": "INKAS\u00ae Group",
+   "domain": "inkas.ca",
+   "firstName": "David",
+   "researched": ""
+  },
+  {
+   "dealId": "843",
+   "company": "Red Wolf Reliability",
+   "domain": "pioneer-engineering.com",
+   "firstName": "Mitchell",
+   "researched": ""
+  },
+  {
+   "dealId": "844",
+   "company": "Signs By The Sea",
+   "domain": "signsbythesea.com",
+   "firstName": "Kathy",
+   "researched": ""
+  },
+  {
+   "dealId": "845",
+   "company": "GrayMatter Robotics",
+   "domain": "graymatter-robotics.com",
+   "firstName": "Ariyan",
+   "researched": ""
+  },
+  {
+   "dealId": "846",
+   "company": "Vedam Design",
+   "domain": "vedamdesign.com",
+   "firstName": "Akshay",
+   "researched": ""
+  },
+  {
+   "dealId": "847",
+   "company": "Process Design Center",
+   "domain": "process-design-center.com",
+   "firstName": "Hans",
+   "researched": ""
+  },
+  {
+   "dealId": "848",
+   "company": "EyeROV (IROV TECHNOLOGIES PRIVATE LIMITED)",
+   "domain": "eyerov.com",
+   "firstName": "Johns",
+   "researched": ""
+  },
+  {
+   "dealId": "849",
+   "company": "Skydio",
+   "domain": "skydio.com",
+   "firstName": "Adam",
+   "researched": ""
+  },
+  {
+   "dealId": "850",
+   "company": "Engineering Consultants Group, Inc.",
+   "domain": "ecg-inc.com",
+   "firstName": "Michael",
+   "researched": ""
+  },
+  {
+   "dealId": "851",
+   "company": "Chara Technologies",
+   "domain": "chara.co.in",
+   "firstName": "Bhaktha",
+   "researched": ""
+  },
+  {
+   "dealId": "852",
+   "company": "Grow Commerce Indonesia",
+   "domain": "growcommerce.co.id",
+   "firstName": "Jason",
+   "researched": ""
+  },
+  {
+   "dealId": "853",
+   "company": "NOA-Labs.com",
+   "domain": "noa-labs.com",
+   "firstName": "Alex",
+   "researched": ""
+  },
+  {
+   "dealId": "854",
+   "company": "PCH International",
+   "domain": "pchintl.com",
+   "firstName": "Liam",
+   "researched": ""
+  },
+  {
+   "dealId": "855",
+   "company": "RAMM Fence & Stalls",
+   "domain": "rammfence.com",
+   "firstName": "Debbie",
+   "researched": ""
+  },
+  {
+   "dealId": "856",
+   "company": "Kickmaker",
+   "domain": "kickmaker.net",
+   "firstName": "Eric",
+   "researched": ""
+  },
+  {
+   "dealId": "857",
+   "company": "Quest Global",
+   "domain": "quest-global.com",
+   "firstName": "Ajit",
+   "researched": ""
+  },
+  {
+   "dealId": "858",
+   "company": "Dusty Robotics",
+   "domain": "dustyrobotics.com",
+   "firstName": "Tessa",
+   "researched": ""
+  },
+  {
+   "dealId": "859",
+   "company": "Hansford McDaniel - Workers' Compensation Attorneys",
+   "domain": "hansfordlawfirm.com",
+   "firstName": "Nathaniel",
+   "researched": ""
+  },
+  {
+   "dealId": "861",
+   "company": "Sapio Sciences",
+   "domain": "sapiosciences.com",
+   "firstName": "Rich",
+   "researched": ""
+  },
+  {
+   "dealId": "862",
+   "company": "Park Avenue Capital",
+   "domain": "parkavenuecapital.com",
+   "firstName": "Luca",
+   "researched": ""
+  },
+  {
+   "dealId": "863",
+   "company": "Sanchez Daniels & Hoffman LLP",
+   "domain": "sanchezdh.com",
+   "firstName": "Manny",
+   "researched": ""
+  },
+  {
+   "dealId": "864",
+   "company": "Q5",
+   "domain": "q5partners.com",
+   "firstName": "Olly",
+   "researched": ""
+  },
+  {
+   "dealId": "865",
+   "company": "Oaklins",
+   "domain": "fr.oaklins.com",
+   "firstName": "Eric",
+   "researched": ""
+  },
+  {
+   "dealId": "866",
+   "company": "Collinwood Technology Partners",
+   "domain": "collinwood.co",
+   "firstName": "Noel",
+   "researched": ""
+  },
+  {
+   "dealId": "867",
+   "company": "HuggleGroup",
+   "domain": "hugglehounds.com",
+   "firstName": "Julie",
+   "researched": ""
+  },
+  {
+   "dealId": "868",
+   "company": "Cabin Editing Company",
+   "domain": "cabinedit.com",
+   "firstName": "Carr",
+   "researched": ""
+  }
+ ]
+}

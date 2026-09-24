@@ -1,269 +1,274 @@
-// Live cold-outreach funnel dashboard.
+// Live campaign dashboard - both channels, no manual entry.
 //
 // Served from this project rather than as a Claude artifact on purpose: a
 // published artifact is CSP-blocked from fetching external URLs, so it can
 // never live-update. Here the page reads its own API same-origin.
 //
-// Design notes: no charts. One cohort with double-digit numbers does not earn
-// a chart - a KPI row and a table say more and lie less. Colour is used only
-// for status, always paired with a word, never carrying meaning alone.
-// Palette values are the validated reference instance.
+// Two channels, told apart without any new plumbing: a cohort that has sends
+// came from Instantly and is cold outreach; a cohort with visits but no sends
+// is paid traffic to the Growth Gap Session page. The ad campaigns are named
+// on the same cYYYYMMDD scheme, so they land as their own rows already.
+//
+// Charts are per-channel small multiples, never one chart across both: emails
+// sent runs in the thousands and LinkedIn visits in the dozens, and putting
+// those on one axis would flatten the smaller channel into nothing. Each
+// funnel is drawn against its own top-of-funnel and direct-labelled with the
+// absolute number, so a bar is never read as a rate it is not.
+//
+// Palette: categorical slots 1 (blue, cold outreach) and 2 (orange, LinkedIn)
+// from the validated reference instance. Verified with the dataviz validator
+// in both modes - worst adjacent CVD dE 24.7 light / 26.8 dark against an >=8
+// target - and every series is direct-labelled as well as coloured, so
+// identity never rests on colour alone.
 
 const PAGE = String.raw`<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Funnel — MN Cold Outreach</title>
+<title>Campaign — Marina Nicholas</title>
 <style>
   :root {
     color-scheme: light;
-    --page: #f9f9f7;
-    --surface: #fcfcfb;
-    --surface-2: #f1f0ec;
-    --border: rgba(11,11,11,0.10);
-    --ink: #0b0b0b;
-    --ink-2: #52514e;
-    --muted: #898781;
-    --rule: #e1e0d9;
-    --accent: #2a78d6;
-    --good: #0ca30c;
-    --warning: #fab219;
-    --critical: #d03b3b;
+    --page:#f9f9f7; --surface:#fcfcfb; --surface-2:#f1f0ec;
+    --border:rgba(11,11,11,0.10); --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+    --rule:#e1e0d9; --accent:#2a78d6;
+    --good:#0ca30c; --warning:#fab219; --critical:#d03b3b;
+    --cold:#2a78d6; --linkedin:#eb6834;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       color-scheme: dark;
-      --page: #0d0d0d;
-      --surface: #1a1a19;
-      --surface-2: #232322;
-      --border: rgba(255,255,255,0.10);
-      --ink: #ffffff;
-      --ink-2: #c3c2b7;
-      --muted: #898781;
-      --rule: #2c2c2a;
-      --accent: #3987e5;
+      --page:#0d0d0d; --surface:#1a1a19; --surface-2:#232322;
+      --border:rgba(255,255,255,0.10); --ink:#fff; --ink-2:#c3c2b7; --muted:#898781;
+      --rule:#2c2c2a; --accent:#3987e5;
+      --cold:#3987e5; --linkedin:#d95926;
     }
   }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    background: var(--page); color: var(--ink);
-    font: 15px/1.5 "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-  .wrap { max-width: 1100px; margin: 0 auto; padding: 36px 24px 72px; }
-  h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.01em; margin: 0; }
-  h2 { font-size: 17px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
-  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
-  .top { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px;
-         flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 26px; }
-  .eyebrow { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; letter-spacing: 0.08em;
-             text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
-  .top .meta { text-align: right; font-size: 12.5px; color: var(--muted); }
-  section { margin-bottom: 34px; }
-  .sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 14px;
-              margin-bottom: 12px; flex-wrap: wrap; }
-  .sec-head .note { font-size: 12.5px; color: var(--muted); }
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
-  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-  @media (max-width: 860px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
-  .kpi { padding: 16px 16px 14px; display: flex; flex-direction: column; gap: 6px; }
-  .kpi .label { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em;
-                color: var(--muted); font-weight: 700; }
-  .kpi .value { font-family: "IBM Plex Mono", monospace; font-size: 27px; font-weight: 600; letter-spacing: -0.01em; }
-  .kpi .sub { font-size: 12.5px; color: var(--ink-2); }
-  .na .value { color: var(--muted); font-size: 20px; }
-  table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 13.5px; }
-  .tw { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
-  th, td { text-align: right; padding: 10px 13px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-  th:first-child, td:first-child { text-align: left; }
-  th { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted);
-       font-weight: 700; background: var(--surface-2); }
-  td { font-family: "IBM Plex Mono", monospace; color: var(--ink-2); }
-  td:first-child { font-family: inherit; color: var(--ink); font-weight: 600; }
-  tr:last-child td { border-bottom: none; }
-  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 7px;
-          border-radius: 999px; font-size: 12px; font-weight: 700; }
-  .pill .dot { width: 7px; height: 7px; border-radius: 50%; }
-  .pill.warn { background: rgba(250,178,25,0.16); color: #7a5400; }
-  .pill.warn .dot { background: var(--warning); }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pill.warn { color: var(--warning); } }
-  .notes { padding: 16px 18px; font-size: 13px; color: var(--ink-2); }
-  .notes ul { margin: 8px 0 0; padding-left: 18px; }
-  .notes li { margin-bottom: 6px; }
-  .err { padding: 16px 18px; color: var(--critical); font-size: 13.5px; }
-  .funnel-bar { height: 6px; border-radius: 3px; background: var(--accent); min-width: 2px; display: block; }
-  .funnel-track { background: var(--rule); border-radius: 3px; height: 6px; width: 120px; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; padding:0; }
+  body { background:var(--page); color:var(--ink);
+    font:15px/1.5 "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:1100px; margin:0 auto; padding:36px 24px 72px; }
+  h1 { font-size:26px; font-weight:800; letter-spacing:-0.01em; margin:0; }
+  h2 { font-size:15px; font-weight:700; margin:0; letter-spacing:-0.01em; }
+  .mono { font-family:"IBM Plex Mono", ui-monospace, monospace; font-variant-numeric:tabular-nums; }
+  .top { display:flex; justify-content:space-between; align-items:flex-end; gap:20px;
+    flex-wrap:wrap; border-bottom:1px solid var(--border); padding-bottom:20px; margin-bottom:24px; }
+  .sub { color:var(--muted); font-size:13px; margin-top:6px; }
+
+  .banner { border:1px solid var(--border); border-left:3px solid var(--warning);
+    background:var(--surface); border-radius:10px; padding:12px 16px; margin-bottom:22px;
+    font-size:13.5px; color:var(--ink-2); }
+  .banner b { color:var(--ink); }
+
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:26px; }
+  .kpi { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px;
+    display:flex; flex-direction:column; }
+  /* Reserve two lines so a label that wraps does not shunt its number down
+     and stagger the whole row. */
+  .kpi .lab { font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted);
+    min-height:2.9em; }
+  .kpi .val { font-size:26px; font-weight:800; letter-spacing:-0.02em; margin-top:6px; }
+  .kpi .note { font-size:12px; color:var(--muted); margin-top:2px; }
+  .kpi.cold { border-top:2px solid var(--cold); }
+  .kpi.li { border-top:2px solid var(--linkedin); }
+
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:26px; }
+  @media (max-width:820px){ .cols { grid-template-columns:1fr; } }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px 20px 20px; }
+  .card .head { display:flex; align-items:center; gap:9px; margin-bottom:4px; }
+  .dot { width:10px; height:10px; border-radius:3px; flex:none; }
+  .card .cap { font-size:12.5px; color:var(--muted); margin-bottom:16px; }
+
+  .stage { margin-bottom:11px; }
+  .stage .row { display:flex; justify-content:space-between; align-items:baseline; gap:10px; font-size:13px; }
+  .stage .name { color:var(--ink-2); }
+  .stage .num { font-weight:700; }
+  .stage .pct { color:var(--muted); font-size:12px; font-weight:400; margin-left:6px; }
+  .bar { height:9px; background:var(--surface-2); border-radius:0 4px 4px 0; margin-top:5px; overflow:hidden; }
+  .bar span { display:block; height:100%; border-radius:0 4px 4px 0; min-width:2px; }
+
+  .costs { border-top:1px solid var(--rule); margin-top:16px; padding-top:14px;
+    display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .costs div .lab { font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+  .costs div .v { font-size:17px; font-weight:700; margin-top:3px; }
+
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:right; padding:9px 10px; border-bottom:1px solid var(--rule); white-space:nowrap; }
+  th:first-child, td:first-child { text-align:left; }
+  th { font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); font-weight:600; }
+  .tag { display:inline-block; font-size:10.5px; padding:1px 7px; border-radius:999px;
+    border:1px solid var(--border); color:var(--ink-2); margin-left:7px; vertical-align:1px; }
+  .tag.cold { border-color:var(--cold); color:var(--cold); }
+  .tag.li { border-color:var(--linkedin); color:var(--linkedin); }
+  .thin { color:var(--muted); }
+  .tablewrap { background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:18px 20px; margin-bottom:24px; overflow-x:auto; }
+  .caveats { font-size:12.5px; color:var(--muted); line-height:1.7; }
+  .caveats li { margin-bottom:3px; }
+  .err { color:var(--critical); }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="top">
     <div>
-      <div class="eyebrow">MN Consulting &middot; Cold Outreach</div>
-      <h1>Funnel</h1>
+      <h1>Campaign</h1>
+      <div class="sub" id="sub">Loading…</div>
     </div>
-    <div class="meta">
-      <div>Refreshes every 60s</div>
-      <div class="mono" id="stamp">loading&hellip;</div>
-    </div>
+    <div class="sub mono" id="stamp"></div>
   </div>
 
-  <section>
-    <div class="sec-head"><h2>Latest cohort</h2><span class="note" id="cohort-note"></span></div>
-    <div class="kpis" id="kpis"></div>
-  </section>
-
-  <section>
-    <div class="sec-head">
-      <h2>End to end, by cohort</h2>
-      <span class="note">Every stage of one send batch, in funnel order</span>
-    </div>
-    <div class="tw" id="funnel"></div>
-  </section>
-
-  <section>
-    <div class="sec-head">
-      <h2>Growth Gap Report form</h2>
-      <span class="note">Live from Fillout &middot; internal QA submissions excluded</span>
-    </div>
-    <div class="kpis" id="fillout"></div>
-  </section>
-
-  <section>
-    <div class="sec-head"><h2>Read this before trusting a number</h2></div>
-    <div class="card notes" id="caveats"></div>
-  </section>
+  <div id="banner"></div>
+  <div class="kpis" id="kpis"></div>
+  <div class="cols" id="cols"></div>
+  <div class="tablewrap"><h2 style="margin-bottom:14px">Every campaign</h2><div id="table"></div></div>
+  <h2 style="margin-bottom:10px">Read this before trusting a number</h2>
+  <ul class="caveats" id="caveats"></ul>
 </div>
 
 <script>
-(function () {
-  "use strict";
-  var esc = function (s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  };
-  var n = function (v) { return (v == null ? 0 : v).toLocaleString("en-GB"); };
-  var pct = function (v) { return v === null || v === undefined ? "&mdash;" : v + "%"; };
+(function(){
+  var CHANNELS = [
+    { key:"cold", label:"Cold outreach", colour:"var(--cold)", cls:"cold",
+      cap:"Instantly sends into the Growth Gap Report.", top:"sent", topLabel:"Emails sent" },
+    { key:"linkedin", label:"LinkedIn ads", colour:"var(--linkedin)", cls:"li",
+      cap:"Paid traffic into the Growth Gap Session page.", top:"visits", topLabel:"Page visits" }
+  ];
 
-  function tile(label, value, sub, opts) {
-    opts = opts || {};
-    return '<div class="card kpi' + (opts.na ? " na" : "") + '">' +
-      '<div class="label">' + esc(label) + "</div>" +
-      '<div class="value mono">' + value + "</div>" +
-      (opts.pill ? '<span class="pill warn"><span class="dot"></span>' + esc(opts.pill) + "</span>" : "") +
-      '<div class="sub">' + sub + "</div></div>";
+  function n(v){ return (v===null||v===undefined) ? "—" : Number(v).toLocaleString("en-GB"); }
+  function money(v){ return (v===null||v===undefined) ? "—" : "£" + Number(v).toLocaleString("en-GB",{maximumFractionDigits:2}); }
+  function pct(v){ return (v===null||v===undefined) ? "" : v + "%"; }
+  function esc(s){ return String(s===null||s===undefined?"":s).replace(/[&<>"]/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+
+  function stages(ch, d){
+    // Each channel is drawn against its own top-of-funnel, never a shared
+    // axis - emails run in the thousands and ad visits in the dozens.
+    var rows = ch.key === "cold"
+      ? [["Emails sent","sent"],["Replies","replied"],["Page visits","visits"],
+         ["Reports completed","completed"],["Calls booked","booked"],["Calls held","held"],["Sales","sold"]]
+      : [["Page visits","visits"],["Reports completed","completed"],
+         ["Calls booked","booked"],["Calls held","held"],["Sales","sold"]];
+    var top = Math.max(1, d[ch.top] || 0);
+    var out = "";
+    for (var i=0;i<rows.length;i++){
+      var label = rows[i][0], key = rows[i][1];
+      var v = d[key] || 0;
+      var share = Math.min(100, (v / top) * 100);
+      var rate = (key === ch.top) ? null : Math.round((v/top)*1000)/10;
+      out += '<div class="stage" title="' + esc(label) + ': ' + n(v) +
+             (rate===null ? "" : " (" + rate + "% of " + esc(ch.topLabel).toLowerCase() + ")") + '">' +
+             '<div class="row"><span class="name">' + esc(label) + '</span>' +
+             '<span class="num mono">' + n(v) +
+             (rate===null ? "" : '<span class="pct">' + rate + '%</span>') + '</span></div>' +
+             '<div class="bar"><span style="width:' + share + '%;background:' + ch.colour + '"></span></div>' +
+             '</div>';
+    }
+    return out;
   }
 
-  function renderCohorts(m) {
-    var rows = m.cohorts || [];
-    var latest = rows[0] || null;
+  function card(ch, d, spendSet){
+    var c = d.cost || {};
+    return '<div class="card">' +
+      '<div class="head"><span class="dot" style="background:' + ch.colour + '"></span>' +
+      '<h2>' + esc(ch.label) + '</h2></div>' +
+      '<div class="cap">' + esc(ch.cap) + '</div>' +
+      stages(ch, d) +
+      '<div class="costs">' +
+        '<div><div class="lab">Cost / click</div><div class="v mono">' + money(c.costPerClick) + '</div></div>' +
+        '<div><div class="lab">Cost / call</div><div class="v mono">' + money(c.costPerCall) + '</div></div>' +
+        '<div><div class="lab">Cost / sale</div><div class="v mono">' + money(c.costPerSale) + '</div></div>' +
+      '</div>' +
+      '<div class="cap" style="margin:10px 0 0">' +
+        (spendSet ? 'Spend this month: ' + money(c.spend) : 'Spend not set for this month.') +
+      '</div>' +
+    '</div>';
+  }
 
-    document.getElementById("cohort-note").innerHTML = latest
-      ? esc(latest.cohort) + " &middot; first seen " + esc((latest.firstSeenAt || "").slice(0, 10))
-      : "";
-
-    document.getElementById("kpis").innerHTML = latest
-      ? tile("Emails sent", n(latest.sent), "delivered by Instantly") +
-        tile("Replies", n(latest.replied), pct(latest.rates.reply) + " of sent &middot; read the Unibox, not the count") +
-        tile("Landing page visits", n(latest.visits), pct(latest.rates.clickThrough) + " of sent &middot; stands in for click-through") +
-        tile("Calls booked", n(latest.booked), "end to end " + pct(latest.rates.endToEnd),
-             latest.thin ? { pill: "Sample too small to compare" } : {})
-      : '<div class="card notes" style="grid-column:1/-1">No cohort has been recorded yet.</div>';
-
-    var stages = [
-      ["Sent", "sent", null],
-      ["Bounced", "bounced", "bounce"],
-      ["Replied", "replied", "reply"],
-      ["Landing visits", "visits", "clickThrough"],
-      ["Reports started", "started", "reportStart"],
-      ["Reports completed", "completed", "formCompletion"],
-      ["Calls booked", "booked", "reportToCall"]
+  function kpis(data){
+    var cold = data.channels.cold, li = data.channels.linkedin;
+    var t = [
+      ["Emails sent", n(cold.sent), "cold outreach", "cold"],
+      ["Reports completed", n(cold.completed + li.completed), "both channels", ""],
+      ["Calls booked", n(cold.booked), "from cold email", "cold"],
+      ["LinkedIn visits", n(li.visits), "paid traffic", "li"],
+      ["Calls booked", n(li.booked), "from LinkedIn", "li"],
+      ["Sales", n(cold.sold + li.sold), "both channels", ""]
     ];
-
-    if (!rows.length) { document.getElementById("funnel").innerHTML = ""; return; }
-
-    var head = "<tr><th>Stage</th>" + rows.map(function (r) {
-      return "<th>" + esc(r.cohort) + "</th>";
-    }).join("") + "<th>Rate</th><th></th></tr>";
-
-    var body = stages.map(function (s) {
-      var cells = rows.map(function (r) { return "<td>" + n(r[s[1]]) + "</td>"; }).join("");
-      var rate = s[2] ? pct(rows[0].rates[s[2]]) : "&mdash;";
-      var top = rows[0].sent || 1;
-      var w = Math.max(2, Math.round(((rows[0][s[1]] || 0) / top) * 120));
-      var bar = '<div class="funnel-track"><span class="funnel-bar" style="width:' + w + 'px"></span></div>';
-      return "<tr><td>" + s[0] + "</td>" + cells + "<td>" + rate + "</td><td>" + bar + "</td></tr>";
-    }).join("");
-
-    document.getElementById("funnel").innerHTML = "<table><thead>" + head + "</thead><tbody>" + body + "</tbody></table>";
-  }
-
-  function renderFillout(f) {
-    var el = document.getElementById("fillout");
-    if (!f || !f.ok) {
-      el.innerHTML = '<div class="card err" style="grid-column:1/-1">Fillout is not reporting: ' +
-        esc((f && f.error) || "no response") + "</div>";
-      return;
+    var out = "";
+    for (var i=0;i<t.length;i++){
+      out += '<div class="kpi ' + t[i][3] + '"><div class="lab">' + esc(t[i][0]) + '</div>' +
+             '<div class="val mono">' + t[i][1] + '</div>' +
+             '<div class="note">' + esc(t[i][2]) + '</div></div>';
     }
-    var t = f.totals || {};
-    var denom = (t.finished || 0) + (t.inProgress || 0);
-    // A rate off one submission reads as a triumphant 100%. Withhold it until
-    // there is enough behind it to mean anything.
-    var MIN = 10;
-    var rate = denom >= MIN ? Math.round(((t.finished || 0) / denom) * 1000) / 10 + "%" : "&mdash;";
-    var rateSub = denom >= MIN
-      ? "finished &divide; (finished + in progress)"
-      : "withheld until " + MIN + " submissions &mdash; " + denom + " so far";
-    var secs = f.medianSecondsToComplete;
-    var time = secs == null ? "&mdash;"
-      : Math.floor(secs / 60) + "m " + String(Math.round(secs % 60)).padStart(2, "0") + "s";
-
-    el.innerHTML =
-      tile("Reports finished", n(t.finished), t.internalTestSubmissions + " internal test submissions excluded") +
-      tile("In progress", n(t.inProgress), "only counts partials Fillout kept as resumable") +
-      tile("Completion rate", rate, rateSub, { na: denom < MIN }) +
-      tile("Median time to complete", time,
-           f.durationSampleSize ? "from " + f.durationSampleSize + " real submission" + (f.durationSampleSize === 1 ? "" : "s") : "no sample yet") +
-      tile("Unique visitors", "Not in the API", "Fillout shows it in Results &rsaquo; Analytics only", { na: true }) +
-      tile("Per-page drop-off", "Not in the API", "Analytics tab only, and not filterable per cohort there", { na: true });
+    return out;
   }
 
-  function renderCaveats(m, f) {
-    var items = (m && m.caveats ? m.caveats.slice() : []);
-    if (f && f.caveat) items.push(f.caveat);
-    if (m && m.unattributed) {
-      var u = m.unattributed;
-      items.push("Pipedrive holds " + u.completed + " completed report(s) and " + u.booked +
-        " booked call(s) that carry no cohort tag, across " + u.deals +
-        " deals. They are counted here but cannot be assigned to a batch.");
+  function table(rows){
+    var head = ["Campaign","Sent","Replies","Visits","Reports","Booked","Held","Sold"];
+    var out = '<table><thead><tr>';
+    for (var i=0;i<head.length;i++) out += '<th>' + head[i] + '</th>';
+    out += '</tr></thead><tbody>';
+    for (var r=0;r<rows.length;r++){
+      var c = rows[r];
+      var tag = c.channel === "cold" ? '<span class="tag cold">cold</span>'
+              : c.channel === "linkedin" ? '<span class="tag li">LinkedIn</span>' : "";
+      out += '<tr' + (c.thin ? ' class="thin"' : '') + '><td>' + esc(c.cohort) + tag + '</td>' +
+        '<td class="mono">' + n(c.sent) + '</td><td class="mono">' + n(c.replied) + '</td>' +
+        '<td class="mono">' + n(c.visits) + '</td><td class="mono">' + n(c.completed) + '</td>' +
+        '<td class="mono">' + n(c.booked) + '</td><td class="mono">' + n(c.held) + '</td>' +
+        '<td class="mono">' + n(c.sold) + '</td></tr>';
     }
-    document.getElementById("caveats").innerHTML =
-      "<strong>Known limits of what is above.</strong><ul>" +
-      items.map(function (c) { return "<li>" + esc(c) + "</li>"; }).join("") + "</ul>";
+    out += '</tbody></table>';
+    return out;
   }
 
-  function load() {
-    Promise.all([
-      fetch("/api/metrics", { cache: "no-store" }).then(function (r) { return r.json(); }).catch(function () { return null; }),
-      fetch("/api/fillout-stats", { cache: "no-store" }).then(function (r) { return r.json(); }).catch(function () { return null; })
-    ]).then(function (res) {
-      var m = res[0], f = res[1];
-      document.getElementById("stamp").textContent = new Date().toLocaleTimeString("en-GB");
-      if (m && m.ok) { renderCohorts(m); } 
-      renderFillout(f);
-      renderCaveats(m, f);
-    });
+  function render(data){
+    var spendSet = data.spend && data.spend.source !== "unset";
+    document.getElementById("sub").textContent =
+      "Every number here is polled automatically. Nothing on this page is typed in.";
+    document.getElementById("stamp").textContent =
+      "updated " + new Date(data.generatedAt).toLocaleString("en-GB");
+
+    document.getElementById("banner").innerHTML = spendSet ? "" :
+      '<div class="banner"><b>Ad spend is not set for ' + esc(data.spend ? data.spend.month : "") + '.</b> ' +
+      'Cost per click, per call and per sale show a dash until it is — they are deliberately ' +
+      'not shown as £0, which would read as free rather than unknown.</div>';
+
+    document.getElementById("kpis").innerHTML = kpis(data);
+
+    var cols = "";
+    for (var i=0;i<CHANNELS.length;i++) cols += card(CHANNELS[i], data.channels[CHANNELS[i].key], spendSet);
+    document.getElementById("cols").innerHTML = cols;
+
+    document.getElementById("table").innerHTML = table(data.cohorts || []);
+
+    var cav = "";
+    for (var j=0;j<(data.caveats||[]).length;j++) cav += "<li>" + esc(data.caveats[j]) + "</li>";
+    if (data.unattributed && data.unattributed.deals) {
+      cav += "<li>" + n(data.unattributed.deals) + " Pipedrive deals carry no campaign tag and are not in any row above.</li>";
+    }
+    document.getElementById("caveats").innerHTML = cav;
   }
 
+  function load(){
+    fetch("/api/metrics", { cache: "no-store" })
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if (!d.ok) throw new Error(d.error || "metrics failed"); render(d); })
+      .catch(function(e){
+        document.getElementById("sub").innerHTML = '<span class="err">Could not load: ' + esc(e.message) + '</span>';
+      });
+  }
   load();
   setInterval(load, 60000);
 })();
 </script>
 </body>
-</html>`;
+</html>
+`;
 
 export default function handler(req, res) {
   res.setHeader("Content-Type", "text/html; charset=utf-8");

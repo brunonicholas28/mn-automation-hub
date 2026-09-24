@@ -6,6 +6,7 @@
 
 import { readAllCohorts, readCohort, normaliseCohortId, isHiddenCohort } from "../lib/cohort.js";
 import { getState } from "../lib/kv.js";
+import { readSpend, costMetrics, currentMonth } from "../lib/spend.js";
 
 // The list of rows that must never reach a reader now lives in lib/cohort.js
 // as isHiddenCohort, because /api/fillout-stats needs exactly the same rule
@@ -30,7 +31,14 @@ function withRates(c) {
       formCompletion: rate(c.completed, c.started),
       reportToCall: rate(c.booked, c.completed),
       endToEnd: rate(c.booked, c.sent),
+      showRate: rate(c.held, c.booked),
+      callToSale: rate(c.sold, c.held),
     },
+    // Which motion produced this row. A cohort with sends came from Instantly
+    // and is cold outreach; one with visits but no sends is paid traffic to
+    // the Growth Gap Session page. Both are tagged cYYYYMMDD, so they already
+    // sit side by side - this only names which is which.
+    channel: c.sent > 0 ? "cold" : (c.visits > 0 ? "linkedin" : "unknown"),
     // Below roughly 200 sends or 20 replies, differences between cohorts are
     // noise. The dashboard and the analyst agent both read this flag so
     // nobody optimises against a sample that cannot support a decision.
@@ -51,13 +59,30 @@ export default async function handler(req, res) {
     const rows = (one ? cohorts : cohorts.filter((c) => !isHidden(c.cohort))).map(withRates);
     const totals = rows.reduce(
       (acc, r) => {
-        for (const k of ["sent", "bounced", "replied", "visits", "started", "completed", "booked"]) {
+        for (const k of ["sent", "bounced", "replied", "visits", "started", "completed", "booked", "held", "sold"]) {
           acc[k] += r[k] || 0;
         }
         return acc;
       },
-      { sent: 0, bounced: 0, replied: 0, visits: 0, started: 0, completed: 0, booked: 0 }
+      { sent: 0, bounced: 0, replied: 0, visits: 0, started: 0, completed: 0, booked: 0, held: 0, sold: 0 }
     );
+
+    // Same sum again, split by channel, so each side can carry its own cost
+    // per outcome against its own spend.
+    const blank = () => ({ sent: 0, bounced: 0, replied: 0, visits: 0, started: 0, completed: 0, booked: 0, held: 0, sold: 0 });
+    const byChannel = { cold: blank(), linkedin: blank() };
+    for (const r of rows) {
+      const bucket = byChannel[r.channel];
+      if (!bucket) continue;
+      for (const k of Object.keys(bucket)) bucket[k] += r[k] || 0;
+    }
+
+    const month = String(req.query?.month || currentMonth()).slice(0, 7);
+    const spend = await readSpend(month);
+    const channels = {
+      cold: { ...withRates({ cohort: "cold", ...byChannel.cold }), cost: costMetrics(spend.cold, byChannel.cold) },
+      linkedin: { ...withRates({ cohort: "linkedin", ...byChannel.linkedin }), cost: costMetrics(spend.linkedin, byChannel.linkedin) },
+    };
 
     // Report completions and booked calls that carry no Cohort value. Shown
     // separately rather than folded into a cohort, because guessing which
@@ -70,6 +95,8 @@ export default async function handler(req, res) {
       cohorts: rows,
       unattributed,
       totals: withRates({ cohort: "all", ...totals }),
+      channels,
+      spend,
       caveats: [
         "Open and click rates are absent by design - tracking pixels are off in Instantly for deliverability.",
         "Landing page visits stand in for click-through and count only traffic carrying a cohort tag.",
@@ -77,6 +104,9 @@ export default async function handler(req, res) {
         "Attribution is last-touch and single-channel.",
         "Bounces read zero because no bounce signal has yet appeared on this Instantly account. Treat the bounce column as unconfirmed rather than as a real zero until a bounce is seen.",
         "Report completions and booked calls only split by cohort once the Fillout to Pipedrive webhook writes utm_campaign into the deal Cohort field. Until then they appear under unattributed.",
+        "Cost per click divides spend by landing page visits, which is what this stack can see first-hand. It is not the ad platform's own CPC and will differ from it.",
+        "Spend is entered per month, not polled - the LinkedIn token here is scoped to writing conversions, not reading ad reporting. Cost figures show a dash until it is set.",
+        "Calls held and tiers sold are read from the Pipedrive enrolment stages, so they are only as current as the pipeline is kept.",
       ],
     });
   } catch (err) {

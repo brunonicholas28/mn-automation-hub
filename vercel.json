@@ -11,6 +11,10 @@
   ],
   "rewrites": [
     {
+      "source": "/api/spend",
+      "destination": "/api/metrics"
+    },
+    {
       "source": "/api/health",
       "destination": "/api/linkedin/shortlist?health=1"
     },

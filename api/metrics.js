@@ -6,7 +6,7 @@
 
 import { readAllCohorts, readCohort, normaliseCohortId, isHiddenCohort } from "../lib/cohort.js";
 import { getState } from "../lib/kv.js";
-import { readSpend, costMetrics, currentMonth } from "../lib/spend.js";
+import { readBudget, costMetrics } from "../lib/spend.js";
 
 // The list of rows that must never reach a reader now lives in lib/cohort.js
 // as isHiddenCohort, because /api/fillout-stats needs exactly the same rule
@@ -77,11 +77,13 @@ export default async function handler(req, res) {
       for (const k of Object.keys(bucket)) bucket[k] += r[k] || 0;
     }
 
-    const month = String(req.query?.month || currentMonth()).slice(0, 7);
-    const spend = await readSpend(month);
+    const [coldBudget, linkedinBudget] = await Promise.all([
+      readBudget("cold"),
+      readBudget("linkedin"),
+    ]);
     const channels = {
-      cold: { ...withRates({ cohort: "cold", ...byChannel.cold }), cost: costMetrics(spend.cold, byChannel.cold) },
-      linkedin: { ...withRates({ cohort: "linkedin", ...byChannel.linkedin }), cost: costMetrics(spend.linkedin, byChannel.linkedin) },
+      cold: { ...withRates({ cohort: "cold", ...byChannel.cold }), cost: costMetrics(coldBudget, byChannel.cold) },
+      linkedin: { ...withRates({ cohort: "linkedin", ...byChannel.linkedin }), cost: costMetrics(linkedinBudget, byChannel.linkedin) },
     };
 
     // Report completions and booked calls that carry no Cohort value. Shown
@@ -96,7 +98,7 @@ export default async function handler(req, res) {
       unattributed,
       totals: withRates({ cohort: "all", ...totals }),
       channels,
-      spend,
+      budgets: { cold: coldBudget, linkedin: linkedinBudget },
       caveats: [
         "Open and click rates are absent by design - tracking pixels are off in Instantly for deliverability.",
         "Landing page visits stand in for click-through and count only traffic carrying a cohort tag.",
@@ -105,7 +107,8 @@ export default async function handler(req, res) {
         "Bounces read zero because no bounce signal has yet appeared on this Instantly account. Treat the bounce column as unconfirmed rather than as a real zero until a bounce is seen.",
         "Report completions and booked calls only split by cohort once the Fillout to Pipedrive webhook writes utm_campaign into the deal Cohort field. Until then they appear under unattributed.",
         "Cost per click divides spend by landing page visits, which is what this stack can see first-hand. It is not the ad platform's own CPC and will differ from it.",
-        "Spend is entered per month, not polled - the LinkedIn token here is scoped to writing conversions, not reading ad reporting. Cost figures show a dash until it is set.",
+        "Spend is a committed budget over a flight, set by hand - the LinkedIn token here is scoped to writing conversions, not reading ad reporting. Cost figures show a dash until it is set.",
+        "Cost per outcome divides spend TO DATE, not the whole budget: the budget pro-rated by how much of the flight has elapsed, assuming an even daily rate. Mid-flight the whole-budget figure would overstate every cost several times over.",
         "Calls held and tiers sold are read from the Pipedrive enrolment stages, so they are only as current as the pipeline is kept.",
       ],
     });

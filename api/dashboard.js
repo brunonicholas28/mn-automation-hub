@@ -170,6 +170,22 @@ const PAGE = String.raw`<!doctype html>
     return out;
   }
 
+  // Says plainly that the figure costs are divided by is spend so far, not
+  // the whole committed budget - otherwise a reader mid-flight would assume
+  // the worse number and conclude the channel costs far more than it does.
+  function spendLine(c){
+    if (c.budget === null || c.budget === undefined) return 'Budget not set — cost figures stay blank.';
+    var line = money(c.spentToDate) + ' spent of ' + money(c.budget);
+    if (c.to) {
+      var to = new Date(c.to + 'T00:00:00Z');
+      line += ' to ' + to.toLocaleDateString('en-GB', { day:'numeric', month:'short', timeZone:'UTC' });
+    }
+    if (c.daysLeft !== null && c.daysLeft !== undefined) {
+      line += ' · ' + c.daysLeft + (c.daysLeft === 1 ? ' day left' : ' days left');
+    }
+    return line + '. Costs use spend so far, not the full budget.';
+  }
+
   function card(ch, d, spendSet){
     var c = d.cost || {};
     return '<div class="card">' +
@@ -182,9 +198,7 @@ const PAGE = String.raw`<!doctype html>
         '<div><div class="lab">Cost / call</div><div class="v mono">' + money(c.costPerCall) + '</div></div>' +
         '<div><div class="lab">Cost / sale</div><div class="v mono">' + money(c.costPerSale) + '</div></div>' +
       '</div>' +
-      '<div class="cap" style="margin:10px 0 0">' +
-        (spendSet ? 'Spend this month: ' + money(c.spend) : 'Spend not set for this month.') +
-      '</div>' +
+      '<div class="cap" style="margin:10px 0 0">' + spendLine(c) + '</div>' +
     '</div>';
   }
 
@@ -227,15 +241,17 @@ const PAGE = String.raw`<!doctype html>
   }
 
   function render(data){
-    var spendSet = data.spend && data.spend.source !== "unset";
+    var b = data.budgets || {};
+    var spendSet = (b.cold && b.cold.budget !== null && b.cold.budget !== undefined) ||
+                   (b.linkedin && b.linkedin.budget !== null && b.linkedin.budget !== undefined);
     document.getElementById("sub").textContent =
       "Every number here is polled automatically. Nothing on this page is typed in.";
     document.getElementById("stamp").textContent =
       "updated " + new Date(data.generatedAt).toLocaleString("en-GB");
 
     document.getElementById("banner").innerHTML = spendSet ? "" :
-      '<div class="banner"><b>Ad spend is not set for ' + esc(data.spend ? data.spend.month : "") + '.</b> ' +
-      'Cost per click, per call and per sale show a dash until it is — they are deliberately ' +
+      '<div class="banner"><b>No ad budget is set.</b> ' +
+      'Cost per click, per call and per sale show a dash until one is — they are deliberately ' +
       'not shown as £0, which would read as free rather than unknown.</div>';
 
     document.getElementById("kpis").innerHTML = kpis(data);

@@ -26,6 +26,7 @@ import {
   ENROLMENT_STAGES,
 } from "../lib/pipedrive.js";
 import { sendConversion, looksLinkedInSourced } from "../lib/linkedinCapi.js";
+import { isTestAddress } from "../lib/testAddresses.js";
 
 const kv = Redis.fromEnv();
 
@@ -98,7 +99,12 @@ export default async function handler(req, res) {
     const liFatId = clean(body.liFatId, 200) || null;
     const utmSource = clean(body.utmSource, 60) || null;
 
-    await kv.hincrby(COUNTER_KEY, "reached_step2", 1);
+    // A test walk is still a real capture, but it must not be counted as a
+    // conversion. reached_step2 is what answers "has a real ad visitor given
+    // us their details?", so a test that lands in it destroys the one number
+    // the paid flight is being judged on.
+    const isTest = isTestAddress(email);
+    await kv.hincrby(COUNTER_KEY, isTest ? "test_reached_step2" : "reached_step2", 1);
 
     const person = await findOrCreatePerson({ name, email });
     if (!person?.id) {
@@ -195,7 +201,11 @@ export default async function handler(req, res) {
     // thing that works fine at fifty records and becomes a problem later.
     // The sweep reads this set; entries whose record has expired are pruned
     // by the sweep itself.
-    await kv.sadd("session:partials:index", email);
+    // ...and a test address never enters the recovery index, so nobody
+    // internal gets chased by a prospect sequence. The capture, the deal and
+    // the CAPI post below all still happen, which is what keeps the path
+    // genuinely testable end to end.
+    if (!isTest) await kv.sadd("session:partials:index", email);
 
     // Report it to LinkedIn as a lead.
     //

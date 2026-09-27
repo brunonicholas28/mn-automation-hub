@@ -228,11 +228,23 @@ const PAGE = String.raw`<!doctype html>
     out += '</tr></thead><tbody>';
     for (var r=0;r<rows.length;r++){
       var c = rows[r];
+      // A cohort that ran as both a send batch and an ad set carries both
+      // tags, because labelling it with either one alone is what hid the
+      // LinkedIn traffic inside the cold row in the first place.
+      var split = c.visitsByChannel || null;
       var tag = c.channel === "cold" ? '<span class="tag cold">cold</span>'
-              : c.channel === "linkedin" ? '<span class="tag li">LinkedIn</span>' : "";
+              : c.channel === "linkedin" ? '<span class="tag li">LinkedIn</span>'
+              : c.channel === "both" ? '<span class="tag cold">cold</span><span class="tag li">LinkedIn</span>' : "";
+      // Visits is the cohort total; the split underneath says how it divides,
+      // so the number never has to be taken on trust.
+      var visitCell = n(c.visits);
+      if (split && c.channel === "both") {
+        visitCell += '<div class="sub mono" style="font-size:11px">' +
+          n(split.linkedin) + ' LinkedIn · ' + n(split.cold) + ' cold</div>';
+      }
       out += '<tr' + (c.thin ? ' class="thin"' : '') + '><td>' + esc(c.cohort) + tag + '</td>' +
         '<td class="mono">' + n(c.sent) + '</td><td class="mono">' + n(c.replied) + '</td>' +
-        '<td class="mono">' + n(c.visits) + '</td><td class="mono">' + n(c.completed) + '</td>' +
+        '<td class="mono">' + visitCell + '</td><td class="mono">' + n(c.completed) + '</td>' +
         '<td class="mono">' + n(c.booked) + '</td><td class="mono">' + n(c.held) + '</td>' +
         '<td class="mono">' + n(c.sold) + '</td></tr>';
     }

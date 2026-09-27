@@ -10,7 +10,14 @@
 // repo was at 13 - two deploys failed outright before that was spotted. A
 // rewrite keeps /api/spend working as an address; see vercel.json.
 
-import { readAllCohorts, readCohort, normaliseCohortId, isHiddenCohort } from "../lib/cohort.js";
+import {
+  readAllCohorts,
+  readCohort,
+  normaliseCohortId,
+  isHiddenCohort,
+  readCohortSources,
+  splitVisitsBySource,
+} from "../lib/cohort.js";
 import { getState } from "../lib/kv.js";
 import { readBudget, writeBudget, costMetrics } from "../lib/spend.js";
 
@@ -24,6 +31,28 @@ const isHidden = isHiddenCohort;
 function rate(numerator, denominator) {
   if (!denominator) return null;
   return Math.round((numerator / denominator) * 1000) / 10;
+}
+
+// Visits split by utm_source. Attached to the cohort as _sources by the
+// handler before withRates runs; absent (an unread hash) degrades to "no
+// LinkedIn visits known", which is the old behaviour.
+export function visitsByChannel(c) {
+  const split = splitVisitsBySource(c.visits, c._sources);
+  // A cohort with no sends is a pure ad row: everything it has is paid
+  // traffic, including visits that landed before the :sources hash existed.
+  if (!(c.sent > 0) && (c.visits || 0) > 0) {
+    return { cold: 0, linkedin: Number(c.visits) || 0 };
+  }
+  return { cold: split.other, linkedin: split.linkedin };
+}
+
+export function channelOf(c) {
+  const hasSends = (c.sent || 0) > 0;
+  const li = visitsByChannel(c).linkedin;
+  if (hasSends && li > 0) return "both";
+  if (hasSends) return "cold";
+  if ((c.visits || 0) > 0) return "linkedin";
+  return "unknown";
 }
 
 function withRates(c) {
@@ -40,11 +69,18 @@ function withRates(c) {
       showRate: rate(c.held, c.booked),
       callToSale: rate(c.sold, c.held),
     },
-    // Which motion produced this row. A cohort with sends came from Instantly
-    // and is cold outreach; one with visits but no sends is paid traffic to
-    // the Growth Gap Session page. Both are tagged cYYYYMMDD, so they already
-    // sit side by side - this only names which is which.
-    channel: c.sent > 0 ? "cold" : (c.visits > 0 ? "linkedin" : "unknown"),
+    // Which motion produced this row.
+    //
+    // A cohort id is not a channel. c20260922 is both an Instantly send batch
+    // and the utm_campaign on the LinkedIn ad set, so the old rule - sends
+    // means cold, otherwise paid - filed every LinkedIn click under cold
+    // outreach and left the LinkedIn panel summing legacy test traffic only.
+    // A cohort carrying both now says "both", and its visits are split by the
+    // utm_source the beacon forwarded. Cohorts with no sends keep the old
+    // fallback so rows that predate the :sources hash stay where they were.
+    channel: channelOf(c),
+    // Visits split by the source on each visit, not by the cohort's label.
+    visitsByChannel: visitsByChannel(c),
     // Below roughly 200 sends or 20 replies, differences between cohorts are
     // noise. The dashboard and the analyst agent both read this flag so
     // nobody optimises against a sample that cannot support a decision.
@@ -106,7 +142,13 @@ export default async function handler(req, res) {
 
     // Asking for a cohort by name is a deliberate act, so it can see the hidden
     // rows - otherwise a test row is impossible to inspect even on purpose.
-    const rows = (one ? cohorts : cohorts.filter((c) => !isHidden(c.cohort))).map(withRates);
+    const visible = one ? cohorts : cohorts.filter((c) => !isHidden(c.cohort));
+
+    // The :sources hash is what tells a LinkedIn click apart from an Instantly
+    // one inside the same cohort, so it is read alongside the counters rather
+    // than inferred from whether the cohort has sends.
+    const sources = await Promise.all(visible.map((c) => readCohortSources(c.cohort)));
+    const rows = visible.map((c, i) => withRates({ ...c, _sources: sources[i] }));
     const totals = rows.reduce(
       (acc, r) => {
         for (const k of ["sent", "bounced", "replied", "visits", "started", "completed", "booked", "held", "sold"]) {
@@ -121,10 +163,20 @@ export default async function handler(req, res) {
     // per outcome against its own spend.
     const blank = () => ({ sent: 0, bounced: 0, replied: 0, visits: 0, started: 0, completed: 0, booked: 0, held: 0, sold: 0 });
     const byChannel = { cold: blank(), linkedin: blank() };
+    // Visits are split per row by source. Everything below the visit - reports
+    // started and completed, calls booked and held, sales - reaches this store
+    // carrying utm_campaign but never utm_source, so for a cohort that ran on
+    // both channels those events cannot be told apart. They are credited to
+    // cold outreach, which is where that cohort's sends came from, and the
+    // caveat below says so rather than the dashboard implying a clean split.
+    const EVENTS = ["sent", "bounced", "replied", "started", "completed", "booked", "held", "sold"];
     for (const r of rows) {
-      const bucket = byChannel[r.channel];
-      if (!bucket) continue;
-      for (const k of Object.keys(bucket)) bucket[k] += r[k] || 0;
+      const split = r.visitsByChannel || { cold: 0, linkedin: 0 };
+      byChannel.cold.visits += split.cold || 0;
+      byChannel.linkedin.visits += split.linkedin || 0;
+      const bucket = r.channel === "linkedin" ? byChannel.linkedin : byChannel.cold;
+      if (r.channel === "unknown") continue;
+      for (const k of EVENTS) bucket[k] += r[k] || 0;
     }
 
     const [coldBudget, linkedinBudget] = await Promise.all([
@@ -154,6 +206,8 @@ export default async function handler(req, res) {
         "Landing page visits stand in for click-through and count only traffic carrying a cohort tag.",
         "c20260908 is cohort zero: it sent before cohort tagging, so its funnel below the send count is attributable to cold email but not cleanly separable from later batches.",
         "Attribution is last-touch and single-channel.",
+        "Page visits are split between channels by the utm_source each visit carried, so a cohort that ran as both a send batch and an ad set (c20260922) reports its paid clicks under LinkedIn and its email clicks under cold outreach. Visits that landed before the source was recorded stay on the cold side, so LinkedIn visits are a floor, not a ceiling.",
+        "Only visits split by channel. Reports, calls booked, calls held and sales arrive with utm_campaign but no utm_source, so for a cohort that ran on both channels they are all credited to cold outreach. A LinkedIn booking from such a cohort is therefore undercounted on the LinkedIn side.",
         "Bounces read zero because no bounce signal has yet appeared on this Instantly account. Treat the bounce column as unconfirmed rather than as a real zero until a bounce is seen.",
         "Report completions and booked calls only split by cohort once the Fillout to Pipedrive webhook writes utm_campaign into the deal Cohort field. Until then they appear under unattributed.",
         "Cost per click divides spend by landing page visits, which is what this stack can see first-hand. It is not the ad platform's own CPC and will differ from it.",

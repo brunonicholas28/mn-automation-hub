@@ -1,0 +1,62 @@
+{
+ "cohort": "c20261006",
+ "count": 8,
+ "rows": [
+  {
+   "dealId": "870",
+   "company": "Attr Check Co - Growth Gap Session (no slot chosen)",
+   "domain": "",
+   "firstName": "Attr",
+   "researched": ""
+  },
+  {
+   "dealId": "871",
+   "company": "Stamp Co - Growth Gap Session (no slot chosen)",
+   "domain": "",
+   "firstName": "Stamp",
+   "researched": ""
+  },
+  {
+   "dealId": "872",
+   "company": "Creative Check Co - Growth Gap Session (no slot chosen)",
+   "domain": "",
+   "firstName": "Creative",
+   "researched": ""
+  },
+  {
+   "dealId": "873",
+   "company": "Cal Check - Growth Gap Session (no slot chosen)",
+   "domain": "",
+   "firstName": "Cal",
+   "researched": ""
+  },
+  {
+   "dealId": "874",
+   "company": "Clean Test - Growth Gap Session (no slot chosen)",
+   "domain": "",
+   "firstName": "Clean",
+   "researched": ""
+  },
+  {
+   "dealId": "875",
+   "company": "Badge Co - Growth Gap Session (no slot chosen)",
+   "domain": "",
+   "firstName": "Badge",
+   "researched": ""
+  },
+  {
+   "dealId": "876",
+   "company": "wef - Growth Gap Session (no slot chosen)",
+   "domain": "",
+   "firstName": "jef",
+   "researched": ""
+  },
+  {
+   "dealId": "877",
+   "company": "CAPI Test - please ignore - Growth Gap Session (no slot chosen)",
+   "domain": "",
+   "firstName": "CAPI",
+   "researched": ""
+  }
+ ]
+}

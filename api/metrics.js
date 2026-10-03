@@ -16,6 +16,7 @@ import {
   normaliseCohortId,
   isHiddenCohort,
   readCohortSources,
+  readCohortSteps,
   splitVisitsBySource,
 } from "../lib/cohort.js";
 import { getState } from "../lib/kv.js";
@@ -193,10 +194,16 @@ export default async function handler(req, res) {
     // batch they belong to would be worse than admitting we cannot tell.
     const unattributed = (await getState("funnel:unattributed")) || null;
 
+    // Only on a named-cohort read. Fetching the step hash for every row would
+    // add a KV round trip per cohort to the endpoint the dashboard polls, and
+    // the steps are only ever read one campaign at a time.
+    const steps = one ? await readCohortSteps(one) : null;
+
     return res.status(200).json({
       ok: true,
       generatedAt: new Date().toISOString(),
       cohorts: rows,
+      steps,
       unattributed,
       totals: withRates({ cohort: "all", ...totals }),
       channels,

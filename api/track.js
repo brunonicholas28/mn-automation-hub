@@ -66,6 +66,26 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, counted: false, reason: "no cohort tag" });
     }
 
+    // Funnel-step beacons from the booking card. They answer the question
+    // 197 visits and zero form submissions could not: where in the card did
+    // people stop - the four qualifying chips, the disqualifier, or the six
+    // typed fields.
+    //
+    // A step is deliberately NOT a visit. Bumping visits here would inflate
+    // the single number the paid flight is judged on, so this branch returns
+    // before the counter below ever runs.
+    const step = String(body.step || "")
+      .trim().toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 24);
+    if (step) {
+      const key = `${cohortKey(cohort)}:steps`;
+      await kv.hincrby(key, step, 1);
+      // Which chip did the blocking, so "the qualifier is too tight" can be
+      // argued from the specific question rather than in general.
+      const dq = String(body.dq || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12);
+      if (dq) await kv.hincrby(key, "dq_" + dq, 1);
+      return res.status(200).json({ ok: true, counted: true, cohort, step, dq: dq || null });
+    }
+
     // stage=started is fired by the beacon embedded in the Fillout form
     // itself, so "reports started" means the form was actually opened rather
     // than merely that the landing page was seen.

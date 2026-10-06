@@ -106,6 +106,17 @@ const PAGE = String.raw`<!doctype html>
   .thin { color:var(--muted); }
   .tablewrap { background:var(--surface); border:1px solid var(--border); border-radius:12px;
     padding:18px 20px; margin-bottom:24px; overflow-x:auto; }
+  .wide { background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:18px 20px 20px; margin-bottom:26px; border-top:2px solid var(--linkedin); }
+  .wide .grid { display:grid; grid-template-columns:1fr 1fr; gap:0 34px; }
+  @media (max-width:820px){ .wide .grid { grid-template-columns:1fr; gap:0; } }
+  .subhead { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted);
+    font-weight:600; margin:18px 0 10px; padding-top:14px; border-top:1px solid var(--rule); }
+  .subhead:first-child { margin-top:0; padding-top:0; border-top:0; }
+  .flat { display:flex; justify-content:space-between; gap:10px; font-size:13px; padding:5px 0; }
+  .flat .name { color:var(--ink-2); }
+  .flat .num { font-weight:700; }
+  .nodata { font-size:13px; color:var(--muted); }
   .caveats { font-size:12.5px; color:var(--muted); line-height:1.7; }
   .caveats li { margin-bottom:3px; }
   .err { color:var(--critical); }
@@ -124,6 +135,7 @@ const PAGE = String.raw`<!doctype html>
   <div id="banner"></div>
   <div class="kpis" id="kpis"></div>
   <div class="cols" id="cols"></div>
+  <div id="steps"></div>
   <div class="tablewrap"><h2 style="margin-bottom:14px">Every campaign</h2><div id="table"></div></div>
   <h2 style="margin-bottom:10px">Read this before trusting a number</h2>
   <ul class="caveats" id="caveats"></ul>
@@ -202,14 +214,129 @@ const PAGE = String.raw`<!doctype html>
     '</div>';
   }
 
+  // On-page behaviour on the Growth Gap Session page.
+  //
+  // This exists because "calls booked" is the only outcome the funnel above
+  // can see, and for a page that has produced zero of them it says nothing
+  // about whether the page works. A visitor who taps a real time and does not
+  // finish is invisible there and is the strongest intent signal the page
+  // produces, so it gets its own panel rather than a footnote.
+  //
+  // calendar_view, not page visits, is the denominator: visits include
+  // untagged traffic, report-page traffic on a cohort that ran both channels,
+  // and clicks from before the step beacon existed. Dividing by visits would
+  // print a tap rate that is wrong in a flattering direction.
+  var TAPS = [
+    ["cal_slot_click", "Tapped a time in the hero strip"],
+    ["cal_pick_time",  "Tapped a time in our calendar"],
+    ["cal_newtab_click", "Tapped the booking button"],
+    ["cal_time_picked", "Picked a time inside the Calendly embed"]
+  ];
+  var HEALTH = [
+    ["cal_link_shown",  "Instant booking link rendered"],
+    ["cal_alive",       "Calendly embed answered"],
+    ["cal_embed_ready", "Calendly embed finished loading"],
+    ["cal_embed_swap",  "Embed replaced the placeholder"],
+    ["cal_fallback",    "Fell back to a plain link"],
+    ["cal_embed_never", "Embed never arrived (10s)"]
+  ];
+  var QUAL = [
+    ["q_start", "Started the qualifying chips"],
+    ["q_pass",  "Passed all three"],
+    ["q_block", "Blocked by a chip"]
+  ];
+  var DQ_LABELS = { role:"Role chip", rev:"Revenue chip", team:"Team-size chip" };
+
+  function flat(label, v){
+    return '<div class="flat"><span class="name">' + esc(label) + '</span>' +
+           '<span class="num mono">' + n(v || 0) + '</span></div>';
+  }
+
+  function stepStage(label, v, top, note){
+    var share = Math.min(100, (v / Math.max(1, top)) * 100);
+    var rate = top ? Math.round((v / top) * 1000) / 10 : null;
+    return '<div class="stage"><div class="row"><span class="name">' + esc(label) +
+      (note ? ' <span class="pct">' + esc(note) + '</span>' : '') + '</span>' +
+      '<span class="num mono">' + n(v) +
+      (rate === null ? "" : '<span class="pct">' + rate + '%</span>') + '</span></div>' +
+      '<div class="bar"><span style="width:' + share + '%;background:var(--linkedin)"></span></div></div>';
+  }
+
+  function stepsPanel(data){
+    var st = data.stepTotals || {};
+    var keys = Object.keys(st);
+    var head = '<div class="wide"><div class="head">' +
+      '<span class="dot" style="background:var(--linkedin)"></span>' +
+      '<h2>On the booking page</h2></div>' +
+      '<div class="cap">What LinkedIn visitors did on freesession.marinanicholas.com. ' +
+      'One count per step per session, campaign-tagged traffic only.</div>';
+
+    if (!keys.length) {
+      return head + '<div class="nodata">No on-page steps recorded yet. They began on 3 October; ' +
+        'a campaign that ran before that shows visits with nothing underneath.</div></div>';
+    }
+
+    var top = st.calendar_view || 0;
+    var body = '<div class="subhead">Did they act on it</div>' +
+      stepStage("Booking card seen", top, top, "denominator") +
+      stepStage("Real times rendered", st.picker_shown || 0, top, "our own calendar");
+    for (var i=0;i<TAPS.length;i++) body += stepStage(TAPS[i][1], st[TAPS[i][0]] || 0, top);
+    body += stepStage("Booking confirmed on the page", st.cal_booked || 0, top);
+    body += '<div class="cap" style="margin:12px 0 0">A session can appear in more than one tap row, ' +
+      'so the tap rows do not sum. Percentages are of booking cards seen, not of page visits — ' +
+      'visits include untagged and report-page traffic.</div>';
+
+    // Which day people chose, from the second dimension on the tap beacon.
+    var days = [];
+    for (var k=0;k<keys.length;k++){
+      var m = /^dq_(\d{8})$/.exec(keys[k]);
+      if (m) days.push([m[1], st[keys[k]]]);
+    }
+    days.sort(function(a,b){ return a[0] < b[0] ? -1 : 1; });
+    var right = "";
+    if (days.length) {
+      right += '<div class="subhead">Which day they chose</div>';
+      for (var x=0;x<days.length;x++){
+        var iso = days[x][0].slice(0,4) + '-' + days[x][0].slice(4,6) + '-' + days[x][0].slice(6,8);
+        var dt = new Date(iso + 'T12:00:00Z');
+        right += flat(dt.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}), days[x][1]);
+      }
+    }
+
+    var qualRows = "", anyQual = false;
+    for (var q=0;q<QUAL.length;q++){ if (st[QUAL[q][0]]) anyQual = true; }
+    if (anyQual) {
+      qualRows += '<div class="subhead">Qualifying chips</div>';
+      for (var q2=0;q2<QUAL.length;q2++) qualRows += flat(QUAL[q2][1], st[QUAL[q2][0]]);
+      for (var dk in DQ_LABELS) {
+        if (st["dq_" + dk]) qualRows += flat(DQ_LABELS[dk] + " blocked them", st["dq_" + dk]);
+      }
+    }
+    right += qualRows;
+
+    right += '<div class="subhead">Booking widget health</div>';
+    for (var h=0;h<HEALTH.length;h++) right += flat(HEALTH[h][1], st[HEALTH[h][0]]);
+
+    return head + '<div class="grid"><div>' + body + '</div><div>' + right + '</div></div></div>';
+  }
+
   function kpis(data){
     var cold = data.channels.cold, li = data.channels.linkedin;
+    var st = data.stepTotals || {};
+    // Our own two pickers only. The embed's own date selection and the
+    // booking button are shown in the panel below but left out here, so the
+    // headline figure cannot double-count one session two ways.
+    var taps = (st.cal_slot_click || 0) + (st.cal_pick_time || 0);
     var t = [
       ["Emails sent", n(cold.sent), "cold outreach", "cold"],
       ["Reports completed", n(cold.completed + li.completed), "both channels", ""],
       ["Calls booked", n(cold.booked), "from cold email", "cold"],
       ["LinkedIn visits", n(li.visits), "paid traffic", "li"],
       ["Calls booked", n(li.booked), "from LinkedIn", "li"],
+      // Intent, not outcome. On a page with no bookings yet this is the only
+      // number that moves, and it is what says whether the page or the offer
+      // is the thing failing.
+      ["Times tapped", n(taps), "a real slot, booking page", "li"],
       ["Sales", n(cold.sold + li.sold), "both channels", ""]
     ];
     var out = "";
@@ -271,6 +398,8 @@ const PAGE = String.raw`<!doctype html>
     var cols = "";
     for (var i=0;i<CHANNELS.length;i++) cols += card(CHANNELS[i], data.channels[CHANNELS[i].key], spendSet);
     document.getElementById("cols").innerHTML = cols;
+
+    document.getElementById("steps").innerHTML = stepsPanel(data);
 
     document.getElementById("table").innerHTML = table(data.cohorts || []);
 

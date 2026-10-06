@@ -194,16 +194,47 @@ export default async function handler(req, res) {
     // batch they belong to would be worse than admitting we cannot tell.
     const unattributed = (await getState("funnel:unattributed")) || null;
 
-    // Only on a named-cohort read. Fetching the step hash for every row would
-    // add a KV round trip per cohort to the endpoint the dashboard polls, and
-    // the steps are only ever read one campaign at a time.
+    // Only on a named-cohort read.
     const steps = one ? await readCohortSteps(one) : null;
+
+    // On-page behaviour on the Growth Gap Session page, summed across every
+    // campaign that sent paid traffic to it.
+    //
+    // This endpoint is polled every 60s by the dashboard, so the step hash is
+    // read only for rows that can hold landing page steps at all - a cohort
+    // with no visits has an empty hash by definition, and a pure cold row
+    // never reaches that page. Today that is nine parallel reads behind a
+    // 60-second edge cache rather than one per cohort.
+    //
+    // These counts answer a question the funnel above cannot: a visitor who
+    // taps a time and never finishes is invisible in "calls booked" but is
+    // the strongest intent signal the page produces. Both numbers are needed
+    // - the tap rate says whether the page works, the booking says whether
+    // the offer does.
+    const stepRows = rows.filter(
+      (r) => (r.visits || 0) > 0 && (r.channel === "linkedin" || r.channel === "both")
+    );
+    const stepHashes = await Promise.all(stepRows.map((r) => readCohortSteps(r.cohort)));
+    const stepTotals = {};
+    const stepsByCohort = {};
+    stepRows.forEach((r, i) => {
+      const clean = {};
+      for (const [k, v] of Object.entries(stepHashes[i] || {})) {
+        const num = Number(v) || 0;
+        if (!num) continue;
+        clean[k] = num;
+        stepTotals[k] = (stepTotals[k] || 0) + num;
+      }
+      if (Object.keys(clean).length) stepsByCohort[r.cohort] = clean;
+    });
 
     return res.status(200).json({
       ok: true,
       generatedAt: new Date().toISOString(),
       cohorts: rows,
       steps,
+      stepTotals,
+      stepsByCohort,
       unattributed,
       totals: withRates({ cohort: "all", ...totals }),
       channels,
@@ -221,6 +252,8 @@ export default async function handler(req, res) {
         "Spend is a committed budget over a flight, set by hand - the LinkedIn token here is scoped to writing conversions, not reading ad reporting. Cost figures show a dash until it is set.",
         "Cost per outcome divides spend TO DATE, not the whole budget: the budget pro-rated by how much of the flight has elapsed, assuming an even daily rate. Mid-flight the whole-budget figure would overstate every cost several times over.",
         "Calls held and tiers sold are read from the Pipedrive enrolment stages, so they are only as current as the pipeline is kept.",
+        "On-page steps count sessions, not actions, and at most once per step per session: a visitor who taps three different times is one tap. They also only count traffic that arrived carrying a campaign tag and ran the page's JavaScript, so every step is a floor, not a total.",
+        "On-page steps started being recorded on 3 October. Campaigns that ran before that show page visits with no steps underneath, which means not measured, not nobody did it.",
       ],
     });
   } catch (err) {

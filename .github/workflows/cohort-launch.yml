@@ -24,8 +24,10 @@
 name: cohort-launch
 
 on:
-  schedule:
-    - cron: "7 6 * * 2"
+  # Schedule switched off 2026-10-10: cold email paused, all-in on organic
+  # LinkedIn. Manual runs still work. Uncomment to bring the schedule back.
+  # schedule:
+  #   - cron: "7 6 * * 2"
   workflow_dispatch:
     inputs:
       cohort:

@@ -9,8 +9,10 @@
 name: recovery-clicked
 
 on:
-  schedule:
-    - cron: "43 9 * * *"
+  # Schedule switched off 2026-10-10: cold email paused, all-in on organic
+  # LinkedIn. Manual runs still work. Uncomment to bring the schedule back.
+  # schedule:
+  #   - cron: "43 9 * * *"
   workflow_dispatch:
     inputs:
       live:

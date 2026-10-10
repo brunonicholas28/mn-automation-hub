@@ -16,11 +16,13 @@
 name: send-audit
 
 on:
-  schedule:
-    - cron: "20 6 * * 2,3,4"
-    - cron: "50 6 * * 2,3,4"
-    - cron: "40 7 * * 2,3,4"
-    - cron: "30 9 * * 2,3,4"
+  # Schedule switched off 2026-10-10: cold email paused, all-in on organic
+  # LinkedIn. Manual runs still work. Uncomment to bring the schedule back.
+  # schedule:
+  #   - cron: "20 6 * * 2,3,4"
+  #   - cron: "50 6 * * 2,3,4"
+  #   - cron: "40 7 * * 2,3,4"
+  #   - cron: "30 9 * * 2,3,4"
   workflow_dispatch:
     inputs:
       campaign:

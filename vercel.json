@@ -37,6 +37,18 @@
     {
       "source": "/api/cron/session-recovery",
       "destination": "/api/cron/run?job=session-recovery"
+    },
+    {
+      "source": "/organic",
+      "destination": "/api/cron/run?job=organic&view=page"
+    },
+    {
+      "source": "/api/organic",
+      "destination": "/api/cron/run?job=organic"
+    },
+    {
+      "source": "/api/cron/organic-digest",
+      "destination": "/api/cron/run?job=organic-digest"
     }
   ]
 }

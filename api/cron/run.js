@@ -21,6 +21,8 @@ import creditCheck from "../../lib/jobs/credit-check.js";
 import funnelWatchdog from "../../lib/jobs/funnel-watchdog.js";
 import sendAudit from "../../lib/jobs/send-audit.js";
 import sessionRecovery from "../../lib/jobs/session-recovery.js";
+import organic from "../../lib/jobs/organic.js";
+import organicDigest from "../../lib/jobs/organic-digest.js";
 
 export const config = { maxDuration: 60 };
 
@@ -35,6 +37,10 @@ const JOBS = {
   "funnel-watchdog": funnelWatchdog,
   "send-audit": sendAudit,
   "session-recovery": sessionRecovery,
+  // Not a cron: the organic LinkedIn page and its API, routed here because
+  // api/ is at the 12-function cap. It does its own auth (ORGANIC_KEY).
+  organic,
+  "organic-digest": organicDigest,
 };
 
 export default async function handler(req, res) {

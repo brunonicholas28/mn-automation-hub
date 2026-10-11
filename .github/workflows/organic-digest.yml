@@ -1,0 +1,26 @@
+# 8am UK daily email for the organic LinkedIn push (lib/jobs/organic-digest.js).
+# Fires at 06:55 and 07:55 UTC; the job itself only sends from the run that
+# lands at 8am UK time, so this is right in both BST and GMT.
+name: Organic LinkedIn digest
+on:
+  schedule:
+    - cron: "55 6 * * *"
+    - cron: "55 7 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Set to 1 to send now regardless of the time"
+        required: false
+        default: "0"
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send digest
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          FORCE: ${{ github.event.inputs.force || '0' }}
+        run: |
+          code=$(curl -s -o /tmp/out.json -w '%{http_code}' -H "Authorization: Bearer ${CRON_SECRET}" "https://mn-automation-hub.vercel.app/api/cron/run?job=organic-digest&force=${FORCE}")
+          cat /tmp/out.json; echo
+          test "$code" = "200"

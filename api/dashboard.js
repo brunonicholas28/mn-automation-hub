@@ -128,6 +128,7 @@ const PAGE = String.raw`<!doctype html>
     <div>
       <h1>Campaign</h1>
       <div class="sub" id="sub">Loading…</div>
+      <div class="sub"><a href="/pipeline" style="color:var(--accent)">Organic pipeline: posts to sales →</a></div>
     </div>
     <div class="sub mono" id="stamp"></div>
   </div>

@@ -49,6 +49,10 @@
     {
       "source": "/api/cron/organic-digest",
       "destination": "/api/cron/run?job=organic-digest"
+    },
+    {
+      "source": "/pipeline",
+      "destination": "/api/cron/run?job=organic&view=pipeline"
     }
   ]
 }

@@ -1,11 +1,15 @@
 # 8am UK daily email for the organic LinkedIn push (lib/jobs/organic-digest.js).
-# Fires at 06:55 and 07:55 UTC; the job itself only sends from the run that
-# lands at 8am UK time, so this is right in both BST and GMT.
+# Fires several times each morning (UTC). The job sends from the first run at
+# or after 8am UK time and ignores the rest, so it is right in both BST and
+# GMT and survives GitHub running a slot late or skipping it.
 name: Organic LinkedIn digest
 on:
   schedule:
-    - cron: "55 6 * * *"
-    - cron: "55 7 * * *"
+    - cron: "2 7 * * *"
+    - cron: "32 7 * * *"
+    - cron: "2 8 * * *"
+    - cron: "32 8 * * *"
+    - cron: "2 9 * * *"
   workflow_dispatch:
     inputs:
       force:

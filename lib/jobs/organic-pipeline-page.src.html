@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Pipeline — Marina Nicholas</title>
+<style>
+  :root{
+    color-scheme:light;
+    --page:#f9f9f7; --surface:#fcfcfb; --surface-2:#f1f0ec; --border:rgba(11,11,11,0.10); --grid:rgba(11,11,11,0.07);
+    --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781; --accent:#103A62; --bar:#2a78d6;
+    --good:#0b8a0b; --warning:#b07800; --critical:#d03b3b; --weekly:#7a5ab8;
+    --s1:#2a78d6; --s2:#1baf7a; --s3:#eb6834;
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+    color-scheme:dark; --page:#0d0d0d; --surface:#1a1a19; --surface-2:#232322; --border:rgba(255,255,255,0.10); --grid:rgba(255,255,255,0.07);
+    --ink:#fff; --ink-2:#c3c2b7; --muted:#8f8d86; --accent:#8ab8ea; --bar:#3987e5;
+    --good:#3ccf3c; --warning:#f5b83a; --critical:#ef6a6a; --weekly:#b49ae6;
+    --s1:#3987e5; --s2:#199e70; --s3:#d95926; }}
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--page);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1100px;margin:0 auto;padding:32px 16px 72px}
+  h1{font-size:26px;font-weight:800;margin:0;letter-spacing:-.01em}
+  h2{font-size:15px;font-weight:700;margin:0 0 12px}
+  .num{font-variant-numeric:tabular-nums}
+  .top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:18px;margin-bottom:20px}
+  .sub{color:var(--muted);font-size:13px;margin-top:4px}
+  a{color:var(--accent)}
+  .banner{border:1px solid var(--border);border-left:4px solid var(--critical);background:var(--surface);border-radius:8px;padding:10px 14px;margin-bottom:18px;font-size:14px}
+  .banner.ok{border-left-color:var(--good)}
+  .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:26px}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;min-width:0}
+  .panel .hint{color:var(--muted);font-size:12.5px;margin:-6px 0 12px}
+  .row{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 0;border-top:1px solid var(--border)}
+  .row:first-of-type{border-top:0}
+  .row .lbl{font-size:14px}
+  .row .val{font-weight:700;font-size:18px;text-align:right}
+  .row .meta{grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+  .track{flex:1;height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden}
+  .fill{height:100%;background:var(--bar);border-radius:3px}
+  .pill{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border-radius:999px;padding:2px 7px;white-space:nowrap}
+  .live{background:color-mix(in srgb,var(--good) 14%,transparent);color:var(--good)}
+  .weekly{background:color-mix(in srgb,var(--weekly) 16%,transparent);color:var(--weekly)}
+  .logged{background:color-mix(in srgb,var(--warning) 16%,transparent);color:var(--warning)}
+  .manual{background:var(--surface-2);color:var(--ink-2)}
+  .tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:26px}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:620px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--border)}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
+  td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+  tr:last-child td{border-bottom:0}
+  .muted{color:var(--muted)}
+  .section{margin-bottom:26px}
+  .notes{font-size:12.5px;color:var(--muted);line-height:1.7;padding-left:18px}
+
+  /* Revenue */
+  .rev-head{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start;margin-bottom:6px}
+  .hero b{display:block;font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+  .hero span{font-size:13px;color:var(--muted)}
+  .delta{font-size:14px;font-weight:700;margin-top:6px}
+  .delta.up{color:var(--good)} .delta.down{color:var(--critical)} .delta.flat{color:var(--muted)}
+  .delta small{font-weight:500;color:var(--muted);font-size:13px}
+  .counts{display:flex;gap:10px;flex-wrap:wrap}
+  .count{border:1px solid var(--border);border-radius:8px;padding:8px 12px;min-width:150px;background:var(--page)}
+  .count b{display:block;font-size:22px;font-weight:800}
+  .count span{font-size:12.5px;color:var(--muted)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);margin:10px 0 4px}
+  .legend i{display:inline-block;width:18px;height:0;border-top:2.5px solid;vertical-align:middle;margin-right:6px}
+  .legend i.dash{border-top-style:dashed}
+  .chart{position:relative}
+  .chart svg{display:block;width:100%;height:auto;overflow:visible}
+  .chart .axis{font-size:11.5px;fill:var(--muted)}
+  .chart .dl{font-size:12px;font-weight:600;fill:var(--ink-2)}
+  .tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12.5px;box-shadow:0 4px 14px rgba(0,0,0,.12);display:none;min-width:170px;z-index:2}
+  .tip .t{color:var(--muted);margin-bottom:4px}
+  .tip .r{display:flex;align-items:center;gap:8px;justify-content:space-between}
+  .tip .r span{color:var(--ink-2);display:flex;align-items:center;gap:6px}
+  .tip .r i{display:inline-block;width:12px;border-top:2.5px solid}
+  .tip .r b{font-variant-numeric:tabular-nums}
+  .up{color:var(--good)} .down{color:var(--critical)}
+  .stats{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-bottom:8px}
+  .stats b{color:var(--ink);font-size:15px;margin-right:4px}
+  .empty{color:var(--muted);font-size:13px;padding:24px 0;text-align:center}
+  @media (max-width:860px){.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div><h1>Pipeline</h1><div class="sub" id="sub">Loading…</div></div>
+    <div class="sub"><a href="/api/dashboard">Campaign dashboard</a> · <a href="/organic">Marina's list</a></div>
+  </div>
+  <div id="banner"></div>
+
+  <div class="section">
+    <div class="panel">
+      <h2>Revenue, month by month</h2>
+      <div class="rev-head">
+        <div class="hero" id="revHero"></div>
+        <div class="counts" id="revCounts"></div>
+      </div>
+      <div class="legend" id="revLegend"></div>
+      <div class="chart" id="revChart"></div>
+    </div>
+  </div>
+  <div class="tablewrap"><table id="revTable"></table></div>
+
+  <div class="grid2">
+    <div class="panel"><h2>1. Posts to reports</h2><p class="hint">Do the posts get seen, clicked and acted on?</p><div id="f1"></div></div>
+    <div class="panel"><h2>2. Calls to sales</h2><p class="hint">Deals since the push began</p><div id="f3"></div></div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <h2>LinkedIn content performance <span class="pill weekly">Weekly</span></h2>
+      <p class="hint">Impressions on Marina's posts and newsletter, week by week</p>
+      <div class="stats" id="cpStats"></div>
+      <div class="chart" id="cpChart"></div>
+    </div>
+    <div class="panel">
+      <h2>Network growth <span class="pill weekly">Weekly</span></h2>
+      <p class="hint">Connections and followers at the end of each week</p>
+      <div class="stats" id="ngStats"></div>
+      <div class="legend" id="ngLegend"></div>
+      <div class="chart" id="ngChart"></div>
+    </div>
+  </div>
+
+  <h2>By route since the push began</h2>
+  <div class="tablewrap"><table id="routes"></table></div>
+
+  <h2>By post</h2>
+  <div class="tablewrap"><table id="posts"></table></div>
+
+  <h2>Where the numbers come from</h2>
+  <ul class="notes">
+    <li><b>Revenue and expenses</b> are entered by hand each month. Each client has its own line; the top line is total revenue.</li>
+    <li><span class="pill weekly">Weekly</span> Impressions, link clicks, connections and followers come from Marina's LinkedIn. LinkedIn has no API for them, so the weekly report reads them and updates this page once a week.</li>
+    <li><span class="pill live">Live</span> Page visits and reports come from the tagged post links; calls, proposals and sales from Pipedrive (refreshed every 5 minutes, test deals excluded).</li>
+    <li><span class="pill manual">+ manual</span> Calls held outside Pipedrive are added by hand, so a call that never became a Pipedrive deal still counts.</li>
+    <li>Each Pipedrive row counts deals that reached that stage or went further, so a deal that moves on still counts for the stages before it.</li>
+  </ul>
+</div>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var NS="http://www.w3.org/2000/svg";
+  function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  function fmt(n){return n==null?"–":Number(n).toLocaleString("en-GB")}
+  function gbp(n){return n==null?"–":"£"+Math.round(n).toLocaleString("en-GB")}
+  function pct(a,b){if(a==null||b==null||!b)return null;return Math.round(a/b*1000)/10}
+  function monthName(m,long){return new Date(m+"-01T12:00:00Z").toLocaleDateString("en-GB",{month:long?"long":"short"})}
+  function weekLabel(w){var a=new Date(w.from+"T12:00:00Z"),b=w.to?new Date(w.to+"T12:00:00Z"):null;return a.getUTCDate()+(b?"–"+b.toLocaleDateString("en-GB",{day:"numeric",month:"short"}):" "+a.toLocaleDateString("en-GB",{month:"short"}))}
+  // Change from one value to the next: arrow, money and percentage.
+  function change(cur,prev,money){
+    if(cur==null||prev==null)return null;
+    var d=cur-prev,p=prev?Math.round(d/prev*1000)/10:null;
+    var dir=d>0?"up":d<0?"down":"flat", arrow=d>0?"▲":d<0?"▼":"■";
+    var amt=money?gbp(Math.abs(d)):fmt(Math.abs(d));
+    return {dir:dir,text:arrow+" "+amt+(p==null?"":" ("+Math.abs(p).toFixed(1)+"%)")};
+  }
+  var SRC={live:'<span class="pill live">Live</span>',weekly:'<span class="pill weekly">Weekly</span>',logged:'<span class="pill logged">Logged</span>'};
+  function funnel(rows){
+    return rows.map(function(r,i){
+      var prev=i?rows[i-1].v:null, p=i?pct(r.v,prev):null;
+      // Two sources can disagree (LinkedIn counts clicks, the hub counts page
+      // loads, including Marina checking her own link), so never show >100%.
+      var txt=p==null?"–":(p>100?"more than "+rows[i-1].short+" (includes link checks)":p+"% of "+rows[i-1].short);
+      var meta=i?('<div class="track"><div class="fill" style="width:'+Math.min(100,p||0)+'%"></div></div><span class="num">'+txt+'</span>'):'<span>top of funnel</span>';
+      if(r.note) meta+='<span>'+esc(r.note)+'</span>';
+      return '<div class="row"><div class="lbl">'+esc(r.l)+' '+SRC[r.s]+(r.manual?' <span class="pill manual">+'+r.manual+' manual</span>':'')+'</div><div class="val num">'+fmt(r.v)+'</div><div class="meta">'+meta+'</div></div>';
+    }).join("");
+  }
+
+  // A small line chart in SVG: one y axis, recessive grid, 2px lines,
+  // markers, a crosshair and one tooltip listing every series.
+  function lineChart(host,o){
+    host.innerHTML="";
+    var W=Math.max(280,Math.round(host.clientWidth||640)),H=o.height||240,L=o.left||56,R=o.right||16,T=14,B=28,n=o.labels.length;
+    var all=[];o.series.forEach(function(s){s.values.forEach(function(v){if(v!=null)all.push(v)})});
+    if(!all.length){host.innerHTML='<div class="empty">'+esc(o.empty||"No data yet.")+'</div>';return}
+    var lo=o.zero?0:Math.min.apply(null,all),hi=Math.max.apply(null,all);
+    if(lo===hi){lo=lo-(Math.abs(lo)*0.05||1);hi=hi+(Math.abs(hi)*0.05||1)}
+    var span=hi-lo,step=Math.pow(10,Math.floor(Math.log10(span/4))),cand=[1,2,2.5,5,10];
+    for(var c=0;c<cand.length;c++){if(span/(step*cand[c])<=5){step=step*cand[c];break}}
+    lo=Math.floor(lo/step)*step;hi=Math.ceil(hi/step)*step;if(o.zero)lo=0;
+    var x=function(i){return n===1?(L+(W-L-R)/2):L+i*(W-L-R)/(n-1)};
+    var y=function(v){return T+(H-T-B)*(1-(v-lo)/(hi-lo))};
+    var svg=document.createElementNS(NS,"svg");svg.setAttribute("viewBox","0 0 "+W+" "+H);svg.setAttribute("role","img");svg.setAttribute("aria-label",o.title||"chart");
+    var h="";
+    for(var g=lo;g<=hi+step/2;g+=step){h+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(g)+'" y2="'+y(g)+'" stroke="var(--grid)"/>';h+='<text class="axis" x="'+(L-8)+'" y="'+(y(g)+4)+'" text-anchor="end">'+esc(o.fmtAxis?o.fmtAxis(g):fmt(g))+'</text>'}
+    o.labels.forEach(function(lab,i){h+='<text class="axis" x="'+x(i)+'" y="'+(H-8)+'" text-anchor="middle">'+esc(lab)+'</text>'});
+    o.series.forEach(function(s){
+      var pts=[];s.values.forEach(function(v,i){if(v!=null)pts.push([x(i),y(v)])});
+      if(pts.length>1)h+='<polyline fill="none" stroke="'+s.color+'" stroke-width="'+(s.width||2)+'" stroke-linejoin="round" stroke-linecap="round"'+(s.dash?' stroke-dasharray="6 5"':'')+' points="'+pts.map(function(p){return p.join(",")}).join(" ")+'"/>';
+      pts.forEach(function(p){h+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="4" fill="'+s.color+'" stroke="var(--surface)" stroke-width="2"/>'});
+    });
+    (o.pointLabels||[]).forEach(function(pl){var s=o.series[pl.series];s.values.forEach(function(v,i){if(v==null)return;h+='<text class="dl" x="'+x(i)+'" y="'+(y(v)+(pl.below?18:-10))+'" text-anchor="middle">'+esc(pl.fmt(v,i))+'</text>'})});
+    h+='<line class="xh" x1="0" x2="0" y1="'+T+'" y2="'+(H-B)+'" stroke="var(--muted)" stroke-dasharray="3 3" style="display:none"/>';
+    h+='<rect x="'+L+'" y="0" width="'+(W-L-R)+'" height="'+H+'" fill="transparent" class="hit"/>';
+    svg.innerHTML=h;host.appendChild(svg);
+    var tip=document.createElement("div");tip.className="tip";host.appendChild(tip);
+    var xh=svg.querySelector(".xh"),hit=svg.querySelector(".hit");
+    function show(ev){
+      var r=svg.getBoundingClientRect(),px=(ev.clientX-r.left)*W/r.width,best=0,bd=1e9;
+      for(var i=0;i<n;i++){var dd=Math.abs(x(i)-px);if(dd<bd){bd=dd;best=i}}
+      xh.setAttribute("x1",x(best));xh.setAttribute("x2",x(best));xh.style.display="";
+      tip.innerHTML="";var t=document.createElement("div");t.className="t";t.textContent=o.tipTitle?o.tipTitle(best):o.labels[best];tip.appendChild(t);
+      o.series.forEach(function(s){var v=s.values[best];if(v==null)return;var row=document.createElement("div");row.className="r";var sp=document.createElement("span");var k=document.createElement("i");k.style.borderTopColor=s.color;if(s.dash)k.style.borderTopStyle="dashed";sp.appendChild(k);sp.appendChild(document.createTextNode(s.name));var b=document.createElement("b");b.textContent=o.fmtTip?o.fmtTip(v):fmt(v);row.appendChild(sp);row.appendChild(b);tip.appendChild(row);
+        if(o.tipChange&&best>0&&s.values[best-1]!=null){var ch=change(v,s.values[best-1],o.money);var cr=document.createElement("div");cr.className="r";var cs=document.createElement("span");cs.textContent="vs "+o.labels[best-1];var cb=document.createElement("b");cb.className=ch.dir;cb.textContent=ch.text;cr.appendChild(cs);cr.appendChild(cb);tip.appendChild(cr)}});
+      tip.style.display="block";
+      var left=x(best)/W*r.width+12;if(left+tip.offsetWidth>r.width)left=x(best)/W*r.width-tip.offsetWidth-12;
+      tip.style.left=Math.max(0,left)+"px";tip.style.top="4px";
+    }
+    hit.addEventListener("pointermove",show);hit.addEventListener("pointerdown",show);
+    hit.addEventListener("pointerleave",function(){tip.style.display="none";xh.style.display="none"});
+  }
+  function legend(el,series){el.innerHTML=series.map(function(s){return '<span><i class="'+(s.dash?"dash":"")+'" style="border-top-color:'+s.color+'"></i>'+esc(s.name)+'</span>'}).join("")}
+  function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
+
+  function renderRevenue(rv){
+    if(!rv||!rv.months||!rv.months.length){$("revHero").innerHTML='<span class="muted">No revenue entered yet.</span>';return}
+    var m=rv.months, last=m[m.length-1], prev=m.length>1?m[m.length-2]:null;
+    var ch=prev?change(last.total,prev.total,true):null, ce=prev?change(last.expenses,prev.expenses,true):null;
+    $("revHero").innerHTML='<b class="num">'+gbp(last.total)+'</b><span>'+monthName(last.month,true)+' revenue</span>'+
+      (ch?'<div class="delta '+ch.dir+'">'+ch.text+' <small>vs '+monthName(prev.month,true)+'</small></div>':'')+
+      (ce?'<div class="delta flat" style="font-weight:500">Expenses '+gbp(last.expenses)+' <span class="'+(ce.dir==="down"?"up":ce.dir==="up"?"down":"")+'">'+ce.text+'</span></div>':'');
+    $("revCounts").innerHTML='<div class="count"><b class="num">'+fmt(rv.activeClients)+'</b><span>Number of Active Clients</span></div><div class="count"><b class="num">'+fmt(rv.funnelClients)+'</b><span>Clients in Funnel</span></div>';
+    var cols=[css("--s2"),"#6250d6","#e87ba4","#eda100"];
+    var series=[{name:"Total revenue",color:css("--s1"),values:m.map(function(x){return x.total}),width:3}];
+    (rv.clients||[]).forEach(function(c,i){series.push({name:c.name,color:cols[i%cols.length],values:m.map(function(x){return x.clients&&x.clients[c.id]!=null?x.clients[c.id]:null}),dash:true})});
+    series.push({name:"Expenses",color:css("--s3"),values:m.map(function(x){return x.expenses})});
+    legend($("revLegend"),series);
+    var labels=m.map(function(x){return monthName(x.month)});
+    lineChart($("revChart"),{title:"Revenue and expenses by month",labels:labels,series:series,zero:true,money:true,height:260,
+      fmtAxis:function(v){return v>=1000?"£"+(v/1000)+"k":"£"+v},fmtTip:gbp,tipChange:true,
+      tipTitle:function(i){return monthName(m[i].month,true)},
+      pointLabels:[{series:0,fmt:function(v){return gbp(v)}},{series:series.length-1,below:true,fmt:function(v){return gbp(v)}}]});
+    // Table view: every value, with the month-to-month change.
+    var cl=rv.clients||[];
+    var t='<thead><tr><th>Month</th><th class="n">Total revenue</th><th class="n">vs previous month</th>'+cl.map(function(c){return '<th class="n">'+esc(c.name)+'</th>'}).join("")+'<th class="n">Expenses</th><th class="n">vs previous month</th><th class="n">Revenue less expenses</th></tr></thead><tbody>';
+    m.slice().reverse().forEach(function(x){var i=m.indexOf(x),p=i?m[i-1]:null,a=p?change(x.total,p.total,true):null,e=p?change(x.expenses,p.expenses,true):null;
+      t+='<tr><td>'+monthName(x.month,true)+'</td><td class="n"><b>'+gbp(x.total)+'</b></td><td class="n '+(a?a.dir:"")+'">'+(a?a.text:"–")+'</td>'+cl.map(function(c){return '<td class="n">'+gbp(x.clients&&x.clients[c.id])+'</td>'}).join("")+'<td class="n">'+gbp(x.expenses)+'</td><td class="n">'+(e?e.text:"–")+'</td><td class="n">'+gbp(x.total-(x.expenses||0))+'</td></tr>'});
+    $("revTable").innerHTML=t+"</tbody>";
+  }
+
+  function renderContent(series){
+    var w=(series||[]).filter(function(s){return s.impressions!=null});
+    var last=w[w.length-1], prev=w.length>1?w[w.length-2]:null;
+    if(last){var ch=prev?change(last.impressions,prev.impressions,false):null;
+      $("cpStats").innerHTML='<span><b class="num">'+fmt(last.impressions)+'</b>impressions, '+esc(weekLabel(last))+'</span>'+(ch?'<span class="'+ch.dir+'">'+ch.text+' vs previous week</span>':'')+
+        (last.membersReached!=null?'<span><b class="num">'+fmt(last.membersReached)+'</b>members reached</span>':'')+
+        (last.inNetworkPct!=null?'<span><b class="num">'+(100-last.inNetworkPct)+'%</b>out of network</span>':'');}
+    lineChart($("cpChart"),{title:"Weekly impressions",labels:w.map(weekLabel),series:[{name:"Impressions",color:css("--s1"),values:w.map(function(s){return s.impressions})}],zero:true,tipChange:true,
+      pointLabels:[{series:0,fmt:function(v){return fmt(v)}}],empty:"Impressions appear after the first weekly read."});
+  }
+
+  function renderNetwork(series){
+    var w=(series||[]).filter(function(s){return s.connections!=null||s.followers!=null});
+    var S=[];
+    if(w.some(function(s){return s.connections!=null}))S.push({name:"Connections",color:css("--s1"),values:w.map(function(s){return s.connections})});
+    if(w.some(function(s){return s.followers!=null}))S.push({name:"Followers",color:css("--s2"),values:w.map(function(s){return s.followers})});
+    var st="";
+    S.forEach(function(s){var v=s.values.filter(function(x){return x!=null}),a=v[v.length-1],b=v.length>1?v[v.length-2]:null,ch=b!=null?change(a,b,false):null;
+      st+='<span><b class="num">'+fmt(a)+'</b>'+s.name.toLowerCase()+(ch?' <span class="'+ch.dir+'">'+ch.text.replace(/ \(.*\)/,"")+' this week</span>':'')+'</span>'});
+    if(!S.some(function(s){return s.name==="Connections"}))st+='<span>Connections are recorded from the next weekly read.</span>';
+    $("ngStats").innerHTML=st;
+    legend($("ngLegend"),S.length>1?S:[]);
+    lineChart($("ngChart"),{title:"Connections and followers by week",labels:w.map(weekLabel),series:S,tipChange:true,
+      pointLabels:S.length===1?[{series:0,fmt:function(v){return fmt(v)}}]:[],empty:"Connections and followers appear after the first weekly read."});
+  }
+
+  function render(d){
+    var r=d.reach, h=d.hub, a=d.actions, pd=d.pipedrive||{}, adj=d.adjust||{};
+    $("sub").textContent="Organic LinkedIn since "+new Date(d.pushStart+"T12:00:00Z").toLocaleDateString("en-GB",{day:"numeric",month:"short"})+" · updated "+new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})+(r.latest?" · LinkedIn figures to "+r.latest.to:"");
+    var b="";
+    if(d.tasks.overdue) b+='<div class="banner"><b>'+d.tasks.overdue+' overdue to-do'+(d.tasks.overdue>1?"s":"")+' on Marina\'s list.</b> Someone who completed the report hasn\'t been messaged yet. <a href="/organic">Open the list</a></div>';
+    else if(d.tasks.open) b+='<div class="banner ok">'+d.tasks.open+' to-do'+(d.tasks.open>1?"s":"")+' due today on Marina\'s list. Nothing overdue.</div>';
+    if(d.pipedriveError) b+='<div class="banner">Couldn\'t read Pipedrive: '+esc(d.pipedriveError)+'</div>';
+    $("banner").innerHTML=b;
+    renderRevenue(d.revenue);
+    $("f1").innerHTML=funnel([
+      {l:"Post impressions",short:"impressions",v:r.weeks?r.impressions:null,s:"weekly"},
+      {l:"Link clicks",short:"clicks",v:r.weeks?r.linkClicks:null,s:"weekly"},
+      {l:"Page visits",short:"visits",v:h.visits,s:"live"},
+      {l:"Reports started",short:"started",v:h.started,s:"live"},
+      {l:"Reports completed",short:"completed",v:h.completed,s:"live"}]);
+    function add(k){return pd[k]==null&&!adj[k]?null:(pd[k]||0)+(adj[k]||0)}
+    $("f3").innerHTML=funnel([
+      {l:"Calls booked",short:"booked",v:add("booked"),s:"live",manual:adj.booked},
+      {l:"Calls held",short:"held",v:add("held"),s:"live",manual:adj.held},
+      {l:"Proposals sent",short:"proposals",v:add("proposal"),s:"live",manual:adj.proposal},
+      {l:"Sold",short:"sold",v:add("sold"),s:"live",manual:adj.sold}]);
+    renderContent(r.series);
+    renderNetwork(r.series);
+    // Routes
+    var RN={report:"Completed the report",growth:"Commented GROWTH",commenter:"Commenters",viewer:"Profile viewers",network:"Existing network",other:"Other"};
+    var rr='<thead><tr><th>Route</th><th class="n">People</th><th class="n">Connection sent</th><th class="n">Connected</th><th class="n">DM sent</th><th class="n">Replied</th><th class="n">Call</th><th class="n">Reply rate</th></tr></thead><tbody>', any=false;
+    ["report","growth","commenter","viewer","network","other"].forEach(function(k){var x=a.routes[k]; if(!x)return; any=true;
+      var rate=pct(x.reply,x.dm);
+      rr+='<tr><td>'+RN[k]+'</td><td class="n">'+x.people+'</td><td class="n">'+x.connect+'</td><td class="n">'+x.accepted+'</td><td class="n">'+x.dm+'</td><td class="n">'+x.reply+'</td><td class="n">'+x.call+'</td><td class="n">'+(rate==null?"–":rate+"%")+'</td></tr>'});
+    if(!any) rr+='<tr><td colspan="8" class="muted">Nothing logged yet. Rows appear as Marina taps actions on her list.</td></tr>';
+    $("routes").innerHTML=rr+"</tbody>";
+    // Posts
+    var pr='<thead><tr><th>Post</th><th>Date</th><th>Opening line</th><th class="n">Impressions</th><th class="n">Visits</th><th class="n">Started</th><th class="n">Completed</th><th class="n">Booked</th></tr></thead><tbody>';
+    if(!d.posts.length) pr+='<tr><td colspan="8" class="muted">No tagged post traffic yet.</td></tr>';
+    d.posts.forEach(function(p){pr+='<tr><td>'+esc(p.cohort)+'</td><td class="muted">'+esc(p.date||"")+'</td><td>'+esc(p.opening||"")+'</td><td class="n">'+fmt(p.impressions)+'</td><td class="n">'+p.visits+'</td><td class="n">'+p.started+'</td><td class="n">'+p.completed+'</td><td class="n">'+p.booked+'</td></tr>'});
+    $("posts").innerHTML=pr+"</tbody>";
+  }
+  var last=null;
+  function load(){fetch("/api/organic?view=pipeline-data",{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){if(!d.ok)throw new Error(d.error||"failed");last=d;render(d)}).catch(function(e){$("sub").textContent="Couldn't load: "+e.message})}
+  // Charts read their colours from CSS, so redraw when the theme flips.
+  // Charts are drawn at their real width so text stays the same size.
+  var rt;window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(function(){if(last)render(last)},150)});
+  if(window.matchMedia)window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",function(){if(last)render(last)});
+  load(); setInterval(load,5*60*1000);
+})();
+</script>
+</body>
+</html>
